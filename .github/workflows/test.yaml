@@ -1,0 +1,49 @@
+name: Tests
+
+on: 
+  push:
+    branches:
+      - develop
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -l {0}      
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        activate-environment: test
+        auto-update-conda: true
+        python-version: ${{ matrix.python-version }}
+        channels: conda-forge
+        allow-softlinks: true
+        channel-priority: flexible
+        show-channel-urls: true	
+    - name: Install dependencies
+      run: |
+        conda install --yes pip
+        pip install coverage
+        pip install coveralls
+        conda install --yes numpy scipy scikit-learn pytest microtc b4msa
+    - name: Tests on Linux
+      if: ${{ runner.os == 'Linux' }}
+      run: |
+        coverage run -m pytest EncExp/tests
+    - name: Tests on macOS and Windows
+      if: ${{ runner.os != 'Linux' }}
+      run: |
+        python -m pytest EncExp/tests
+    - name: coveralls
+      if: ${{ runner.os == 'Linux' }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        coveralls --service=github
