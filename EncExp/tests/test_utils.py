@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 
 
 def test_download():
@@ -18,7 +19,6 @@ def test_download():
 
     from EncExp.utils import Download
     from os.path import isfile
-    import os
 
     Download("http://github.com", "t.html")
     assert isfile("t.html")
@@ -28,3 +28,13 @@ def test_download():
     except ValueError:
         return
     assert False
+
+
+def test_download_use_tqdm():
+    """Test to disable tqdm"""
+
+    from EncExp import utils 
+
+    utils.USE_TQDM = False
+    utils.Download("http://github.com", "t.html")
+    os.unlink("t.html")
