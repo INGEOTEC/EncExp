@@ -46,6 +46,15 @@ def test_seqtm_compute_vocabulary():
     assert counter2.most_common()[0] == ('de', 990)
 
 
+def test_seqtm_identifier():
+    """Test SeqTM identifier"""
+
+    samples()
+    data = compute_vocabulary('es-mx-sample.json')
+    seqtm = SeqTM(vocabulary=data, lang='en', voc_size_exponent=13)
+    assert seqtm.identifier == 'seqtm_en_13'
+
+
 def test_seqtm_build():
     """Test SeqTM CLI"""
 
@@ -57,10 +66,12 @@ def test_seqtm_build():
     samples()
     A.lang = 'es'
     A.file = ['es-mx-sample.json']
-    A.output = 't.json'
+    A.output = 't.json.gz'
+    A.limits = -1
+    A.voc_size_exponent = -1
     main(A)
-    data = next(tweet_iterator('t.json'))
+    data = next(tweet_iterator('t.json.gz'))
     _ = data['counter']
     counter2 = Counter(_["dict"], _["update_calls"])
     assert counter2.most_common()[0] == ('de', 990)
-    os.unlink('t.json')
+    os.unlink('t.json.gz')

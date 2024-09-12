@@ -101,6 +101,7 @@ def b4msa_params(lang='es'):
 
 def compute_vocabulary(filenames, limits=None, lang='es',
                        tokenize=None, get_text = lambda x: x['text'],
+                       voc_size_exponent=-1,
                        params = None, **kwargs):
     """Compute the vocabulary"""
 
@@ -123,7 +124,11 @@ def compute_vocabulary(filenames, limits=None, lang='es',
             loop = range(limit)
         for tweet, _ in zip(tweet_iterator(filename), loop):
             counter.update(set(tokenize(get_text(tweet))))
+    if voc_size_exponent > 0:
+        voc = counter.most_common()[:2**voc_size_exponent]
+    else:
+        voc = counter.most_common()
     _ = dict(update_calls=counter.update_calls,
-             dict=dict(counter.most_common()))
+             dict=dict(voc))
     data = dict(counter=_, params=params)
     return data

@@ -18,6 +18,8 @@ import json
 from EncExp.utils import compute_vocabulary
 from EncExp.text_repr import SeqTM
 import EncExp
+import numpy as np
+import gzip
 
 
 def main(args):
@@ -28,16 +30,22 @@ def main(args):
 
     filename  = args.file
     lang = args.lang
+    limits = args.limits
+    if limits < 0:
+        limits = None
+    voc_size_exponent = args.voc_size_exponent
     data = compute_vocabulary(filename, lang=lang)
-    seqtm = SeqTM(vocabulary=data)
-    data = compute_vocabulary(filename,
+    seqtm = SeqTM(vocabulary=data, lang=lang,
+                  voc_size_exponent=voc_size_exponent)
+    data = compute_vocabulary(filename, limits=limits,
+                              voc_size_exponent=voc_size_exponent,
                               tokenize=seqtm.tokenize,
                               params=data['params'])
-    if args.output is None:
-        output_json(data, file=sys.stdout)
-    else:
-        with open(args.output, 'w', encoding='utf-8') as fpt:
-            output_json(data, file=fpt)
+    output_filename = args.output
+    if output_filename is None:
+        output_filename = seqtm.identifier + '.json.gz'
+    with gzip.open(output_filename, 'wb') as fpt:
+        fpt.write(bytes(json.dumps(data), encoding='utf-8'))
 
 
 if __name__ == '__main__':
@@ -53,5 +61,9 @@ if __name__ == '__main__':
     parser.add_argument('file',
                         help='input filename',
                         nargs=1, type=str)
+    parser.add_argument('limits', help='Maximum size of the dataset',
+                        type=int, default=-1)
+    parser.add_argument('voc_size_exponent', help='Vocabulary size express as log2',
+                        type=int, default=-1)
     args = parser.parse_args()
     main(args)

@@ -88,6 +88,12 @@ class SeqTM(TextModel):
         self._voc_size_exponent = value
 
     @property
+    def identifier(self):
+        lang = self.language
+        voc = self.voc_size_exponent
+        return f'seqtm_{lang}_{voc}'
+    
+    @property
     def sequence(self):
         """Vocabulary compute on sequence text-transformation"""
 

@@ -71,3 +71,7 @@ def test_compute_vocabulary():
     _ = data['counter']
     counter = Counter(_["dict"], _["update_calls"])
     assert counter.update_calls == 10
+    data = compute_vocabulary('es-mx-sample.json', voc_size_exponent=4)
+    _ = data['counter']
+    counter = Counter(_["dict"], _["update_calls"])
+    assert len(counter) == 16
