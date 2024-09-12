@@ -72,7 +72,7 @@ class Download(object):
         self.update()
 
 
-def b4msa_params(lang='es', dim=17):
+def b4msa_params(lang='es'):
     """B4MSA default parameters"""
 
     from microtc.params import OPTION_DELETE, OPTION_NONE
@@ -89,10 +89,9 @@ def b4msa_params(lang='es', dim=17):
                    select_ent=False,
                    select_suff=False,
                    select_conn=False,
-                   max_dimension=True,
+                   max_dimension=False,
                    unit_vector=True,
-                   q_grams_words=True,
-                   token_max_filter=2**dim)
+                   q_grams_words=True)
     if lang == 'ja' or lang == 'zh':
         tm_kwargs['token_list'] = [1, 2, 3]
     else:
@@ -100,19 +99,22 @@ def b4msa_params(lang='es', dim=17):
     return tm_kwargs
 
 
-def compute_vocabulary(filenames, limits=np.inf,
+def compute_vocabulary(filenames, limits=None, lang='es',
                        tokenize=None, get_text = lambda x: x['text'],
                        params = None, **kwargs):
     """Compute the vocabulary"""
 
     if params is None:
-        params = b4msa_params()
+        params = b4msa_params(lang=lang)
     params.update(kwargs)
     if tokenize is None:
         tokenize = TextModel(**params).tokenize
     if isinstance(filenames, str):
         filenames = [filenames]
-        limits = [limits]
+    if limits is None:
+        limits = np.inf
+    if not isinstance(limits, list):
+        limits = [limits] * len(filenames)
     counter = Counter()
     for filename, limit in zip(filenames, limits):
         if limit == np.inf:

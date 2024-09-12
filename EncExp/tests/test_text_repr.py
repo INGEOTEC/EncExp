@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from microtc.utils import Counter
 from EncExp.tests.test_utils import samples
 from EncExp.utils import compute_vocabulary
 from EncExp.text_repr import SeqTM
+import os
 
 
 def test_seqtm():
@@ -29,7 +31,6 @@ def test_seqtm():
 def test_seqtm_compute_vocabulary():
     """Compute SeqTM's vocabulary """
 
-    from microtc.utils import Counter
     samples()
     data = compute_vocabulary('es-mx-sample.json')
     _ = data['counter']
@@ -43,3 +44,23 @@ def test_seqtm_compute_vocabulary():
 
     assert counter.most_common()[0] != counter2.most_common()[0]
     assert counter2.most_common()[0] == ('de', 990)
+
+
+def test_seqtm_build():
+    """Test SeqTM CLI"""
+
+    from microtc.utils import tweet_iterator
+    class A:
+        """Dummy"""
+
+    from EncExp.build_voc import main
+    samples()
+    A.lang = 'es'
+    A.file = ['es-mx-sample.json']
+    A.output = 't.json'
+    main(A)
+    data = next(tweet_iterator('t.json'))
+    _ = data['counter']
+    counter2 = Counter(_["dict"], _["update_calls"])
+    assert counter2.most_common()[0] == ('de', 990)
+    os.unlink('t.json')
