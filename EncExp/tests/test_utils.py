@@ -11,13 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from os.path import isfile
 import os
+from EncExp.utils import Download, DialectID_URL
 
 
 def test_download():
     """Test Download"""
 
-    from EncExp.utils import Download
     from os.path import isfile
 
     Download("http://github.com", "t.html")
@@ -38,3 +39,35 @@ def test_download_use_tqdm():
     utils.USE_TQDM = False
     utils.Download("http://github.com", "t.html")
     os.unlink("t.html")
+
+
+def samples():
+    """Download MX sample"""
+
+    from zipfile import ZipFile
+
+    filename = 'es-mx-sample.json.zip'
+    if isfile(filename):
+        return
+    Download(f'{DialectID_URL}/es-mx-sample.json.zip',
+             filename)
+    with ZipFile(filename, "r") as fpt:
+        fpt.extractall(path=".",
+                       pwd="ingeotec".encode("utf-8"))
+    
+
+def test_compute_vocabulary():
+    """Compute vocabulary"""
+
+    from EncExp.utils import compute_vocabulary
+    from microtc.utils import Counter
+
+    samples()
+    data = compute_vocabulary('es-mx-sample.json')
+    _ = data['counter']
+    counter = Counter(_["dict"], _["update_calls"])
+    assert counter.most_common()[0] == ('q:e~', 1847)
+    data = compute_vocabulary('es-mx-sample.json', 10)
+    _ = data['counter']
+    counter = Counter(_["dict"], _["update_calls"])
+    assert counter.update_calls == 10

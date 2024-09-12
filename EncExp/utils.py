@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from itertools import count
 from urllib import request
 from urllib.error import HTTPError
 try:
@@ -18,7 +19,12 @@ try:
     from tqdm import tqdm
 except ImportError:
     USE_TQDM = False
+from microtc.utils import tweet_iterator, Counter
+from b4msa import TextModel
+import numpy as np
 
+
+DialectID_URL = 'https://github.com/INGEOTEC/dialectid/releases/download/data'
 
 class Download(object):
     """Download
@@ -64,3 +70,58 @@ class Download(object):
 
         self._nblocks = total // block_size
         self.update()
+
+
+def b4msa_params(lang='es', dim=17):
+    """B4MSA default parameters"""
+
+    from microtc.params import OPTION_DELETE, OPTION_NONE
+    tm_kwargs=dict(num_option=OPTION_NONE,
+                   usr_option=OPTION_DELETE,
+                   url_option=OPTION_DELETE,
+                   emo_option=OPTION_NONE,
+                   hashtag_option=OPTION_NONE,
+                   ent_option=OPTION_NONE,
+                   lc=True,
+                   del_dup=False,
+                   del_punc=True,
+                   del_diac=True,
+                   select_ent=False,
+                   select_suff=False,
+                   select_conn=False,
+                   max_dimension=True,
+                   unit_vector=True,
+                   q_grams_words=True,
+                   token_max_filter=2**dim)
+    if lang == 'ja' or lang == 'zh':
+        tm_kwargs['token_list'] = [1, 2, 3]
+    else:
+        tm_kwargs['token_list'] = [-1, 2, 3, 4, 5, 6]
+    return tm_kwargs
+
+
+def compute_vocabulary(filenames, limits=np.inf,
+                       tokenize=None, get_text = lambda x: x['text'],
+                       params = None, **kwargs):
+    """Compute the vocabulary"""
+
+    if params is None:
+        params = b4msa_params()
+    params.update(kwargs)
+    if tokenize is None:
+        tokenize = TextModel(**params).tokenize
+    if isinstance(filenames, str):
+        filenames = [filenames]
+        limits = [limits]
+    counter = Counter()
+    for filename, limit in zip(filenames, limits):
+        if limit == np.inf:
+            loop = count()
+        else:
+            loop = range(limit)
+        for tweet, _ in zip(tweet_iterator(filename), loop):
+            counter.update(set(tokenize(get_text(tweet))))
+    _ = dict(update_calls=counter.update_calls,
+             dict=dict(counter.most_common()))
+    data = dict(counter=_, params=params)
+    return data
