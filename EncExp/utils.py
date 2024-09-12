@@ -98,6 +98,15 @@ def b4msa_params(lang='es'):
         tm_kwargs['token_list'] = [-1, 2, 3, 4, 5, 6]
     return tm_kwargs
 
+def progress_bar(data, total=np.inf, **kwargs):
+    """Progress bar"""
+
+    if not USE_TQDM:
+        return data
+    if total == np.inf:
+        total = None
+    return tqdm(data, total=total, **kwargs)
+
 
 def compute_vocabulary(filenames, limits=None, lang='es',
                        tokenize=None, get_text = lambda x: x['text'],
@@ -122,7 +131,9 @@ def compute_vocabulary(filenames, limits=None, lang='es',
             loop = count()
         else:
             loop = range(limit)
-        for tweet, _ in zip(tweet_iterator(filename), loop):
+        for tweet, _ in progress_bar(zip(tweet_iterator(filename),
+                                         loop), total=limit,
+                                         desc=filename):
             counter.update(set(tokenize(get_text(tweet))))
     if voc_size_exponent > 0:
         voc = counter.most_common()[:2**voc_size_exponent]
@@ -132,3 +143,19 @@ def compute_vocabulary(filenames, limits=None, lang='es',
              dict=dict(voc))
     data = dict(counter=_, params=params)
     return data
+
+
+def uniform_sample(N, avail_data):
+    """Uniform sample from the available data"""
+    remaining = avail_data.copy()
+    M = 0
+    while M < N:
+        index = np.where(remaining > 0)[0]
+        if index.shape[0] == 0:
+            break
+        sample = np.random.randint(index.shape[0], size=N - M)
+        sample_i, sample_cnt = np.unique(index[sample], return_counts=True)
+        remaining[sample_i] = remaining[sample_i] - sample_cnt
+        remaining[remaining < 0] = 0
+        M = (avail_data - remaining).sum()
+    return avail_data - remaining

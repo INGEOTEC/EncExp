@@ -34,7 +34,7 @@ def main(args):
     if limits < 0:
         limits = None
     voc_size_exponent = args.voc_size_exponent
-    data = compute_vocabulary(filename, lang=lang)
+    data = compute_vocabulary(filename, limits=limits, lang=lang)
     seqtm = SeqTM(vocabulary=data, lang=lang,
                   voc_size_exponent=voc_size_exponent)
     data = compute_vocabulary(filename, limits=limits,
@@ -58,12 +58,12 @@ if __name__ == '__main__':
                         dest='output', default=None, type=str)
     parser.add_argument('--lang', help='Language (ar | ca | de | en | es | fr | hi | in | it | ja | ko | nl | pl | pt | ru | tl | tr | zh)',
                         type=str, default='es')
+    parser.add_argument('--limits', help='Maximum size of the dataset',
+                        type=int, default=-1)
+    parser.add_argument('--voc_size_exponent', help='Vocabulary size express as log2',
+                        type=int, default=-1) 
     parser.add_argument('file',
                         help='input filename',
                         nargs=1, type=str)
-    parser.add_argument('limits', help='Maximum size of the dataset',
-                        type=int, default=-1)
-    parser.add_argument('voc_size_exponent', help='Vocabulary size express as log2',
-                        type=int, default=-1)
     args = parser.parse_args()
     main(args)

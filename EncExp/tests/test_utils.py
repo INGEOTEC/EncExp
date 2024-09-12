@@ -75,3 +75,13 @@ def test_compute_vocabulary():
     _ = data['counter']
     counter = Counter(_["dict"], _["update_calls"])
     assert len(counter) == 16
+
+
+def test_uniform_sample():
+    """Test uniform sample"""
+
+    from EncExp.utils import uniform_sample
+    import numpy as np
+
+    data = uniform_sample(10, np.array([20, 5, 4, 7]))
+    assert data.sum() == 10

@@ -64,7 +64,7 @@ def test_seqtm_build():
 
     from EncExp.build_voc import main
     samples()
-    A.lang = 'es'
+    A.lang = 'en'
     A.file = ['es-mx-sample.json']
     A.output = 't.json.gz'
     A.limits = -1
@@ -75,3 +75,11 @@ def test_seqtm_build():
     counter2 = Counter(_["dict"], _["update_calls"])
     assert counter2.most_common()[0] == ('de', 990)
     os.unlink('t.json.gz')
+    A.output = None
+    A.voc_size_exponent = 4
+    main(A)
+    data = next(tweet_iterator('seqtm_en_4.json.gz'))
+    _ = data['counter']
+    counter2 = Counter(_["dict"], _["update_calls"])
+    assert len(counter2) == 16
+    os.unlink('seqtm_en_4.json.gz')
