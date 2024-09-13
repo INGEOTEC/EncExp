@@ -14,6 +14,7 @@
 from os.path import isfile
 import os
 from EncExp.utils import Download, DialectID_URL
+from EncExp.utils import compute_b4msa_vocabulary
 
 
 def test_download():
@@ -54,27 +55,22 @@ def samples():
     with ZipFile(filename, "r") as fpt:
         fpt.extractall(path=".",
                        pwd="ingeotec".encode("utf-8"))
-    
 
-def test_compute_vocabulary():
+
+def test_compute_b4msa_vocabulary():
     """Compute vocabulary"""
 
-    from EncExp.utils import compute_vocabulary
     from microtc.utils import Counter
 
     samples()
-    data = compute_vocabulary('es-mx-sample.json')
+    data = compute_b4msa_vocabulary('es-mx-sample.json')
     _ = data['counter']
     counter = Counter(_["dict"], _["update_calls"])
     assert counter.most_common()[0] == ('q:e~', 1847)
-    data = compute_vocabulary('es-mx-sample.json', 10)
+    data = compute_b4msa_vocabulary('es-mx-sample.json', 10)
     _ = data['counter']
     counter = Counter(_["dict"], _["update_calls"])
     assert counter.update_calls == 10
-    data = compute_vocabulary('es-mx-sample.json', voc_size_exponent=4)
-    _ = data['counter']
-    counter = Counter(_["dict"], _["update_calls"])
-    assert len(counter) == 16
 
 
 def test_uniform_sample():

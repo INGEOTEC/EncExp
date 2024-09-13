@@ -98,6 +98,7 @@ def b4msa_params(lang='es'):
         tm_kwargs['token_list'] = [-1, 2, 3, 4, 5, 6]
     return tm_kwargs
 
+
 def progress_bar(data, total=np.inf, **kwargs):
     """Progress bar"""
 
@@ -108,40 +109,81 @@ def progress_bar(data, total=np.inf, **kwargs):
     return tqdm(data, total=total, **kwargs)
 
 
-def compute_vocabulary(filenames, limits=None, lang='es',
-                       tokenize=None, get_text = lambda x: x['text'],
-                       voc_size_exponent=-1,
-                       params = None, **kwargs):
+def compute_b4msa_vocabulary(filename, limit=None, lang='es',
+                             **kwargs):
     """Compute the vocabulary"""
 
-    if params is None:
-        params = b4msa_params(lang=lang)
+    params = b4msa_params(lang=lang)
     params.update(kwargs)
-    if tokenize is None:
-        tokenize = TextModel(**params).tokenize
-    if isinstance(filenames, str):
-        filenames = [filenames]
-    if limits is None:
-        limits = np.inf
-    if not isinstance(limits, list):
-        limits = [limits] * len(filenames)
+    tokenize = TextModel(**params).tokenize
+    if limit is None:
+        limit = np.inf
     counter = Counter()
-    for filename, limit in zip(filenames, limits):
-        if limit == np.inf:
-            loop = count()
-        else:
-            loop = range(limit)
-        for tweet, _ in progress_bar(zip(tweet_iterator(filename),
-                                         loop), total=limit,
-                                         desc=filename):
-            counter.update(set(tokenize(get_text(tweet))))
-    if voc_size_exponent > 0:
-        voc = counter.most_common()[:2**voc_size_exponent]
+    if limit == np.inf:
+        loop = count()
     else:
-        voc = counter.most_common()
+        loop = range(limit)
+    for tweet, _ in progress_bar(zip(tweet_iterator(filename),
+                                        loop), total=limit,
+                                        desc=filename):
+        counter.update(set(tokenize(tweet)))
     _ = dict(update_calls=counter.update_calls,
-             dict=dict(voc))
+             dict=dict(counter.most_common()))
     data = dict(counter=_, params=params)
+    return data
+
+
+def compute_seqtm_vocabulary(instance, vocabulary,
+                             filename, limit=None,
+                             voc_size_exponent=13):
+    """Compute SeqTM"""
+    def current_lost_words():
+        words = [w for w, _ in base_voc.most_common() if w[:2] != 'q:']
+        current = words[:2**voc_size_exponent]
+        lost =  words[2**voc_size_exponent:]
+        return current, lost
+
+    def optimize_vocabulary():
+        cnt = Counter({k: v for k, v in base_voc.items() if k[:2] == 'q:'},
+                      update_calls=base_voc.update_calls)
+        _ = dict(params=vocabulary['params'], counter=cnt)
+        tokenize = instance(vocabulary=_).tokenize        
+        current, lost = current_lost_words()
+        for _ in range(1024):
+            cnt = Counter()
+            for word in lost:
+                tokens = set(tokenize(word))
+                _ = {token: base_voc[word] for token in tokens}
+                cnt.update(_)
+            for word in current:
+                cnt[word] = base_voc[word]
+            mask = set(current)
+            u_lost = [k for k, _ in cnt.most_common()[2**voc_size_exponent:]
+                    if k in mask]
+            lost = lost + u_lost
+            current = [w for w, _ in cnt.most_common()[:2**voc_size_exponent]
+                    if w[:2] != 'q:']
+            if len(u_lost) == 0:
+                break
+        return cnt.most_common()[:2**voc_size_exponent]
+
+    limit = np.inf if limit is None else limit
+    loop = count() if limit == np.inf else range(limit)
+    base_voc = Counter(vocabulary['counter']["dict"],
+                       vocabulary['counter']["update_calls"])
+    voc = optimize_vocabulary()
+    cnt = Counter(dict(voc),
+                  update_calls=base_voc.update_calls)
+    _ = dict(params=vocabulary['params'], counter=cnt)
+    tokenize = instance(vocabulary=_).tokenize
+    counter = Counter()
+    for tweet, _ in progress_bar(zip(tweet_iterator(filename),
+                                        loop), total=limit,
+                                        desc=filename):
+        counter.update(set(tokenize(tweet)))
+    _ = dict(update_calls=counter.update_calls,
+             dict=dict(counter.most_common()[:2**voc_size_exponent]))
+    data = dict(counter=_, params=vocabulary['params'])
     return data
 
 
