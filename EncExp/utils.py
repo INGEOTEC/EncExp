@@ -149,7 +149,7 @@ def compute_seqtm_vocabulary(instance, vocabulary,
         _ = dict(params=vocabulary['params'], counter=cnt)
         tokenize = instance(vocabulary=_).tokenize        
         current, lost = current_lost_words()
-        for _ in range(1024):
+        for _ in progress_bar(range(32)):
             cnt = Counter()
             for word in lost:
                 tokens = set(tokenize(word))
@@ -159,10 +159,10 @@ def compute_seqtm_vocabulary(instance, vocabulary,
                 cnt[word] = base_voc[word]
             mask = set(current)
             u_lost = [k for k, _ in cnt.most_common()[2**voc_size_exponent:]
-                    if k in mask]
+                      if k in mask]
             lost = lost + u_lost
             current = [w for w, _ in cnt.most_common()[:2**voc_size_exponent]
-                    if w[:2] != 'q:']
+                       if w[:2] != 'q:']
             if len(u_lost) == 0:
                 break
         return cnt.most_common()[:2**voc_size_exponent]

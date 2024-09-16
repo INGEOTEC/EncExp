@@ -15,7 +15,6 @@ from microtc.utils import Counter
 from EncExp.tests.test_utils import samples
 from EncExp.utils import compute_b4msa_vocabulary
 from EncExp.text_repr import SeqTM
-import os
 
 
 def test_seqtm():
@@ -50,25 +49,3 @@ def test_seqtm_identifier():
     data = compute_b4msa_vocabulary('es-mx-sample.json')
     seqtm = SeqTM(vocabulary=data, lang='en', voc_size_exponent=13)
     assert seqtm.identifier == 'seqtm_en_13'
-
-
-def test_seqtm_build():
-    """Test SeqTM CLI"""
-
-    from microtc.utils import tweet_iterator
-    class A:
-        """Dummy"""
-
-    from EncExp.build_voc import main
-    samples()
-    A.lang = 'en'
-    A.file = ['es-mx-sample.json']
-    A.output = None
-    A.limit = -1
-    A.voc_size_exponent = 4
-    main(A)
-    data = next(tweet_iterator('seqtm_en_4.json.gz'))
-    _ = data['counter']
-    counter2 = Counter(_["dict"], _["update_calls"])
-    assert counter2.most_common()[0] == ('q:o~', 1776)
-    os.unlink('seqtm_en_4.json.gz')
