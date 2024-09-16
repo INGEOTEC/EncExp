@@ -11,13 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import argparse
+import EncExp
 from EncExp.text_repr import SeqTM
+from EncExp.utils import progress_bar
 from microtc.utils import tweet_iterator, Counter
 from sklearn.svm import LinearSVC
 from random import randint, shuffle
 from joblib import Parallel, delayed
-from os.path import isdir, isfile, basename
-from glob import glob
+from os.path import isfile, basename
 import numpy as np
 import gzip
 import json
@@ -44,20 +46,21 @@ def encode(vocabulary, fname):
     tokenize = seq.tokenize
     cnt = Counter()
     with open(output, 'w', encoding='utf-8') as fpt:
-        for tweet in tweet_iterator(fname):
+        for tweet in progress_bar(tweet_iterator(fname),
+                                  desc=output):
             _ = tokenize(tweet)
             cnt.update(_)
             print(json.dumps(_), file=fpt)
     return output, cnt
 
 
-def feasible_tokens(vocabulary, count, min_examples=512):
+def feasible_tokens(vocabulary, count, min_pos=512):
     """Feasible tokens"""
     seq = SeqTM(vocabulary=vocabulary)
     tokens = sorted(seq.model.word2id)
     output = []
     for k, v in enumerate(tokens):
-        if count[v] < min_examples:
+        if count[v] < min_pos:
             continue
         output.append((k, v))
     return output
@@ -104,7 +107,58 @@ def build_encexp_token(index, vocabulary,
     return output_fname
 
 
-# for lang in ['ar', 'fr', 'pt', 'ru']:
-#     print('*'*10, f'Haciendo {lang}', '*' * 10)
-#     Parallel(n_jobs=-1)(delayed(create_model)(index, lang)
-#                         for index in tqdm(range(2**13)))
+def build_encexp(vocabulary,
+                 fname, output,
+                 min_pos=512,
+                 max_pos=2**13,
+                 n_jobs = -1,
+                 precision=np.float32):
+    """Build EncExp"""
+    encode_fname, cnt = encode(vocabulary, fname)
+    tokens = feasible_tokens(vocabulary, cnt, min_pos=min_pos)
+    fnames = Parallel(n_jobs=n_jobs)(delayed(build_encexp_token)(index,
+                                                                 vocabulary,
+                                                                 encode_fname,
+                                                                 precision=precision,
+                                                                 max_pos=max_pos)
+                                     for index, _ in progress_bar(tokens,
+                                                                  desc=output, 
+                                                                  total=len(tokens)))
+    with gzip.open(output, 'wb') as fpt:
+        fpt.write(bytes(json.dumps(vocabulary) + '\n',
+                        encoding='utf-8'))
+        for fname in fnames:
+            data = next(tweet_iterator(fname))
+            fpt.write(bytes(json.dumps(data) + '\n',
+                            encoding='utf-8'))
+    for fname in fnames:
+        os.unlink(fname)
+    os.unlink(encode_fname)
+
+
+def main(args):
+    """CLI"""
+    filename  = args.file[0]
+    output = args.output
+    vocabulary = args.vocabulary
+    voc = next(tweet_iterator(vocabulary))
+    build_encexp(voc, filename, output)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Compute SeqTM Vocabulary',
+                                     prog='EncExp.build_voc')
+    parser.add_argument('-v', '--version', action='version',
+                        version=f'EncExp {EncExp.__version__}')
+    parser.add_argument('-o', '--output',
+                        help='Output filename',
+                        dest='output', type=str)
+    parser.add_argument('--vocabulary',
+                        help='Vocabulary filename',
+                        dest='vocabulary', type=str) 
+    parser.add_argument('file',
+                        help='Input filename',
+                        nargs=1, type=str)
+    args = parser.parse_args()
+    main(args)
+

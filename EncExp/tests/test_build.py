@@ -16,7 +16,7 @@ from EncExp.tests.test_utils import samples
 from EncExp.utils import compute_b4msa_vocabulary
 from EncExp.text_repr import SeqTM
 from EncExp.utils import compute_seqtm_vocabulary
-from EncExp.build_encexp import encode_output, encode, feasible_tokens, build_encexp_token
+from EncExp.build_encexp import encode_output, encode, feasible_tokens, build_encexp_token, build_encexp
 from os.path import isfile
 import os
 
@@ -93,3 +93,14 @@ def test_build_encexp_token():
     assert data['label'] == token
     os.unlink(fname)
         
+
+def test_build_encexp():
+    """Test build encexp"""
+    samples()
+    data = compute_b4msa_vocabulary('es-mx-sample.json')
+    voc = compute_seqtm_vocabulary(SeqTM, data,
+                                   'es-mx-sample.json',
+                                   voc_size_exponent=10)
+    build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz')
+    assert isfile('encexp-es-mx.json.gz')
+    os.unlink('encexp-es-mx.json.gz')
