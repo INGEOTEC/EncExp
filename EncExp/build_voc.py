@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import argparse
-import sys
 import json
 from EncExp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary
 from EncExp.text_repr import SeqTM
