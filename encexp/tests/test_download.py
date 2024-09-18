@@ -30,6 +30,7 @@ def test_download_encexp():
 
     data = download_encexp(lang='es')
     dim = 2**13
-    assert len(data['params']['counter']['dict']) == dim
+    assert len(data['seqtm']['counter']['dict']) == dim
+    assert len(data['coefs'])
     for coef in data['coefs']:
         assert coef['coef'].shape[0] == dim

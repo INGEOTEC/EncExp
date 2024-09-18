@@ -16,7 +16,7 @@ import argparse
 import json
 from encexp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary
 from encexp.text_repr import SeqTM
-import EncExp
+import encexp
 import numpy as np
 import gzip
 

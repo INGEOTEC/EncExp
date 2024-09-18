@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """EncExp"""
-from encexp.text_repr import EncExp
+import sys
+
+if not '-m' in sys.argv:
+    from encexp.text_repr import EncExp
 
 __version__ = "0.0.2"

@@ -37,7 +37,7 @@ def download_seqtm(lang, voc_size_exponent: int=13,
     return next(tweet_iterator(output))
 
 
-def download_encexp(lang, voc_size_exponent: int=13,
+def download_encexp(lang='es', voc_size_exponent: int=13,
                     precision=np.float32,
                     output=None):
     """Download EncExp"""
@@ -49,8 +49,8 @@ def download_encexp(lang, voc_size_exponent: int=13,
             _ = np.frombuffer(bytearray.fromhex(coef['coef']),
                               dtype=precision)
             coef['coef'] = _
-        coefs = list(iter)
-        return dict(params=params, coefs=coefs)
+            coefs.append(coef)
+        return dict(seqtm=params, coefs=coefs)
 
     if not isdir(MODELS):
         os.mkdir(MODELS)
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Download',
                                      prog='EncExp.build_voc')
     parser.add_argument('-v', '--version', action='version',
-                        version=f'EncExp {EncExp.__version__}')
+                        version=f'EncExp {encexp.__version__}')
     parser.add_argument('-o', '--output',
                         help='Output filename',
                         dest='output', default=None, type=str)

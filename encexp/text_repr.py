@@ -18,7 +18,7 @@ from microtc.utils import tweet_iterator, Counter
 from microtc import emoticons
 from microtc.weighting import TFIDF
 import numpy as np
-from encexp.download import download_seqtm
+from encexp.download import download_seqtm, download_encexp
 
 
 class SeqTM(TextModel):
@@ -212,4 +212,56 @@ class SeqTM(TextModel):
 
 @dataclass
 class EncExp:
-    pass
+    lang: str='es'
+    voc_size_exponent: int=13
+    EncExp_filename: str=None
+
+
+    @property
+    def weights(self):
+        """Weights"""
+        try:
+            return self._weights
+        except AttributeError:
+            if self.EncExp_filename is not None:
+                data = download_encexp(output=self.EncExp_filename)
+            else:
+                data = download_encexp(lang=self.lang,
+                                       voc_size_exponent=self.voc_size_exponent)
+            self._bow = SeqTM(vocabulary=data['seqtm'])
+            w = self._bow.weights
+            self._weights = np.vstack([vec['coef'] * w
+                                       for vec in data['coefs']]).astype(np.float32)
+            self._names = np.array([vec['label'] for vec in data['coefs']])
+        return self._weights
+
+    @property
+    def names(self):
+        """Vector space components"""
+        try:
+            return self._names
+        except AttributeError:
+            self.weights
+        return self._names
+    
+    @property
+    def bow(self):
+        """BoW"""
+        try:
+            return self._bow
+        except AttributeError:
+            self.weights
+        return self._bow
+
+    def encode(self, text):
+        """Encode utterace into a matrix"""
+
+        token2id = self.bow.token2id
+        seq = []
+        for token in self.bow.tokenize(text):
+            try:
+                seq.append(token2id[token])
+            except KeyError:
+                continue
+        W = self.weights
+        return np.vstack([W[:, x] for x in seq]).T

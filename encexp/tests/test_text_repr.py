@@ -11,10 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from microtc.utils import Counter
 from encexp.tests.test_utils import samples
-from encexp.utils import compute_b4msa_vocabulary
-from encexp.text_repr import SeqTM
+from encexp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary
+from encexp.build_encexp import build_encexp
+from encexp.text_repr import SeqTM, EncExp
+from os.path import isfile
+import numpy as np
+import os
 
 
 def test_seqtm():
@@ -57,3 +60,31 @@ def test_seqtm_download():
     cdn = seqtm.tokenize('buenos dias méxico')
     assert cdn == ['buenos', 'dias', 'mexico']
 
+
+def test_EncExp_filename():
+    """Test EncExp"""
+    if not isfile('encexp-es-mx.json.gz'):
+        samples()
+        data = compute_b4msa_vocabulary('es-mx-sample.json')
+        voc = compute_seqtm_vocabulary(SeqTM, data,
+                                       'es-mx-sample.json',
+                                       voc_size_exponent=10)
+        build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz')
+    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz')
+    assert enc.weights.dtype == np.float32
+    assert len(enc.names) == 11
+    os.unlink('encexp-es-mx.json.gz')
+
+
+def test_EncExp():
+    """Test EncExp"""
+    enc = EncExp()
+    assert enc.weights.dtype == np.float32
+    assert len(enc.names) == 2**13
+
+
+def test_EncExp_encode():
+    """Test EncExp encode"""
+
+    dense = EncExp()
+    assert dense.encode('buenos días').shape[1] == 2    
