@@ -26,7 +26,7 @@ def test_seqtm_build():
     class A:
         """Dummy"""
 
-    from EncExp.build_voc import main
+    from encexp.build_voc import main
     samples()
     A.lang = 'en'
     A.file = ['es-mx-sample.json']
