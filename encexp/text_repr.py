@@ -230,8 +230,13 @@ class EncExp:
                                        voc_size_exponent=self.voc_size_exponent)
             self._bow = SeqTM(vocabulary=data['seqtm'])
             w = self._bow.weights
-            self._weights = np.vstack([vec['coef'] * w
-                                       for vec in data['coefs']]).astype(np.float32)
+            weights = []
+            for vec in data['coefs']:
+                coef = (vec['coef'] * w).astype(np.float32)
+                _ = coef.max()
+                coef[self._bow.token2id[vec['label']]] = _
+                weights.append(coef)
+            self._weights = np.vstack(weights)
             self._names = np.array([vec['label'] for vec in data['coefs']])
         return self._weights
 
@@ -264,4 +269,6 @@ class EncExp:
             except KeyError:
                 continue
         W = self.weights
+        if len(seq) == 0:
+            return np.ones((W.shape[0], 1), dtype=W.dtype)        
         return np.vstack([W[:, x] for x in seq]).T

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from EncExp.download import download_seqtm, download_encexp
+from encexp.download import download_seqtm, download_encexp
 from os.path import isfile
 import os
 
@@ -30,6 +30,7 @@ def test_download_encexp():
 
     data = download_encexp(lang='es')
     dim = 2**13
+    # assert list(data.keys()) is None
     assert len(data['seqtm']['counter']['dict']) == dim
     assert len(data['coefs'])
     for coef in data['coefs']:
