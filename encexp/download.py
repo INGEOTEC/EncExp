@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
-from EncExp.utils import Download, MODELS, EncExp_URL
+from encexp.utils import Download, MODELS, EncExp_URL
 from microtc.utils import tweet_iterator
 from os.path import isdir, isfile, join
 import numpy as np
 import os
-import EncExp
+import encexp
 
 
 def download_seqtm(lang, voc_size_exponent: int=13,

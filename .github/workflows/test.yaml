@@ -36,12 +36,12 @@ jobs:
     - name: Tests on Linux
       if: ${{ runner.os == 'Linux' }}
       run: |
-        coverage run -m pytest EncExp/tests
+        coverage run -m pytest encexp/tests
         coverage report
     - name: Tests on macOS and Windows
       if: ${{ runner.os != 'Linux' }}
       run: |
-        python -m pytest EncExp/tests
+        python -m pytest encexp/tests
     - name: coveralls
       if: ${{ runner.os == 'Linux' }}
       env:

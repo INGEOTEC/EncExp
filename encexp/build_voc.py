@@ -14,8 +14,8 @@
 
 import argparse
 import json
-from EncExp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary
-from EncExp.text_repr import SeqTM
+from encexp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary
+from encexp.text_repr import SeqTM
 import EncExp
 import numpy as np
 import gzip
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Compute SeqTM Vocabulary',
                                      prog='EncExp.build_voc')
     parser.add_argument('-v', '--version', action='version',
-                        version=f'EncExp {EncExp.__version__}')
+                        version=f'EncExp {encexp.__version__}')
     parser.add_argument('-o', '--output',
                         help='Output filename',
                         dest='output', default=None, type=str)

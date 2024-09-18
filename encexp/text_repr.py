@@ -11,22 +11,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from dataclasses import dataclass
 from collections import OrderedDict
 from b4msa import TextModel
 from microtc.utils import tweet_iterator, Counter
 from microtc import emoticons
 from microtc.weighting import TFIDF
 import numpy as np
+from encexp.download import download_seqtm
 
 
 class SeqTM(TextModel):
     """TextModel where the utterance is segmented in a sequence."""
 
     def __init__(self, lang='es',
-                 voc_size_exponent: int=17,
+                 voc_size_exponent: int=13,
                  vocabulary=None):
-        assert vocabulary is not None
+        if vocabulary is None:
+            vocabulary = download_seqtm(lang,
+                                        voc_size_exponent=voc_size_exponent)
         self._map = {}
         params = vocabulary['params']
         counter = vocabulary['counter']
@@ -205,3 +208,8 @@ class SeqTM(TextModel):
         if end > init:
             blocks.append([init, end])
         return blocks
+
+
+@dataclass
+class EncExp:
+    pass

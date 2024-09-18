@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from microtc.utils import Counter, tweet_iterator
-from EncExp.tests.test_utils import samples
-from EncExp.utils import compute_b4msa_vocabulary
-from EncExp.text_repr import SeqTM
-from EncExp.utils import compute_seqtm_vocabulary
-from EncExp.build_encexp import encode_output, encode, feasible_tokens, build_encexp_token, build_encexp
+from encexp.tests.test_utils import samples
+from encexp.utils import compute_b4msa_vocabulary
+from encexp.text_repr import SeqTM
+from encexp.utils import compute_seqtm_vocabulary
+from encexp.build_encexp import encode_output, encode, feasible_tokens, build_encexp_token, build_encexp
 from os.path import isfile
 import os
 

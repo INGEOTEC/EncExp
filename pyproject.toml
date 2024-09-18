@@ -33,7 +33,7 @@ maintainers = [
 ]
 
 [tool.setuptools.dynamic]
-version = {attr = 'EncExp.__version__'}
+version = {attr = 'encexp.__version__'}
 
 [project.urls]
 Repository = "https://github.com/INGEOTEC/EncExp"

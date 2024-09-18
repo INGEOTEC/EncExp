@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from microtc.utils import Counter
-from EncExp.tests.test_utils import samples
-from EncExp.utils import compute_b4msa_vocabulary
-from EncExp.text_repr import SeqTM
+from encexp.tests.test_utils import samples
+from encexp.utils import compute_b4msa_vocabulary
+from encexp.text_repr import SeqTM
 
 
 def test_seqtm():
@@ -49,3 +49,11 @@ def test_seqtm_identifier():
     data = compute_b4msa_vocabulary('es-mx-sample.json')
     seqtm = SeqTM(vocabulary=data, lang='en', voc_size_exponent=13)
     assert seqtm.identifier == 'seqtm_en_13'
+
+
+def test_seqtm_download():
+    """Test SeqTM download"""
+    seqtm = SeqTM(lang='es', voc_size_exponent=13)
+    cdn = seqtm.tokenize('buenos dias méxico')
+    assert cdn == ['buenos', 'dias', 'mexico']
+

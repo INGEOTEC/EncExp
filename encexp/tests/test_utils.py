@@ -13,8 +13,8 @@
 # limitations under the License.
 from os.path import isfile
 import os
-from EncExp.utils import Download, DialectID_URL
-from EncExp.utils import compute_b4msa_vocabulary
+from encexp.utils import Download, DialectID_URL
+from encexp.utils import compute_b4msa_vocabulary
 
 
 def test_download():
@@ -35,7 +35,7 @@ def test_download():
 def test_download_use_tqdm():
     """Test to disable tqdm"""
 
-    from EncExp import utils 
+    from encexp import utils 
 
     utils.USE_TQDM = False
     utils.Download("http://github.com", "t.html")
@@ -76,7 +76,7 @@ def test_compute_b4msa_vocabulary():
 def test_uniform_sample():
     """Test uniform sample"""
 
-    from EncExp.utils import uniform_sample
+    from encexp.utils import uniform_sample
     import numpy as np
 
     data = uniform_sample(10, np.array([20, 5, 4, 7]))
