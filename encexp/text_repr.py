@@ -272,3 +272,12 @@ class EncExp:
         if len(seq) == 0:
             return np.ones((W.shape[0], 1), dtype=W.dtype)        
         return np.vstack([W[:, x] for x in seq]).T
+
+    def transform(self, texts):
+        """Represents the texts into a matrix"""
+        enc = []
+        for data in texts:
+            _ = self.encode(data)
+            vec = _.sum(axis=1)
+            enc.append(vec / np.linalg.norm(vec))
+        return np.vstack(enc)        

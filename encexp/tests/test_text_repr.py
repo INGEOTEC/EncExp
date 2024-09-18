@@ -87,4 +87,14 @@ def test_EncExp_encode():
     """Test EncExp encode"""
 
     dense = EncExp()
-    assert dense.encode('buenos días').shape[1] == 2    
+    assert dense.encode('buenos días').shape[1] == 2
+
+
+def test_EncExp_transform():
+    """Test EncExp transform"""
+
+    encexp = EncExp()
+    X = encexp.transform(['buenos dias'])
+    assert X.shape[0] == 1
+    assert X.shape[1] == 2**13
+    assert X.dtype == np.float32
