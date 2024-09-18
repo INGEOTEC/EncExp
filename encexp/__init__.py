@@ -11,30 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
+"""EncExp"""
+import sys
 
+if not '-m' in sys.argv:
+    from encexp.text_repr import EncExp
 
-def test_download():
-    """Test Download"""
-
-    from EncExp.utils import Download
-    from os.path import isfile
-
-    Download("http://github.com", "t.html")
-    assert isfile("t.html")
-    os.unlink("t.html")
-    try:
-        Download("adasdf", "t1.html")
-    except ValueError:
-        return
-    assert False
-
-
-def test_download_use_tqdm():
-    """Test to disable tqdm"""
-
-    from EncExp import utils 
-
-    utils.USE_TQDM = False
-    utils.Download("http://github.com", "t.html")
-    os.unlink("t.html")
+__version__ = "0.0.2"
