@@ -33,8 +33,6 @@ def test_seqtm():
 def test_seqtm_vocabulary():
     """Test SeqTM vocabulary"""
 
-    from EncExp.utils import compute_seqtm_vocabulary
-    from EncExp.text_repr import SeqTM
     samples()
     data = compute_b4msa_vocabulary('es-mx-sample.json')
     voc = compute_seqtm_vocabulary(SeqTM, data,
