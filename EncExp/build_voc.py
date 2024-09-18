@@ -50,11 +50,14 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output',
                         help='Output filename',
                         dest='output', default=None, type=str)
-    parser.add_argument('--lang', help='Language (ar | ca | de | en | es | fr | hi | in | it | ja | ko | nl | pl | pt | ru | tl | tr | zh)',
+    parser.add_argument('--lang', help='Language (ar | ca | de | en | es | fr | hi | in | it | ko | nl | pl | pt | ru | tl | tr )',
                         type=str, default='es')
     parser.add_argument('--limit', help='Maximum size of the dataset',
+                        dest='limit',
                         type=int, default=-1)
-    parser.add_argument('--voc_size_exponent', help='Vocabulary size express as log2',
+    parser.add_argument('--voc_size_exponent',
+                        help='Vocabulary size express as log2',
+                        dest='voc_size_exponent',
                         type=int, default=-1) 
     parser.add_argument('file',
                         help='Input filename',

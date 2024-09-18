@@ -142,11 +142,13 @@ def main(args):
     output = args.output
     vocabulary = args.vocabulary
     voc = next(tweet_iterator(vocabulary))
-    build_encexp(voc, filename, output)
+    min_pos = args.min_pos
+    build_encexp(voc, filename, output,
+                 min_pos=min_pos)
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Compute SeqTM Vocabulary',
+    parser = argparse.ArgumentParser(description='Compute EncExp',
                                      prog='EncExp.build_voc')
     parser.add_argument('-v', '--version', action='version',
                         version=f'EncExp {EncExp.__version__}')
@@ -156,6 +158,9 @@ if __name__ == '__main__':
     parser.add_argument('--vocabulary',
                         help='Vocabulary filename',
                         dest='vocabulary', type=str) 
+    parser.add_argument('--min-pos-examples',
+                        help='Minimum number of positive examples',
+                        dest='min_pos', type=int, default=512)
     parser.add_argument('file',
                         help='Input filename',
                         nargs=1, type=str)

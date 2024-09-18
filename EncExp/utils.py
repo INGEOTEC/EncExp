@@ -22,9 +22,13 @@ except ImportError:
 from microtc.utils import tweet_iterator, Counter
 from b4msa import TextModel
 import numpy as np
+import os
 
 
 DialectID_URL = 'https://github.com/INGEOTEC/dialectid/releases/download/data'
+EncExp_URL = 'https://github.com/INGEOTEC/EncExp/releases/download/data'
+MODELS = os.path.join(os.path.dirname(__file__),
+                      'models')
 
 class Download(object):
     """Download
@@ -36,33 +40,36 @@ class Download(object):
     def __init__(self, url, output='t.tmp') -> None:
         self._url = url
         self._output = output
+        self._use_tqdm = USE_TQDM
         try:
             request.urlretrieve(url, output, reporthook=self.progress)
         except HTTPError as exc:
+            self._use_tqdm = False
             self.close()
-            raise exc
+            raise RuntimeError(f'URL=> {url}') from exc
         self.close()
 
     @property
     def tqdm(self):
         """tqdm"""
 
-        if not USE_TQDM:
+        if not self._use_tqdm:
             return None
         try:
             return self._tqdm
         except AttributeError:
-            self._tqdm = tqdm(total=self._nblocks, leave=False)
+            self._tqdm = tqdm(total=self._nblocks,
+                              leave=False, desc=self._output)
         return self._tqdm
 
     def close(self):
         """Close tqdm if used"""
-        if USE_TQDM:
+        if self._use_tqdm:
             self.tqdm.close()
 
     def update(self):
         """Update tqdm if used"""
-        if USE_TQDM:
+        if self._use_tqdm:
             self.tqdm.update()
 
     def progress(self, nblocks, block_size, total):
