@@ -102,7 +102,7 @@ def b4msa_params(lang='es'):
     if lang == 'ja' or lang == 'zh':
         tm_kwargs['token_list'] = [1, 2, 3]
     else:
-        tm_kwargs['token_list'] = [-1, 2, 3, 4, 5, 6]
+        tm_kwargs['token_list'] = [-1, 2, 3, 4, 5, 6, 7, 8]
     return tm_kwargs
 
 
@@ -142,37 +142,59 @@ def compute_b4msa_vocabulary(filename, limit=None, lang='es',
 
 def compute_seqtm_vocabulary(instance, vocabulary,
                              filename, limit=None,
-                             voc_size_exponent=13):
+                             voc_size_exponent=13,
+                             statistics=None):
     """Compute SeqTM"""
+
     def current_lost_words():
         words = [w for w, _ in base_voc.most_common() if w[:2] != 'q:']
         current = words[:2**voc_size_exponent]
         lost =  words[2**voc_size_exponent:]
         return current, lost
 
-    def optimize_vocabulary():
-        cnt = Counter({k: v for k, v in base_voc.items() if k[:2] == 'q:'},
-                      update_calls=base_voc.update_calls)
+    def tokenizer(length, current):
+        length += 2
+        cnt = Counter()
+        for k, v in base_voc.items():
+            if k[:2] != 'q:' or len(k) != length:
+                continue
+            cnt[k] = v
+        for token in current:
+            freq = base_voc[token]
+            if freq == 0:
+                continue
+            cnt[token] = freq
+        cnt.update_calls = base_voc.update_calls
         _ = dict(params=vocabulary['params'], counter=cnt)
-        tokenize = instance(vocabulary=_).tokenize        
-        current, lost = current_lost_words()
-        for _ in progress_bar(range(32)):
+        return instance(vocabulary=_).tokenize
+
+    def optimize_vocabulary():
+        words = [token for token in base_voc if token[:2] != 'q:']
+        current, _ = current_lost_words()
+        lengths = sorted([length 
+                          for length in vocabulary['params']['token_list']
+                          if length > 0], reverse=True)
+        for length in progress_bar(lengths, desc='qgrams'):
+            tokenize = tokenizer(length, current)
             cnt = Counter()
-            for word in lost:
+            for word in words:
                 tokens = set(tokenize(word))
                 _ = {token: base_voc[word] for token in tokens}
                 cnt.update(_)
-            for word in current:
-                cnt[word] = base_voc[word]
-            mask = set(current)
-            u_lost = [k for k, _ in cnt.most_common()[2**voc_size_exponent:]
-                      if k in mask]
-            lost = lost + u_lost
-            current = [w for w, _ in cnt.most_common()[:2**voc_size_exponent]
-                       if w[:2] != 'q:']
-            if len(u_lost) == 0:
-                break
-        return cnt.most_common()[:2**voc_size_exponent]
+            current = [k for k, v in cnt.most_common(n=2**voc_size_exponent)]
+            if statistics is not None:
+                _ = Counter(dict(cnt.most_common(n=2**voc_size_exponent)),
+                                 update_calls=base_voc.update_calls)
+                _ = dict(params=vocabulary['params'],
+                         counter=_)
+                tok2 = instance(vocabulary=_).tokenize 
+                tot = 0
+                for token in words:
+                    _ = ''.join([tok.replace('~', '').replace('q:', '')
+                                 for tok in set(tok2(token))])
+                    tot += base_voc[token] * (len(token) - len(_))
+                statistics.append(tot)
+        return cnt.most_common(n=2**voc_size_exponent)
 
     limit = np.inf if limit is None else limit
     loop = count() if limit == np.inf else range(limit)
