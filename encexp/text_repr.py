@@ -215,6 +215,7 @@ class EncExp:
     lang: str='es'
     voc_size_exponent: int=13
     EncExp_filename: str=None
+    precision: np.float32
 
 
     @property
@@ -231,8 +232,9 @@ class EncExp:
             self._bow = SeqTM(vocabulary=data['seqtm'])
             w = self._bow.weights
             weights = []
+            precision = self.precision
             for vec in data['coefs']:
-                coef = (vec['coef'] * w).astype(np.float32)
+                coef = (vec['coef'] * w).astype(precision)
                 _ = coef.max()
                 coef[self._bow.token2id[vec['label']]] = _
                 weights.append(coef)
