@@ -16,6 +16,7 @@ from encexp.tests.test_utils import samples
 from encexp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary
 from encexp.text_repr import SeqTM
 from encexp.build_encexp import encode_output, encode, feasible_tokens, build_encexp_token, build_encexp
+from encexp.build_voc import main, build_voc
 from os.path import isfile
 import os
 
@@ -26,19 +27,36 @@ def test_seqtm_build():
     class A:
         """Dummy"""
 
-    from encexp.build_voc import main
+
     samples()
     A.lang = 'en'
     A.file = ['es-mx-sample.json']
     A.output = None
-    A.limit = -1
+    A.limit = None
     A.voc_size_exponent = 4
     main(A)
     data = next(tweet_iterator('seqtm_en_4.json.gz'))
     _ = data['counter']
     counter2 = Counter(_["dict"], _["update_calls"])
-    assert counter2.most_common()[0] == ('q:o~', 1776)
+    assert counter2.most_common()[0] == ('q:e~', 1846)
     os.unlink('seqtm_en_4.json.gz')
+
+
+def test_build_voc():
+    """Test build voc"""
+    samples()
+    build_voc('es-mx-sample.json', output='t.json.gz')
+    os.unlink('t.json.gz')
+
+
+def test_build_voc_stats():
+    """Test build voc statistics"""
+    samples()
+    statistics = []
+    build_voc('es-mx-sample.json', output='t.json.gz',
+              voc_size_exponent=10, statistics=statistics)
+    assert statistics[:3] == [78696, 75996, 73297]
+    os.unlink('t.json.gz')
 
 
 def test_encexp_encode():
@@ -86,7 +104,7 @@ def test_build_encexp_token():
     tokens = feasible_tokens(voc, cnt)
     index, token = tokens[-3]
     fname = build_encexp_token(index, voc, output)
-    assert fname == '541-encode-es-mx-sample.json'
+    assert fname == '561-encode-es-mx-sample.json'
     os.unlink('encode-es-mx-sample.json')
     data = next(tweet_iterator(fname))
     assert data['label'] == token

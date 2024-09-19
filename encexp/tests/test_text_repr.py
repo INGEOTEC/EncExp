@@ -40,7 +40,7 @@ def test_seqtm_vocabulary():
                                    voc_size_exponent=5)
     assert len(voc['counter']['dict']) == 32
     _ = voc['counter']['dict']
-    assert len([k for k in _ if k[:2] == 'q:']) == 9
+    assert len([k for k in _ if k[:2] == 'q:']) == 30
 
 
 def test_seqtm_identifier():

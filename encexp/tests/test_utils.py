@@ -13,6 +13,7 @@
 # limitations under the License.
 from os.path import isfile
 import os
+from microtc.utils import Counter
 from encexp.utils import Download, DialectID_URL
 from encexp.utils import compute_b4msa_vocabulary
 
@@ -59,8 +60,6 @@ def samples():
 
 def test_compute_b4msa_vocabulary():
     """Compute vocabulary"""
-
-    from microtc.utils import Counter
 
     samples()
     data = compute_b4msa_vocabulary('es-mx-sample.json')
