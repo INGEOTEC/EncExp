@@ -215,7 +215,7 @@ class EncExp:
     lang: str='es'
     voc_size_exponent: int=13
     EncExp_filename: str=None
-    precision: np.float32
+    precision=np.float32
 
 
     @property
