@@ -14,6 +14,7 @@
 from encexp.download import download_seqtm, download_encexp
 from os.path import isfile
 import os
+import numpy as np
 
 
 def test_download_seqtm():
@@ -28,10 +29,12 @@ def test_download_seqtm():
 def test_download_encexp():
     """Test download EncExp"""
 
-    data = download_encexp(lang='es')
+    data = download_encexp(lang='es', country='cu',
+                           precision=np.float16)
     dim = 2**13
     # assert list(data.keys()) is None
     assert len(data['seqtm']['counter']['dict']) == dim
     assert len(data['coefs'])
     for coef in data['coefs']:
         assert coef['coef'].shape[0] == dim
+        assert coef['coef'].dtype == np.float16

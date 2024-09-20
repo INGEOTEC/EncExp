@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from encexp.tests.test_utils import samples
-from encexp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary
+from encexp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary, to_float16
 from encexp.build_encexp import build_encexp
 from encexp.text_repr import SeqTM, EncExp
 from os.path import isfile
@@ -71,8 +71,15 @@ def test_EncExp_filename():
     enc = EncExp(EncExp_filename='encexp-es-mx.json.gz')
     assert enc.weights.dtype == np.float32
     assert len(enc.names) == 11
+    to_float16('encexp-es-mx.json.gz', 'encexp-float16-es-mx.json.gz')
+    enc2 = EncExp(EncExp_filename='encexp-float16-es-mx.json.gz', 
+                  precision=np.float16)
+    assert enc2.weights.dtype == np.float16
+    w = enc.weights
+    assert np.all(enc2.weights.shape == enc.weights.shape)
     os.unlink('encexp-es-mx.json.gz')
-
+    os.unlink('encexp-float16-es-mx.json.gz')
+    
 
 def test_EncExp():
     """Test EncExp"""

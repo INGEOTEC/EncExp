@@ -38,7 +38,7 @@ def download_seqtm(lang, voc_size_exponent: int=13,
 
 
 def download_encexp(lang='es', voc_size_exponent: int=13,
-                    precision=np.float32,
+                    precision=np.float32, country=None,
                     output=None):
     """Download EncExp"""
     def read(output):
@@ -54,7 +54,14 @@ def download_encexp(lang='es', voc_size_exponent: int=13,
 
     if not isdir(MODELS):
         os.mkdir(MODELS)
-    voc_fname = f'encexp_{lang}_{voc_size_exponent}.json.gz'
+    if country:
+        voc_fname = f'encexp_{country}_{lang}_{voc_size_exponent}.json.gz'
+    else:   
+        voc_fname = f'encexp_{lang}_{voc_size_exponent}.json.gz'
+    if precision.__name__ == 'float16':
+        _ = voc_fname.split('_')
+        _.insert(1, 'float16')
+        voc_fname = '_'.join(_)
     if output is None:
         output = join(MODELS, voc_fname)
     if isfile(output):
@@ -74,7 +81,14 @@ def main(args):
         download_seqtm(lang=lang, voc_size_exponent=voc_size_exponent,
                        output=output)
     if args.encexp:
-        download_encexp(lang=lang, voc_size_exponent=voc_size_exponent,
+        country = args.country
+        precision = np.float32
+        if country is not None:
+            precision = np.float16
+        download_encexp(lang=lang,
+                        voc_size_exponent=voc_size_exponent,
+                        precision=precision,
+                        country=country,
                         output=output)
     
 
@@ -92,6 +106,9 @@ if __name__ == '__main__':
                         help='Vocabulary size express as log2',
                         dest='voc_size_exponent',
                         type=int, default=13)
+    parser.add_argument('--country',
+                        help='Country', dest='country',
+                        default=None)
     parser.add_argument('--SeqTM',
                         help='Download SeqTM vocabulary',
                         dest='seqtm', action='store_true')
