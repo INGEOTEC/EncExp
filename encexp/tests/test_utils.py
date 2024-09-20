@@ -13,9 +13,10 @@
 # limitations under the License.
 from os.path import isfile
 import os
-from microtc.utils import Counter
-from encexp.utils import Download, DialectID_URL
-from encexp.utils import compute_b4msa_vocabulary
+from microtc.utils import Counter, tweet_iterator
+import json
+import numpy as np
+from encexp.utils import Download, DialectID_URL, compute_b4msa_vocabulary, to_float16
 
 
 def test_download():
@@ -80,3 +81,24 @@ def test_uniform_sample():
 
     data = uniform_sample(10, np.array([20, 5, 4, 7]))
     assert data.sum() == 10
+
+
+def test_to_float16():
+    """Test to_float16"""
+
+    fname = 't.json'
+    with open(fname, 'w') as fpt:
+        print(json.dumps(dict(vacio=1)), file=fpt)
+        arr = np.array([1, 1.75], dtype=np.float32)
+        _ = json.dumps(dict(coef=arr.tobytes().hex()))
+        fpt.write(_)
+    to_float16('t.json', 't2.json.gz')
+    for data in tweet_iterator('t2.json.gz'):
+        pass
+    _ = np.frombuffer(bytearray.fromhex(data['coef']),
+                      dtype=np.float16)
+    assert np.all(_ == arr)
+    os.unlink('t.json')
+    os.unlink('t2.json.gz')
+
+

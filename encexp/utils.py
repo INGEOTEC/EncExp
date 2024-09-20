@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import argparse
 from itertools import count
 from urllib import request
 from urllib.error import HTTPError
@@ -22,7 +23,10 @@ except ImportError:
 from microtc.utils import tweet_iterator, Counter
 from b4msa import TextModel
 import numpy as np
+import gzip
+import json
 import os
+import encexp
 
 
 DialectID_URL = 'https://github.com/INGEOTEC/dialectid/releases/download/data'
@@ -230,3 +234,40 @@ def uniform_sample(N, avail_data):
         remaining[remaining < 0] = 0
         M = (avail_data - remaining).sum()
     return avail_data - remaining
+
+
+def to_float16(input_filename, output_filename):
+    """Convert EncExp model from float32 to float16"""
+    with gzip.open(output_filename, 'wb') as fpt:
+        iter = tweet_iterator(input_filename)
+        data = next(iter)
+        fpt.write(bytes(json.dumps(data) + '\n',
+                  encoding='utf-8'))
+        for data in iter:
+            _ = np.frombuffer(bytearray.fromhex(data['coef']),
+                              dtype=np.float32).astype(np.float16)
+            data['coef'] = _.tobytes().hex()
+            fpt.write(bytes(json.dumps(data) + '\n',
+                      encoding='utf-8'))
+            
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Compute SeqTM Vocabulary',
+                                     prog='EncExp.build_voc')
+    parser.add_argument('-v', '--version', action='version',
+                        version=f'EncExp {encexp.__version__}')
+    parser.add_argument('-o', '--output',
+                        help='Output filename',
+                        dest='output', type=str)
+    parser.add_argument('file',
+                        help='Input filename',
+                        nargs=1, type=str)
+    parser.add_argument('--to-float16',
+                        help='Convert EncExp model from float32 to float16',
+                        dest='float16', action='store_true')    
+    args = parser.parse_args()
+
+    input = args.file[0]
+    output = args.output
+    if args.float16:
+        to_float16(input, output)

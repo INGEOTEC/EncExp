@@ -215,7 +215,7 @@ class EncExp:
     lang: str='es'
     voc_size_exponent: int=13
     EncExp_filename: str=None
-
+    precision: np.dtype=np.float32
 
     @property
     def weights(self):
@@ -224,15 +224,18 @@ class EncExp:
             return self._weights
         except AttributeError:
             if self.EncExp_filename is not None:
-                data = download_encexp(output=self.EncExp_filename)
+                data = download_encexp(output=self.EncExp_filename,
+                                       precision=self.precision)
             else:
                 data = download_encexp(lang=self.lang,
-                                       voc_size_exponent=self.voc_size_exponent)
+                                       voc_size_exponent=self.voc_size_exponent,
+                                       precision=self.precision)
             self._bow = SeqTM(vocabulary=data['seqtm'])
             w = self._bow.weights
             weights = []
+            precision = self.precision
             for vec in data['coefs']:
-                coef = (vec['coef'] * w).astype(np.float32)
+                coef = (vec['coef'] * w).astype(precision)
                 _ = coef.max()
                 coef[self._bow.token2id[vec['label']]] = _
                 weights.append(coef)

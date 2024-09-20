@@ -98,7 +98,8 @@ def build_encexp_token(index, vocabulary,
     X = seq.tonp([seq.model[x] for x in POS + NEG])
     y = [1] * len(POS) + [0] * len(NEG)
 
-    m = LinearSVC(class_weight='balanced', fit_intercept=False).fit(X, y)
+    m = LinearSVC(class_weight='balanced', fit_intercept=False,
+                  dual='auto').fit(X, y)
     coef = m.coef_[0].astype(precision)
     with open(output_fname, 'wb') as fpt:
         output = dict(N=len(y), coef=coef.tobytes().hex(),
