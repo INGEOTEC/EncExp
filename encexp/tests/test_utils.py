@@ -98,5 +98,7 @@ def test_to_float16():
     _ = np.frombuffer(bytearray.fromhex(data['coef']),
                       dtype=np.float16)
     assert np.all(_ == arr)
+    os.unlink('t.json')
+    os.unlink('t2.json.gz')
 
 
