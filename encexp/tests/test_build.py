@@ -109,7 +109,7 @@ def test_build_encexp_token():
     data = next(tweet_iterator(fname))
     assert data['label'] == token
     os.unlink(fname)
-        
+
 
 def test_build_encexp():
     """Test build encexp"""

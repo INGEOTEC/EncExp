@@ -13,10 +13,11 @@
 # limitations under the License.
 from os.path import isfile
 import os
-from microtc.utils import Counter, tweet_iterator
 import json
 import numpy as np
-from encexp.utils import Download, DialectID_URL, compute_b4msa_vocabulary, to_float16
+from microtc.utils import Counter, tweet_iterator
+from encexp.utils import Download, DialectID_URL, compute_b4msa_vocabulary
+from encexp.utils import to_float16, compute_seqtm_vocabulary
 
 
 def test_download():
@@ -102,3 +103,14 @@ def test_to_float16():
     os.unlink('t2.json.gz')
 
 
+def test_compute_seqtm_vocabulary_prefix_suffix():
+    """Test encode method"""
+    from encexp.text_repr import SeqTM
+
+    samples()
+    data = compute_b4msa_vocabulary('es-mx-sample.json')
+    voc = compute_seqtm_vocabulary(SeqTM, data,
+                                   'es-mx-sample.json',
+                                   voc_size_exponent=10,
+                                   prefix_suffix=True)
+    assert voc is None

@@ -147,6 +147,7 @@ def compute_b4msa_vocabulary(filename, limit=None, lang='es',
 def compute_seqtm_vocabulary(instance, vocabulary,
                              filename, limit=None,
                              voc_size_exponent=13,
+                             prefix_suffix=False,
                              statistics=None):
     """Compute SeqTM"""
 
@@ -162,6 +163,8 @@ def compute_seqtm_vocabulary(instance, vocabulary,
         for k, v in base_voc.items():
             if k[:2] != 'q:' or len(k) != length:
                 continue
+            if prefix_suffix and length < 6 and k[3] != '~' and k[-1] != '~':
+                continue
             cnt[k] = v
         for token in current:
             freq = base_voc[token]
@@ -175,7 +178,7 @@ def compute_seqtm_vocabulary(instance, vocabulary,
     def optimize_vocabulary():
         words = [token for token in base_voc if token[:2] != 'q:']
         current, _ = current_lost_words()
-        lengths = sorted([length 
+        lengths = sorted([length
                           for length in vocabulary['params']['token_list']
                           if length > 0], reverse=True)
         for length in progress_bar(lengths, desc='qgrams'):
