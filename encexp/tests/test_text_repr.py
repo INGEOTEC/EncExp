@@ -11,13 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from os.path import isfile
+import numpy as np
+import os
+from microtc.utils import tweet_iterator
 from encexp.tests.test_utils import samples
 from encexp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary, to_float16
 from encexp.build_encexp import build_encexp
 from encexp.text_repr import SeqTM, EncExp
-from os.path import isfile
-import numpy as np
-import os
 
 
 def test_seqtm():
@@ -112,4 +113,35 @@ def test_EncExp_transform_float16():
     X = encexp.transform(['buenos dias'])
     assert X.shape[0] == 1
     assert X.shape[1] == 8132
-    assert X.dtype == np.float32    
+    assert X.dtype == np.float32
+
+
+def test_EncExp_prefix_suffix():
+    """Test EncExp prefix/suffix"""
+
+    encexp = EncExp(lang='es',
+                    precision=np.float16,
+                    prefix_suffix=True)
+    for k in encexp.bow.names:
+        if k[:2] != 'q:':
+            continue
+        if len(k) >= 6:
+            continue
+        assert k[3] == '~' or k[-1] == '~'
+
+
+def test_EncExp_fit():
+    """Test EncExp fit"""
+    from sklearn.svm import LinearSVC
+    samples()
+    mx = list(tweet_iterator('es-mx-sample.json'))
+    samples(filename='es-ar-sample.json.zip')
+    ar = list(tweet_iterator('es-ar-sample.json'))
+    y = ['mx'] * len(mx)
+    y += ['ar'] * len(ar)
+    enc = EncExp(lang='es',
+                 prefix_suffix=True,
+                 precision=np.float16).fit(mx + ar, y)
+    assert isinstance(enc.estimator, LinearSVC)
+    hy = enc.predict(ar)
+    assert hy.shape[0] == len(ar)

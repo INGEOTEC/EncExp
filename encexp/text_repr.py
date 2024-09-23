@@ -219,6 +219,37 @@ class EncExp:
     EncExp_filename: str=None
     precision: np.dtype=np.float32
     country: str=None
+    prefix_suffix: bool=False
+    estimator_kwargs: dict=None
+
+    @property
+    def estimator(self):
+        """Estimator (classifier/regressor)"""
+        try:
+            return self._estimator
+        except AttributeError:
+            from sklearn.svm import LinearSVC
+            params = dict(class_weight='balanced',
+                          dual='auto')
+            if self.estimator_kwargs is None:
+                self.estimator_kwargs = params
+            else:
+                params.update(self.estimator_kwargs)
+                self.estimator_kwargs = params
+            self.estimator = LinearSVC(**self.estimator_kwargs)
+        return self._estimator
+
+    @estimator.setter
+    def estimator(self, value):
+        self._estimator = value
+
+    def fit(self, D, y=None):
+        """Estimate the parameters"""
+        if y is None:
+            y = [x['klass'] for x in D]
+        X = self.transform(D)
+        self.estimator.fit(X, y)
+        return self
 
     @property
     def weights(self):
@@ -233,7 +264,8 @@ class EncExp:
                 data = download_encexp(lang=self.lang,
                                        voc_size_exponent=self.voc_size_exponent,
                                        precision=self.precision,
-                                       country=self.country)
+                                       country=self.country,
+                                       prefix_suffix=self.prefix_suffix)
             self._bow = SeqTM(vocabulary=data['seqtm'])
             w = self._bow.weights
             weights = []
@@ -243,9 +275,13 @@ class EncExp:
                 _ = coef.max()
                 coef[self._bow.token2id[vec['label']]] = _
                 weights.append(coef)
-            self._weights = np.vstack(weights)
-            self._names = np.array([vec['label'] for vec in data['coefs']])
+            self.weights = np.vstack(weights)
+            self.names = np.array([vec['label'] for vec in data['coefs']])
         return self._weights
+
+    @weights.setter
+    def weights(self, value):
+        self._weights = value
 
     @property
     def names(self):
@@ -255,6 +291,10 @@ class EncExp:
         except AttributeError:
             self.weights
         return self._names
+
+    @names.setter
+    def names(self, value):
+        self._names = value
 
     @property
     def bow(self):
@@ -290,4 +330,9 @@ class EncExp:
             if flag:
                 vec = vec.astype(np.float32)
             enc.append(vec / np.linalg.norm(vec))
-        return np.vstack(enc)        
+        return np.vstack(enc)
+    
+    def predict(self, texts):
+        """Predict"""
+        X = self.transform(texts)
+        return self.estimator.predict(X)

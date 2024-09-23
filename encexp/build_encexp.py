@@ -150,7 +150,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Compute EncExp',
-                                     prog='EncExp.build_voc')
+                                     prog='EncExp.build_encexp')
     parser.add_argument('-v', '--version', action='version',
                         version=f'EncExp {encexp.__version__}')
     parser.add_argument('-o', '--output',

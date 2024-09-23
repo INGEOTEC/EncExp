@@ -45,15 +45,14 @@ def test_download_use_tqdm():
     os.unlink("t.html")
 
 
-def samples():
+def samples(filename='es-mx-sample.json.zip'):
     """Download MX sample"""
 
     from zipfile import ZipFile
 
-    filename = 'es-mx-sample.json.zip'
     if isfile(filename):
         return
-    Download(f'{DialectID_URL}/es-mx-sample.json.zip',
+    Download(f'{DialectID_URL}/{filename}',
              filename)
     with ZipFile(filename, "r") as fpt:
         fpt.extractall(path=".",
