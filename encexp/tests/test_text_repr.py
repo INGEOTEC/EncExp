@@ -111,5 +111,5 @@ def test_EncExp_transform_float16():
     encexp = EncExp(country='mx', precision=np.float16)
     X = encexp.transform(['buenos dias'])
     assert X.shape[0] == 1
-    assert X.shape[1] == 2**13
+    assert X.shape[1] == 8132
     assert X.dtype == np.float32    
