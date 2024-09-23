@@ -90,7 +90,7 @@ def main(args):
         prefix_suffix = args.prefix_suffix
         if country is not None:
             precision = np.float16
-        
+
         download_encexp(lang=lang,
                         voc_size_exponent=voc_size_exponent,
                         precision=precision,
@@ -122,10 +122,7 @@ if __name__ == '__main__':
     parser.add_argument('--EncExp',
                         help='Download EncExp',
                         dest='encexp', action='store_true')
-    parser.add_argument('--EncExp',
-                        help='Download EncExp',
-                        dest='encexp', action='store_true')
-    parser.add_argument('--prefix-suffix', 
+    parser.add_argument('--prefix-suffix',
                         help='Restric to use prefix and suffix',
                         dest='prefix_suffix', action='store_true')    
     main(parser.parse_args())
