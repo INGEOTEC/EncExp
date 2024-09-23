@@ -267,9 +267,8 @@ if __name__ == '__main__':
                         nargs=1, type=str)
     parser.add_argument('--to-float16',
                         help='Convert EncExp model from float32 to float16',
-                        dest='float16', action='store_true')    
+                        dest='float16', action='store_true')
     args = parser.parse_args()
-
     input = args.file[0]
     output = args.output
     if args.float16:

@@ -44,7 +44,8 @@ def main(args):
     filename  = args.file[0]
     build_voc(filename, lang=args.lang,
               voc_size_exponent=args.voc_size_exponent,
-              limit=args.limit, output=args.output)
+              limit=args.limit, output=args.output,
+              prefix_suffix=args.prefix_suffix)
 
 
 if __name__ == '__main__':
@@ -64,8 +65,10 @@ if __name__ == '__main__':
                         help='Vocabulary size express as log2',
                         dest='voc_size_exponent',
                         type=int, default=13)
+    parser.add_argument('--prefix-suffix', 
+                        help='Restric to use prefix and suffix',
+                        dest='prefix_suffix', action='store_true')    
     parser.add_argument('file',
                         help='Input filename',
                         nargs=1, type=str)
-    args = parser.parse_args()
-    main(args)
+    main(parser.parse_args())

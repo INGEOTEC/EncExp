@@ -92,6 +92,7 @@ class SeqTM(TextModel):
 
     @property
     def identifier(self):
+        """Function id"""
         lang = self.language
         voc = self.voc_size_exponent
         return f'seqtm_{lang}_{voc}'
@@ -212,10 +213,12 @@ class SeqTM(TextModel):
 
 @dataclass
 class EncExp:
+    """EncExp (Encaje Explicable)"""
     lang: str='es'
     voc_size_exponent: int=13
     EncExp_filename: str=None
     precision: np.dtype=np.float32
+    country: str=None
 
     @property
     def weights(self):
@@ -229,7 +232,8 @@ class EncExp:
             else:
                 data = download_encexp(lang=self.lang,
                                        voc_size_exponent=self.voc_size_exponent,
-                                       precision=self.precision)
+                                       precision=self.precision,
+                                       country=self.country)
             self._bow = SeqTM(vocabulary=data['seqtm'])
             w = self._bow.weights
             weights = []
@@ -251,7 +255,7 @@ class EncExp:
         except AttributeError:
             self.weights
         return self._names
-    
+
     @property
     def bow(self):
         """BoW"""
@@ -279,8 +283,11 @@ class EncExp:
     def transform(self, texts):
         """Represents the texts into a matrix"""
         enc = []
+        flag = self.weights.dtype == np.float16
         for data in texts:
             _ = self.encode(data)
             vec = _.sum(axis=1)
+            if flag:
+                vec = vec.astype(np.float32)
             enc.append(vec / np.linalg.norm(vec))
         return np.vstack(enc)        
