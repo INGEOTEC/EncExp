@@ -256,7 +256,7 @@ def to_float16(input_filename, output_filename):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Compute SeqTM Vocabulary',
-                                     prog='EncExp.build_voc')
+                                     prog='EncExp.utils')
     parser.add_argument('-v', '--version', action='version',
                         version=f'EncExp {encexp.__version__}')
     parser.add_argument('-o', '--output',

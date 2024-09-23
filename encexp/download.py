@@ -101,7 +101,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Download',
-                                     prog='EncExp.build_voc')
+                                     prog='EncExp.download')
     parser.add_argument('-v', '--version', action='version',
                         version=f'EncExp {encexp.__version__}')
     parser.add_argument('-o', '--output',
