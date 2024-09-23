@@ -133,7 +133,7 @@ def test_EncExp_prefix_suffix():
 def test_EncExp_fit():
     """Test EncExp fit"""
     from sklearn.svm import LinearSVC
-    mx = samples()
+    samples()
     mx = list(tweet_iterator('es-mx-sample.json'))
     samples(filename='es-ar-sample.json.zip')
     ar = list(tweet_iterator('es-ar-sample.json'))
@@ -143,3 +143,5 @@ def test_EncExp_fit():
                  prefix_suffix=True,
                  precision=np.float16).fit(mx + ar, y)
     assert isinstance(enc.estimator, LinearSVC)
+    hy = enc.predict(ar)
+    assert hy.shape[0] == len(ar)

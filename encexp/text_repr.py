@@ -330,4 +330,9 @@ class EncExp:
             if flag:
                 vec = vec.astype(np.float32)
             enc.append(vec / np.linalg.norm(vec))
-        return np.vstack(enc)        
+        return np.vstack(enc)
+    
+    def predict(self, texts):
+        """Predict"""
+        X = self.transform(texts)
+        return self.estimator.predict(X)
