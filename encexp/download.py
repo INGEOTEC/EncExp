@@ -39,7 +39,8 @@ def download_seqtm(lang, voc_size_exponent: int=13,
 
 def download_encexp(lang='es', voc_size_exponent: int=13,
                     precision=np.float32, country=None,
-                    output=None):
+                    output=None,
+                    prefix_suffix=False):
     """Download EncExp"""
     def read(output):
         iter = tweet_iterator(output)
@@ -62,12 +63,15 @@ def download_encexp(lang='es', voc_size_exponent: int=13,
         _ = voc_fname.split('_')
         _.insert(1, 'float16')
         voc_fname = '_'.join(_)
+    if prefix_suffix:
+        a, b = voc_fname.split(f'_{lang}_')
+        voc_fname = f'{a}_ix_{lang}_{b}'
     if output is None:
         output = join(MODELS, voc_fname)
     if isfile(output):
         try:
             return read(output)
-        except Exception as exp:
+        except Exception:
             os.unlink(output)
     Download(EncExp_URL + f'/{voc_fname}', output)
     return read(output)
@@ -83,13 +87,16 @@ def main(args):
     if args.encexp:
         country = args.country
         precision = np.float32
+        prefix_suffix = args.prefix_suffix
         if country is not None:
             precision = np.float16
+        
         download_encexp(lang=lang,
                         voc_size_exponent=voc_size_exponent,
                         precision=precision,
                         country=country,
-                        output=output)
+                        output=output,
+                        prefix_suffix=prefix_suffix)
     
 
 if __name__ == '__main__':
@@ -115,5 +122,10 @@ if __name__ == '__main__':
     parser.add_argument('--EncExp',
                         help='Download EncExp',
                         dest='encexp', action='store_true')
-    args = parser.parse_args()
-    main(args)
+    parser.add_argument('--EncExp',
+                        help='Download EncExp',
+                        dest='encexp', action='store_true')
+    parser.add_argument('--prefix-suffix', 
+                        help='Restric to use prefix and suffix',
+                        dest='prefix_suffix', action='store_true')    
+    main(parser.parse_args())

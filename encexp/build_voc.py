@@ -67,7 +67,7 @@ if __name__ == '__main__':
                         type=int, default=13)
     parser.add_argument('--prefix-suffix', 
                         help='Restric to use prefix and suffix',
-                        dest='prefix_suffix', action='store_true')    
+                        dest='prefix_suffix', action='store_true')
     parser.add_argument('file',
                         help='Input filename',
                         nargs=1, type=str)
