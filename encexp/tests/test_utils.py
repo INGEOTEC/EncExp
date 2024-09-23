@@ -113,4 +113,8 @@ def test_compute_seqtm_vocabulary_prefix_suffix():
                                    'es-mx-sample.json',
                                    voc_size_exponent=10,
                                    prefix_suffix=True)
-    assert voc is None
+    for k in voc['counter']['dict']:
+        if k[:2] != 'q:':
+            continue
+        if len(k) < 6:
+            assert k[3] == '~' or k[-1] == '~'

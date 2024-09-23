@@ -34,6 +34,7 @@ def test_seqtm_build():
     A.output = None
     A.limit = None
     A.voc_size_exponent = 4
+    A.prefix_suffix = False
     main(A)
     data = next(tweet_iterator('seqtm_en_4.json.gz'))
     _ = data['counter']
