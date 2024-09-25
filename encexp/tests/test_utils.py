@@ -15,9 +15,11 @@ from os.path import isfile
 import os
 import json
 import numpy as np
+from numpy.testing import assert_almost_equal
 from microtc.utils import Counter, tweet_iterator
 from encexp.utils import Download, DialectID_URL, compute_b4msa_vocabulary
-from encexp.utils import to_float16, compute_seqtm_vocabulary
+from encexp.utils import to_float16, compute_seqtm_vocabulary, unit_length
+from encexp.utils import set_to_zero
 
 
 def test_download():
@@ -117,3 +119,35 @@ def test_compute_seqtm_vocabulary_prefix_suffix():
             continue
         if len(k) < 6:
             assert k[3] == '~' or k[-1] == '~'
+
+
+def test_unit_length():
+    """Test unit length"""
+    from encexp import EncExp
+    enc = EncExp(lang='es',
+                 precision=np.float16)
+    w = enc.weights
+    w_u = unit_length(w)
+    a = np.sqrt((w_u * w_u).sum(axis=0))
+    assert_almost_equal(a, 1, decimal=5)
+    w[:, 3] = 0
+    w_u = unit_length(w)
+    assert w_u[:, 3].sum() == 0
+
+
+def test_set_to_zero():
+    """Test set to zero"""
+    a = np.array([1, -1.2, 0.1])
+    set_to_zero(a, percentage=1)
+    assert_almost_equal(a, np.array([1, 0, 0.1]))
+    a = np.array([[0.5, 0, 0.33],
+                  [0.1, 0, 0.33],
+                  [0.4, 0, 0.33]])
+    set_to_zero(a, percentage=0.65)
+    b = np.array([[0.5, 0, 0.33],
+                  [0.0, 0, 0.33],
+                  [0.4, 0, 0.33]])
+    assert_almost_equal(a, b)
+
+    
+    

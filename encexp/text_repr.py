@@ -219,8 +219,18 @@ class EncExp:
     EncExp_filename: str=None
     precision: np.dtype=np.float32
     country: str=None
-    prefix_suffix: bool=False
+    prefix_suffix: bool=True
     estimator_kwargs: dict=None
+
+    def get_params(self):
+        """Parameters"""
+        return dict(lang=self.lang,
+                    voc_size_exponent=self.voc_size_exponent,
+                    EncExp_filename=self.EncExp_filename,
+                    precision=self.precision,
+                    country=self.country,
+                    prefix_suffix=self.prefix_suffix,
+                    estimator_kwargs=self.estimator_kwargs)
 
     @property
     def estimator(self):
@@ -331,8 +341,20 @@ class EncExp:
                 vec = vec.astype(np.float32)
             enc.append(vec / np.linalg.norm(vec))
         return np.vstack(enc)
-    
+
     def predict(self, texts):
         """Predict"""
         X = self.transform(texts)
         return self.estimator.predict(X)
+
+    def decision_function(self, texts):
+        """Decision function"""
+        X = self.transform(texts)
+        return self.estimator.decision_function(X)
+
+    def __sklearn_clone__(self):
+        klass = self.__class__
+        params = self.get_params()
+        ins = klass(**params)
+        ins.weights = self.weights
+        return ins

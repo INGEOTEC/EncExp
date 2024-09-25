@@ -19,6 +19,7 @@ from encexp.tests.test_utils import samples
 from encexp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary, to_float16
 from encexp.build_encexp import build_encexp
 from encexp.text_repr import SeqTM, EncExp
+from sklearn.base import clone
 
 
 def test_seqtm():
@@ -145,3 +146,16 @@ def test_EncExp_fit():
     assert isinstance(enc.estimator, LinearSVC)
     hy = enc.predict(ar)
     assert hy.shape[0] == len(ar)
+    df = enc.decision_function(ar)
+    assert df.shape[0] == len(ar)
+    assert df.dtype == np.float64
+
+
+def test_EncExp_clone():
+    """Test EncExp clone"""
+
+    enc = EncExp(lang='es', prefix_suffix=True,
+                 precision=np.float16)
+    enc2 = clone(enc)
+    assert isinstance(enc2, EncExp)
+    assert np.all(enc2.weights == enc.weights)
