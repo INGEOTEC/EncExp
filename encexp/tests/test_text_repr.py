@@ -85,22 +85,22 @@ def test_EncExp_filename():
 
 def test_EncExp():
     """Test EncExp"""
-    enc = EncExp()
-    assert enc.weights.dtype == np.float32
+    enc = EncExp(precision=np.float16)
+    assert enc.weights.dtype == np.float16
     assert len(enc.names) == 2**13
 
 
 def test_EncExp_encode():
     """Test EncExp encode"""
 
-    dense = EncExp()
+    dense = EncExp(precision=np.float16)
     assert dense.encode('buenos días').shape[1] == 2
 
 
 def test_EncExp_transform():
     """Test EncExp transform"""
 
-    encexp = EncExp()
+    encexp = EncExp(precision=np.float16)
     X = encexp.transform(['buenos dias'])
     assert X.shape[0] == 1
     assert X.shape[1] == 2**13
@@ -110,7 +110,8 @@ def test_EncExp_transform():
 def test_EncExp_transform_float16():
     """Test EncExp transform (float16)"""
 
-    encexp = EncExp(country='mx', precision=np.float16)
+    encexp = EncExp(country='mx', prefix_suffix=False,
+                    precision=np.float16)
     X = encexp.transform(['buenos dias'])
     assert X.shape[0] == 1
     assert X.shape[1] == 8132
