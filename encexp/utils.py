@@ -282,7 +282,8 @@ def set_to_zero(data, percentage: float=0.95):
     if values.shape[0] != data.shape[0]:
         a_n = np.zeros(data.shape[0], dtype=values.dtype)
         a_n[b] = values
-    data[data < a_n] = 0
+        values = a_n
+    data[data < values] = 0
     return data
 
 
