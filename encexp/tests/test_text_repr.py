@@ -160,3 +160,18 @@ def test_EncExp_clone():
     enc2 = clone(enc)
     assert isinstance(enc2, EncExp)
     assert np.all(enc2.weights == enc.weights)
+
+
+def test_EncExp_raw():
+    """Test EncExp without keyword's weight"""
+
+    enc = EncExp(lang='es', prefix_suffix=True,
+                 precision=np.float16, raw=True)
+    weights = enc.weights
+    for k, v in enc.bow.token2id.items():
+        assert weights[v, v] == 0
+    X1 = enc.transform(['buenos dias'])[0] > 0
+    enc = EncExp(lang='es', prefix_suffix=True,
+                 precision=np.float16)
+    X2 = enc.transform(['buenos dias'])[0] > 0
+    assert np.all(X1 == X2)

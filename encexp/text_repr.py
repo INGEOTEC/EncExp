@@ -221,6 +221,7 @@ class EncExp:
     country: str=None
     prefix_suffix: bool=True
     estimator_kwargs: dict=None
+    raw: bool=False
 
     def get_params(self):
         """Parameters"""
@@ -281,9 +282,13 @@ class EncExp:
             weights = []
             precision = self.precision
             for vec in data['coefs']:
-                coef = (vec['coef'] * w).astype(precision)
-                _ = coef.max()
-                coef[self._bow.token2id[vec['label']]] = _
+                if self.raw:
+                    coef = vec['coef']
+                else:
+                    coef = (vec['coef'] * w).astype(precision)
+                if not self.raw:
+                    _ = coef.max()
+                    coef[self._bow.token2id[vec['label']]] = _
                 weights.append(coef)
             self.weights = np.vstack(weights)
             self.names = np.array([vec['label'] for vec in data['coefs']])
@@ -327,11 +332,15 @@ class EncExp:
                 continue
         W = self.weights
         if len(seq) == 0:
-            return np.ones((W.shape[0], 1), dtype=W.dtype)        
-        return np.vstack([W[:, x] for x in seq]).T
+            return np.ones((W.shape[0], 1), dtype=W.dtype)
+        return W[:, seq].T
 
     def transform(self, texts):
         """Represents the texts into a matrix"""
+        if self.raw:
+            X = self.bow.transform(texts).toarray()
+            rr = (self.weights @ X.T).T
+            return rr / np.linalg.norm(rr)
         enc = []
         flag = self.weights.dtype == np.float16
         for data in texts:
