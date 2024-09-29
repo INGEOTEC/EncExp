@@ -333,14 +333,14 @@ class EncExp:
         W = self.weights
         if len(seq) == 0:
             return np.ones((W.shape[0], 1), dtype=W.dtype)
-        return W[:, seq].T
+        return W[:, seq]
 
     def transform(self, texts):
         """Represents the texts into a matrix"""
         if self.raw:
             X = self.bow.transform(texts).toarray()
             rr = (self.weights @ X.T).T
-            return rr / np.linalg.norm(rr)
+            return rr / np.linalg.norm(rr, axis=1)
         enc = []
         flag = self.weights.dtype == np.float16
         for data in texts:
