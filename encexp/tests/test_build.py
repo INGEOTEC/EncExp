@@ -121,4 +121,21 @@ def test_build_encexp():
                                    voc_size_exponent=10)
     build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz')
     assert isfile('encexp-es-mx.json.gz')
+    lst = list(tweet_iterator('encexp-es-mx.json.gz'))
+    assert lst[1]['intercept'] == 0
     os.unlink('encexp-es-mx.json.gz')
+
+
+def test_build_encexp_estimator_kwargs():
+    """Test build encexp with estimator_kwargs"""
+    data = compute_b4msa_vocabulary('es-mx-sample.json')
+    voc = compute_seqtm_vocabulary(SeqTM, data,
+                                   'es-mx-sample.json',
+                                   voc_size_exponent=10)
+    build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',
+                 estimator_kwargs=dict(fit_intercept=True))
+    assert isfile('encexp-es-mx.json.gz')
+    lst = list(tweet_iterator('encexp-es-mx.json.gz'))
+    assert lst[1]['intercept'] != 0
+    os.unlink('encexp-es-mx.json.gz')
+

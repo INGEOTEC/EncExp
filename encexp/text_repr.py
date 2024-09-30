@@ -242,11 +242,9 @@ class EncExp:
             from sklearn.svm import LinearSVC
             params = dict(class_weight='balanced',
                           dual='auto')
-            if self.estimator_kwargs is None:
-                self.estimator_kwargs = params
-            else:
+            if self.estimator_kwargs is not None:
                 params.update(self.estimator_kwargs)
-                self.estimator_kwargs = params
+            self.estimator_kwargs = params
             self.estimator = LinearSVC(**self.estimator_kwargs)
         return self._estimator
 
