@@ -338,7 +338,7 @@ class EncExp:
         if self.raw:
             X = self.bow.transform(texts).toarray()
             rr = (self.weights @ X.T).T
-            return rr / np.linalg.norm(rr, axis=1)
+            return rr / np.atleast_2d(np.linalg.norm(rr, axis=1)).T
         enc = []
         flag = self.weights.dtype == np.float16
         for data in texts:

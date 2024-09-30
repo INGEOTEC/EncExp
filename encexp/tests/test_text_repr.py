@@ -170,8 +170,10 @@ def test_EncExp_raw():
     weights = enc.weights
     for k, v in enc.bow.token2id.items():
         assert weights[v, v] == 0
-    X1 = enc.transform(['buenos dias'])[0] > 0
+    X1 = enc.transform(['buenos dias', 'buenos']) > 0
     enc = EncExp(lang='es', prefix_suffix=True,
                  precision=np.float16)
-    X2 = enc.transform(['buenos dias'])[0] > 0
+    for k, v in enc.bow.token2id.items():
+        enc.weights[v, v] = 0
+    X2 = enc.transform(['buenos dias', 'buenos']) > 0
     assert np.all(X1 == X2)
