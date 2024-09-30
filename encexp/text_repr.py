@@ -219,8 +219,19 @@ class EncExp:
     EncExp_filename: str=None
     precision: np.dtype=np.float32
     country: str=None
-    prefix_suffix: bool=False
+    prefix_suffix: bool=True
     estimator_kwargs: dict=None
+    raw: bool=False
+
+    def get_params(self):
+        """Parameters"""
+        return dict(lang=self.lang,
+                    voc_size_exponent=self.voc_size_exponent,
+                    EncExp_filename=self.EncExp_filename,
+                    precision=self.precision,
+                    country=self.country,
+                    prefix_suffix=self.prefix_suffix,
+                    estimator_kwargs=self.estimator_kwargs)
 
     @property
     def estimator(self):
@@ -231,11 +242,9 @@ class EncExp:
             from sklearn.svm import LinearSVC
             params = dict(class_weight='balanced',
                           dual='auto')
-            if self.estimator_kwargs is None:
-                self.estimator_kwargs = params
-            else:
+            if self.estimator_kwargs is not None:
                 params.update(self.estimator_kwargs)
-                self.estimator_kwargs = params
+            self.estimator_kwargs = params
             self.estimator = LinearSVC(**self.estimator_kwargs)
         return self._estimator
 
@@ -271,9 +280,13 @@ class EncExp:
             weights = []
             precision = self.precision
             for vec in data['coefs']:
-                coef = (vec['coef'] * w).astype(precision)
-                _ = coef.max()
-                coef[self._bow.token2id[vec['label']]] = _
+                if self.raw:
+                    coef = vec['coef']
+                else:
+                    coef = (vec['coef'] * w).astype(precision)
+                if not self.raw:
+                    _ = coef.max()
+                    coef[self._bow.token2id[vec['label']]] = _
                 weights.append(coef)
             self.weights = np.vstack(weights)
             self.names = np.array([vec['label'] for vec in data['coefs']])
@@ -317,11 +330,15 @@ class EncExp:
                 continue
         W = self.weights
         if len(seq) == 0:
-            return np.ones((W.shape[0], 1), dtype=W.dtype)        
-        return np.vstack([W[:, x] for x in seq]).T
+            return np.ones((W.shape[0], 1), dtype=W.dtype)
+        return W[:, seq]
 
     def transform(self, texts):
         """Represents the texts into a matrix"""
+        if self.raw:
+            X = self.bow.transform(texts).toarray()
+            rr = (self.weights @ X.T).T
+            return rr / np.linalg.norm(rr, axis=1)
         enc = []
         flag = self.weights.dtype == np.float16
         for data in texts:
@@ -331,8 +348,20 @@ class EncExp:
                 vec = vec.astype(np.float32)
             enc.append(vec / np.linalg.norm(vec))
         return np.vstack(enc)
-    
+
     def predict(self, texts):
         """Predict"""
         X = self.transform(texts)
         return self.estimator.predict(X)
+
+    def decision_function(self, texts):
+        """Decision function"""
+        X = self.transform(texts)
+        return self.estimator.decision_function(X)
+
+    def __sklearn_clone__(self):
+        klass = self.__class__
+        params = self.get_params()
+        ins = klass(**params)
+        ins.weights = self.weights
+        return ins

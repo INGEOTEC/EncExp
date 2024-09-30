@@ -19,6 +19,7 @@ from encexp.tests.test_utils import samples
 from encexp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary, to_float16
 from encexp.build_encexp import build_encexp
 from encexp.text_repr import SeqTM, EncExp
+from sklearn.base import clone
 
 
 def test_seqtm():
@@ -84,22 +85,22 @@ def test_EncExp_filename():
 
 def test_EncExp():
     """Test EncExp"""
-    enc = EncExp()
-    assert enc.weights.dtype == np.float32
+    enc = EncExp(precision=np.float16)
+    assert enc.weights.dtype == np.float16
     assert len(enc.names) == 2**13
 
 
 def test_EncExp_encode():
     """Test EncExp encode"""
 
-    dense = EncExp()
+    dense = EncExp(precision=np.float16)
     assert dense.encode('buenos días').shape[1] == 2
 
 
 def test_EncExp_transform():
     """Test EncExp transform"""
 
-    encexp = EncExp()
+    encexp = EncExp(precision=np.float16)
     X = encexp.transform(['buenos dias'])
     assert X.shape[0] == 1
     assert X.shape[1] == 2**13
@@ -109,7 +110,8 @@ def test_EncExp_transform():
 def test_EncExp_transform_float16():
     """Test EncExp transform (float16)"""
 
-    encexp = EncExp(country='mx', precision=np.float16)
+    encexp = EncExp(country='mx', prefix_suffix=False,
+                    precision=np.float16)
     X = encexp.transform(['buenos dias'])
     assert X.shape[0] == 1
     assert X.shape[1] == 8132
@@ -145,3 +147,31 @@ def test_EncExp_fit():
     assert isinstance(enc.estimator, LinearSVC)
     hy = enc.predict(ar)
     assert hy.shape[0] == len(ar)
+    df = enc.decision_function(ar)
+    assert df.shape[0] == len(ar)
+    assert df.dtype == np.float64
+
+
+def test_EncExp_clone():
+    """Test EncExp clone"""
+
+    enc = EncExp(lang='es', prefix_suffix=True,
+                 precision=np.float16)
+    enc2 = clone(enc)
+    assert isinstance(enc2, EncExp)
+    assert np.all(enc2.weights == enc.weights)
+
+
+def test_EncExp_raw():
+    """Test EncExp without keyword's weight"""
+
+    enc = EncExp(lang='es', prefix_suffix=True,
+                 precision=np.float16, raw=True)
+    weights = enc.weights
+    for k, v in enc.bow.token2id.items():
+        assert weights[v, v] == 0
+    X1 = enc.transform(['buenos dias'])[0] > 0
+    enc = EncExp(lang='es', prefix_suffix=True,
+                 precision=np.float16)
+    X2 = enc.transform(['buenos dias'])[0] > 0
+    assert np.all(X1 == X2)

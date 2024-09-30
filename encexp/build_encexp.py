@@ -12,10 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
-import encexp
-from encexp.text_repr import SeqTM
-from encexp.utils import progress_bar
-from microtc.utils import tweet_iterator, Counter
 from sklearn.svm import LinearSVC
 from random import randint, shuffle
 from joblib import Parallel, delayed
@@ -24,6 +20,10 @@ import numpy as np
 import gzip
 import json
 import os
+from microtc.utils import tweet_iterator, Counter
+import encexp
+from encexp.text_repr import SeqTM
+from encexp.utils import progress_bar
 
 
 def encode_output(fname, prefix='encode'):
@@ -68,7 +68,9 @@ def feasible_tokens(vocabulary, count, min_pos=512):
 
 def build_encexp_token(index, vocabulary,
                        fname, max_pos=2**13,
-                       precision=np.float32):
+                       precision=np.float32,
+                       transform=None,
+                       estimator_kwargs=None):
     """Build token classifier"""
     seq = SeqTM(vocabulary=vocabulary)
     tokens = sorted(seq.model.word2id)
@@ -95,15 +97,21 @@ def build_encexp_token(index, vocabulary,
             break
     shuffle(NEG)
     NEG = NEG[:len(POS)]
-    X = seq.tonp([seq.model[x] for x in POS + NEG])
+    if transform is not None:
+        X = transform(POS + NEG)
+    else:
+        X = seq.tonp([seq.model[x] for x in POS + NEG])
     y = [1] * len(POS) + [0] * len(NEG)
-
-    m = LinearSVC(class_weight='balanced', fit_intercept=False,
-                  dual='auto').fit(X, y)
+    est_kwargs = dict(class_weight='balanced',
+                      fit_intercept=False,
+                      dual='auto')
+    if estimator_kwargs:
+        est_kwargs.update(estimator_kwargs)
+    m = LinearSVC(**est_kwargs).fit(X, y)
     coef = m.coef_[0].astype(precision)
     with open(output_fname, 'wb') as fpt:
         output = dict(N=len(y), coef=coef.tobytes().hex(),
-                      intercept=m.intercept_, label=label)
+                      intercept=float(m.intercept_), label=label)
         fpt.write(bytes(json.dumps(output), encoding='utf-8'))
     return output_fname
 
@@ -113,7 +121,9 @@ def build_encexp(vocabulary,
                  min_pos=512,
                  max_pos=2**13,
                  n_jobs = -1,
-                 precision=np.float32):
+                 precision=np.float32,
+                 estimator_kwargs=None,
+                 transform=None):
     """Build EncExp"""
     encode_fname, cnt = encode(vocabulary, fname)
     tokens = feasible_tokens(vocabulary, cnt, min_pos=min_pos)
@@ -121,9 +131,11 @@ def build_encexp(vocabulary,
                                                                  vocabulary,
                                                                  encode_fname,
                                                                  precision=precision,
-                                                                 max_pos=max_pos)
+                                                                 max_pos=max_pos,
+                                                                 estimator_kwargs=estimator_kwargs,
+                                                                 transform=transform)
                                      for index, _ in progress_bar(tokens,
-                                                                  desc=output, 
+                                                                  desc=output,
                                                                   total=len(tokens)))
     with gzip.open(output, 'wb') as fpt:
         fpt.write(bytes(json.dumps(vocabulary) + '\n',

@@ -11,10 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from encexp.download import download_seqtm, download_encexp
 from os.path import isfile
 import os
 import numpy as np
+from encexp.download import download_seqtm, download_encexp
 
 
 def test_download_seqtm():
@@ -29,7 +29,7 @@ def test_download_seqtm():
 def test_download_encexp():
     """Test download EncExp"""
 
-    data = download_encexp(lang='es', country='cu',
+    data = download_encexp(lang='es', country='mx',
                            precision=np.float16)
     dim = 2**13
     # assert list(data.keys()) is None

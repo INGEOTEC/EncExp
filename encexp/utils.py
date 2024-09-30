@@ -252,7 +252,40 @@ def to_float16(input_filename, output_filename):
             data['coef'] = _.tobytes().hex()
             fpt.write(bytes(json.dumps(data) + '\n',
                       encoding='utf-8'))
-            
+
+
+def unit_length(data):
+    """Convert EncExp weights to have unit length"""
+    if data.dtype == np.float16:
+        data = data.astype(np.float32)
+    w = np.linalg.norm(data, axis=0)
+    w[w == 0] = 1
+    return data / w
+
+
+def set_to_zero(data, percentage: float=0.95):
+    """Set elements to zero"""
+    if percentage == 1:
+        data[data < 0] = 0
+        return data
+    ss = np.argsort(data, axis=0)[::-1]
+    tot = data.sum(axis=0)
+    tot[tot == 0] = 1
+    cum = np.cumsum(np.take_along_axis(data / tot,
+                                       ss, axis=0), axis=0)
+    a, b = np.where(np.diff(cum <= percentage,
+                            axis=0))
+    a += 1
+    _ = b.argsort()
+    a, b = a[_], b[_]
+    values = data[ss[a, b], b]
+    if values.shape[0] != data.shape[0]:
+        a_n = np.zeros(data.shape[0], dtype=values.dtype)
+        a_n[b] = values
+        values = a_n
+    data[data < values] = 0
+    return data
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Compute SeqTM Vocabulary',
@@ -273,3 +306,5 @@ if __name__ == '__main__':
     output = args.output
     if args.float16:
         to_float16(input, output)
+
+
