@@ -221,7 +221,8 @@ class EncExp:
     country: str=None
     prefix_suffix: bool=True
     estimator_kwargs: dict=None
-    raw: bool=False
+    merge_IDF: bool=True
+    force_token: bool=True
 
     def get_params(self):
         """Parameters"""
@@ -231,7 +232,9 @@ class EncExp:
                     precision=self.precision,
                     country=self.country,
                     prefix_suffix=self.prefix_suffix,
-                    estimator_kwargs=self.estimator_kwargs)
+                    estimator_kwargs=self.estimator_kwargs,
+                    merge_idf=self.merge_IDF,
+                    force_token=self.force_token)
 
     @property
     def estimator(self):
@@ -275,18 +278,18 @@ class EncExp:
                                        precision=self.precision,
                                        country=self.country,
                                        prefix_suffix=self.prefix_suffix)
-            self._bow = SeqTM(vocabulary=data['seqtm'])
-            w = self._bow.weights
+            self.bow = SeqTM(vocabulary=data['seqtm'])
+            w = self.bow.weights
             weights = []
             precision = self.precision
             for vec in data['coefs']:
-                if self.raw:
+                if not self.merge_IDF:
                     coef = vec['coef']
                 else:
                     coef = (vec['coef'] * w).astype(precision)
-                if not self.raw:
+                if self.force_token:
                     _ = coef.max()
-                    coef[self._bow.token2id[vec['label']]] = _
+                    coef[self.bow.token2id[vec['label']]] = _
                 weights.append(coef)
             self.weights = np.vstack(weights)
             self.names = np.array([vec['label'] for vec in data['coefs']])
@@ -317,6 +320,10 @@ class EncExp:
         except AttributeError:
             self.weights
         return self._bow
+    
+    @bow.setter
+    def bow(self, value):
+        self._bow = value
 
     def encode(self, text):
         """Encode utterace into a matrix"""
@@ -335,10 +342,6 @@ class EncExp:
 
     def transform(self, texts):
         """Represents the texts into a matrix"""
-        if self.raw:
-            X = self.bow.transform(texts).toarray()
-            rr = (self.weights @ X.T).T
-            return rr / np.atleast_2d(np.linalg.norm(rr, axis=1)).T
         enc = []
         flag = self.weights.dtype == np.float16
         for data in texts:

@@ -13,6 +13,7 @@
 # limitations under the License.
 from os.path import isfile
 import numpy as np
+from numpy.testing import assert_almost_equal
 import os
 from microtc.utils import tweet_iterator
 from encexp.tests.test_utils import samples
@@ -162,18 +163,27 @@ def test_EncExp_clone():
     assert np.all(enc2.weights == enc.weights)
 
 
-def test_EncExp_raw():
+def test_EncExp_merge_IDF():
     """Test EncExp without keyword's weight"""
 
     enc = EncExp(lang='es', prefix_suffix=True,
-                 precision=np.float16, raw=True)
-    weights = enc.weights
+                 precision=np.float16, merge_IDF=False,
+                 force_token=False)
     for k, v in enc.bow.token2id.items():
-        assert weights[v, v] == 0
-    X1 = enc.transform(['buenos dias', 'buenos']) > 0
-    enc = EncExp(lang='es', prefix_suffix=True,
-                 precision=np.float16)
-    for k, v in enc.bow.token2id.items():
-        enc.weights[v, v] = 0
-    X2 = enc.transform(['buenos dias', 'buenos']) > 0
-    assert np.all(X1 == X2)
+        assert enc.weights[v, v] == 0
+    enc2 = EncExp(lang='es', prefix_suffix=True,
+                  precision=np.float16, merge_IDF=True,
+                  force_token=False)
+    _ = (enc.weights * enc.bow.weights).astype(enc.precision)
+    assert_almost_equal(_, enc2.weights, decimal=5)
+    
+    # X1 = enc.transform(['buenos dias', 'buenos']) > 0
+    # enc = EncExp(lang='es', prefix_suffix=True,
+    #              force_token=False,
+    #              precision=np.float16)
+    # for k, v in enc.bow.token2id.items():
+    #     assert enc.weights[v, v] == 0    
+    # # for k, v in enc.bow.token2id.items():
+    # #     enc.weights[v, v] = 0
+    # X2 = enc.transform(['buenos dias', 'buenos']) > 0
+    # assert np.all(X1 == X2)
