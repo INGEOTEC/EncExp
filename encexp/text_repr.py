@@ -233,7 +233,7 @@ class EncExp:
                     country=self.country,
                     prefix_suffix=self.prefix_suffix,
                     estimator_kwargs=self.estimator_kwargs,
-                    merge_idf=self.merge_IDF,
+                    merge_IDF=self.merge_IDF,
                     force_token=self.force_token)
 
     @property
