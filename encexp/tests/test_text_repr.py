@@ -153,6 +153,26 @@ def test_EncExp_fit():
     assert df.dtype == np.float64
 
 
+def test_EncExp_train_predict_decision_function():
+    """Test EncExp train_predict_decision_function"""
+    samples()
+    mx = list(tweet_iterator('es-mx-sample.json'))
+    samples(filename='es-ar-sample.json.zip')
+    ar = list(tweet_iterator('es-ar-sample.json'))
+    samples(filename='es-es-sample.json.zip')
+    es = list(tweet_iterator('es-es-sample.json'))
+    y = ['mx'] * len(mx)
+    y += ['ar'] * len(ar)
+    enc = EncExp(lang='es',
+                 prefix_suffix=True,
+                 precision=np.float16)
+    hy = enc.train_predict_decision_function(mx + ar, y)
+    assert hy.ndim == 2 and hy.shape[0] == len(y) and hy.shape[1] == 1
+    y += ['es'] * len(es)
+    hy = enc.train_predict_decision_function(mx + ar + es, y)
+    assert hy.shape[1] == 3 and hy.shape[0] == len(y)
+
+
 def test_EncExp_clone():
     """Test EncExp clone"""
 

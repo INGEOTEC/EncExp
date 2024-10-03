@@ -13,6 +13,8 @@
 # limitations under the License.
 from dataclasses import dataclass
 from collections import OrderedDict
+from sklearn.model_selection import StratifiedKFold
+from sklearn.base import clone
 from b4msa import TextModel
 from microtc.utils import tweet_iterator, Counter
 from microtc import emoticons
@@ -223,6 +225,8 @@ class EncExp:
     estimator_kwargs: dict=None
     merge_IDF: bool=True
     force_token: bool=True
+    kfold_class: StratifiedKFold=StratifiedKFold
+    kfold_kwargs: dict=None
 
     def get_params(self):
         """Parameters"""
@@ -234,7 +238,9 @@ class EncExp:
                     prefix_suffix=self.prefix_suffix,
                     estimator_kwargs=self.estimator_kwargs,
                     merge_IDF=self.merge_IDF,
-                    force_token=self.force_token)
+                    force_token=self.force_token,
+                    kfold_class=self.kfold_class,
+                    kfold_kwargs=self.kfold_kwargs)
 
     @property
     def estimator(self):
@@ -361,10 +367,34 @@ class EncExp:
         """Decision function"""
         X = self.transform(texts)
         return self.estimator.decision_function(X)
+    
+    def train_predict_decision_function(self, D, y=None):
+        """Train and predict the decision"""
+        if y is None:
+            y = np.array([x['klass'] for x in D])
+        if not isinstance(y, np.ndarray):
+            y = np.array(y)
+        nclass = np.unique(y).shape[0]
+        X = self.transform(D)
+        if nclass == 2:
+            hy = np.empty(X.shape[0])
+        else:
+            hy = np.empty((X.shape[0], nclass))
+        kwargs = dict(random_state=0, shuffle=True)
+        if self.kfold_kwargs is not None:
+            kwargs.update(self.kfold_kwargs)
+        for tr, vs in self.kfold_class(**kwargs).split(X, y):
+            m = clone(self).estimator.fit(X[tr], y[tr])
+            hy[vs] = m.decision_function(X[vs])
+        if hy.ndim == 1:
+            return np.c_[hy]
+        return hy
 
     def __sklearn_clone__(self):
         klass = self.__class__
         params = self.get_params()
         ins = klass(**params)
         ins.weights = self.weights
+        ins.bow = self.bow
+        ins.names = self.names
         return ins
