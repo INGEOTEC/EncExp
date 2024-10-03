@@ -13,6 +13,8 @@
 # limitations under the License.
 from dataclasses import dataclass
 from collections import OrderedDict
+from sklearn.model_selection import StratifiedKFold
+from sklearn.base import clone
 from b4msa import TextModel
 from microtc.utils import tweet_iterator, Counter
 from microtc import emoticons
@@ -221,7 +223,10 @@ class EncExp:
     country: str=None
     prefix_suffix: bool=True
     estimator_kwargs: dict=None
-    raw: bool=False
+    merge_IDF: bool=True
+    force_token: bool=True
+    kfold_class: StratifiedKFold=StratifiedKFold
+    kfold_kwargs: dict=None
 
     def get_params(self):
         """Parameters"""
@@ -231,7 +236,11 @@ class EncExp:
                     precision=self.precision,
                     country=self.country,
                     prefix_suffix=self.prefix_suffix,
-                    estimator_kwargs=self.estimator_kwargs)
+                    estimator_kwargs=self.estimator_kwargs,
+                    merge_IDF=self.merge_IDF,
+                    force_token=self.force_token,
+                    kfold_class=self.kfold_class,
+                    kfold_kwargs=self.kfold_kwargs)
 
     @property
     def estimator(self):
@@ -275,18 +284,18 @@ class EncExp:
                                        precision=self.precision,
                                        country=self.country,
                                        prefix_suffix=self.prefix_suffix)
-            self._bow = SeqTM(vocabulary=data['seqtm'])
-            w = self._bow.weights
+            self.bow = SeqTM(vocabulary=data['seqtm'])
+            w = self.bow.weights
             weights = []
             precision = self.precision
             for vec in data['coefs']:
-                if self.raw:
+                if not self.merge_IDF:
                     coef = vec['coef']
                 else:
                     coef = (vec['coef'] * w).astype(precision)
-                if not self.raw:
+                if self.force_token:
                     _ = coef.max()
-                    coef[self._bow.token2id[vec['label']]] = _
+                    coef[self.bow.token2id[vec['label']]] = _
                 weights.append(coef)
             self.weights = np.vstack(weights)
             self.names = np.array([vec['label'] for vec in data['coefs']])
@@ -317,6 +326,10 @@ class EncExp:
         except AttributeError:
             self.weights
         return self._bow
+    
+    @bow.setter
+    def bow(self, value):
+        self._bow = value
 
     def encode(self, text):
         """Encode utterace into a matrix"""
@@ -335,10 +348,6 @@ class EncExp:
 
     def transform(self, texts):
         """Represents the texts into a matrix"""
-        if self.raw:
-            X = self.bow.transform(texts).toarray()
-            rr = (self.weights @ X.T).T
-            return rr / np.linalg.norm(rr, axis=1)
         enc = []
         flag = self.weights.dtype == np.float16
         for data in texts:
@@ -357,11 +366,38 @@ class EncExp:
     def decision_function(self, texts):
         """Decision function"""
         X = self.transform(texts)
-        return self.estimator.decision_function(X)
+        hy = self.estimator.decision_function(X)
+        if hy.ndim == 1:
+            return np.c_[hy]
+        return hy
+    
+    def train_predict_decision_function(self, D, y=None):
+        """Train and predict the decision"""
+        if y is None:
+            y = np.array([x['klass'] for x in D])
+        if not isinstance(y, np.ndarray):
+            y = np.array(y)
+        nclass = np.unique(y).shape[0]
+        X = self.transform(D)
+        if nclass == 2:
+            hy = np.empty(X.shape[0])
+        else:
+            hy = np.empty((X.shape[0], nclass))
+        kwargs = dict(random_state=0, shuffle=True)
+        if self.kfold_kwargs is not None:
+            kwargs.update(self.kfold_kwargs)
+        for tr, vs in self.kfold_class(**kwargs).split(X, y):
+            m = clone(self).estimator.fit(X[tr], y[tr])
+            hy[vs] = m.decision_function(X[vs])
+        if hy.ndim == 1:
+            return np.c_[hy]
+        return hy
 
     def __sklearn_clone__(self):
         klass = self.__class__
         params = self.get_params()
         ins = klass(**params)
         ins.weights = self.weights
+        ins.bow = self.bow
+        ins.names = self.names
         return ins
