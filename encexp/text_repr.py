@@ -366,7 +366,10 @@ class EncExp:
     def decision_function(self, texts):
         """Decision function"""
         X = self.transform(texts)
-        return self.estimator.decision_function(X)
+        hy = self.estimator.decision_function(X)
+        if hy.ndim == 1:
+            return np.c_[hy]
+        return hy
     
     def train_predict_decision_function(self, D, y=None):
         """Train and predict the decision"""
