@@ -152,11 +152,11 @@ def test_build_encexp_transform():
                  prefix_suffix=True)
     voc = download_encexp(lang='es', precision=np.float16,
                           prefix_suffix=True)['seqtm']
-    
+
     build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',
                  transform=enc.transform,
                  estimator_kwargs=dict(fit_intercept=True))
     assert isfile('encexp-es-mx.json.gz')
     lst = list(tweet_iterator('encexp-es-mx.json.gz'))
     assert lst[1]['intercept'] != 0
-    os.unlink('encexp-es-mx.json.gz')    
+    os.unlink('encexp-es-mx.json.gz')

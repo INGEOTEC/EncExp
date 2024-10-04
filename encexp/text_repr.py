@@ -393,6 +393,19 @@ class EncExp:
             return np.c_[hy]
         return hy
 
+    def fill(self, inplace: bool=True):
+        """Fill weights with the missing dimensions"""
+        weights = self.weights
+        w = np.empty((len(self.bow.names), weights.shape[1]),
+                     dtype=self.precision)
+        iden = {v:k for k, v in enumerate(self.bow.names)}
+        for key, value in zip(self.names, weights):
+            w[iden[key]] = value
+        if inplace:
+            self.weights = w
+            self.names = self.bow.names
+        return w
+
     def __sklearn_clone__(self):
         klass = self.__class__
         params = self.get_params()
