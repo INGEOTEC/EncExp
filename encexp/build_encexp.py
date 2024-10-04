@@ -149,6 +149,8 @@ def build_encexp(vocabulary,
             fpt.write(bytes(json.dumps(data) + '\n',
                             encoding='utf-8'))
     for fname in fnames:
+        if fname is None:
+            continue        
         os.unlink(fname)
     os.unlink(encode_fname)
 
