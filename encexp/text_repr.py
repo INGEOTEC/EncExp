@@ -326,7 +326,7 @@ class EncExp:
         except AttributeError:
             self.weights
         return self._bow
-    
+
     @bow.setter
     def bow(self, value):
         self._bow = value
@@ -370,7 +370,7 @@ class EncExp:
         if hy.ndim == 1:
             return np.c_[hy]
         return hy
-    
+
     def train_predict_decision_function(self, D, y=None):
         """Train and predict the decision"""
         if y is None:
