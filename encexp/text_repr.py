@@ -20,6 +20,7 @@ from microtc.utils import tweet_iterator, Counter
 from microtc import emoticons
 from microtc.weighting import TFIDF
 import numpy as np
+from numpy.linalg import norm
 from encexp.download import download_seqtm, download_encexp
 
 
@@ -355,7 +356,11 @@ class EncExp:
             vec = _.sum(axis=1)
             if flag:
                 vec = vec.astype(np.float32)
-            enc.append(vec / np.linalg.norm(vec))
+            _norm = norm(vec)
+            if _norm == 0:
+                enc.append(vec)
+            else:
+                enc.append(vec / _norm)
         return np.vstack(enc)
 
     def predict(self, texts):
