@@ -220,7 +220,7 @@ class EncExp:
     lang: str='es'
     voc_size_exponent: int=13
     EncExp_filename: str=None
-    precision: np.dtype=np.float32
+    precision: np.dtype=np.float16
     country: str=None
     prefix_suffix: bool=True
     estimator_kwargs: dict=None
@@ -294,13 +294,19 @@ class EncExp:
                     coef = vec['coef']
                 else:
                     coef = (vec['coef'] * w).astype(precision)
-                if self.force_token:
-                    _ = coef.max()
-                    coef[self.bow.token2id[vec['label']]] = _
                 weights.append(coef)
             self.weights = np.vstack(weights)
             self.names = np.array([vec['label'] for vec in data['coefs']])
+            if self.force_token:
+                self.force_tokens_weights()
         return self._weights
+
+    def force_tokens_weights(self):
+        """Set the maximum weight"""
+        rows = np.arange(len(self.names))
+        cols = np.array([self.bow.token2id[x] for x in self.names])
+        _max = self.weights.max(axis=1)
+        self.weights[rows, cols] = _max
 
     @weights.setter
     def weights(self, value):
