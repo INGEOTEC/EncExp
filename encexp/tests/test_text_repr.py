@@ -71,11 +71,12 @@ def test_EncExp_filename():
                                        'es-mx-sample.json',
                                        voc_size_exponent=10)
         build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz')
-    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz')
+    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz',
+                 precision=np.float32)
     assert enc.weights.dtype == np.float32
     assert len(enc.names) == 11
     to_float16('encexp-es-mx.json.gz', 'encexp-float16-es-mx.json.gz')
-    enc2 = EncExp(EncExp_filename='encexp-float16-es-mx.json.gz', 
+    enc2 = EncExp(EncExp_filename='encexp-float16-es-mx.json.gz',
                   precision=np.float16)
     assert enc2.weights.dtype == np.float16
     w = enc.weights
@@ -196,14 +197,44 @@ def test_EncExp_merge_IDF():
                   force_token=False)
     _ = (enc.weights * enc.bow.weights).astype(enc.precision)
     assert_almost_equal(_, enc2.weights, decimal=5)
-    
-    # X1 = enc.transform(['buenos dias', 'buenos']) > 0
-    # enc = EncExp(lang='es', prefix_suffix=True,
-    #              force_token=False,
-    #              precision=np.float16)
-    # for k, v in enc.bow.token2id.items():
-    #     assert enc.weights[v, v] == 0    
-    # # for k, v in enc.bow.token2id.items():
-    # #     enc.weights[v, v] = 0
-    # X2 = enc.transform(['buenos dias', 'buenos']) > 0
-    # assert np.all(X1 == X2)
+
+
+def test_EncExp_fill():
+    """Test EncExp fill weights"""
+    from encexp.download import download_encexp
+
+    voc = download_encexp(lang='es', precision=np.float16,
+                          prefix_suffix=True)['seqtm']
+    samples()
+    if not isfile('encexp-es-mx.json.gz'):
+        build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',
+                    min_pos=64)
+    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz',
+                 precision=np.float32)
+    iden = {v:k for k, v in enumerate(enc.bow.names)}
+    comp = [x for x in enc.bow.names if x not in enc.names]
+    key = enc.names[0]
+    enc.weights
+    w = enc.fill()
+    assert np.any(w[iden[key]] != 0)
+    assert_almost_equal(w[iden[comp[0]]], 0)
+    os.unlink('encexp-es-mx.json.gz')
+    assert np.all(enc.names == enc.bow.names)
+
+
+def test_EncExp_force_tokens():
+    """Test force tokens"""
+
+    enc = EncExp(lang='es', prefix_suffix=True,
+                 precision=np.float16,
+                 force_token=False)
+    w = enc.weights
+    _max = w.max(axis=1)
+    rows = np.arange(len(enc.names))
+    cols = np.array([enc.bow.token2id[x] for x in enc.names])
+    assert_almost_equal(w[rows, cols], 0)
+    enc = EncExp(lang='es', prefix_suffix=True,
+                 precision=np.float16,
+                 force_token=True)
+    w[rows, cols] = _max
+    assert_almost_equal(enc.weights, w)

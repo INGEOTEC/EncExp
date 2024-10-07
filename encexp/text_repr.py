@@ -20,6 +20,7 @@ from microtc.utils import tweet_iterator, Counter
 from microtc import emoticons
 from microtc.weighting import TFIDF
 import numpy as np
+from numpy.linalg import norm
 from encexp.download import download_seqtm, download_encexp
 
 
@@ -219,7 +220,7 @@ class EncExp:
     lang: str='es'
     voc_size_exponent: int=13
     EncExp_filename: str=None
-    precision: np.dtype=np.float32
+    precision: np.dtype=np.float16
     country: str=None
     prefix_suffix: bool=True
     estimator_kwargs: dict=None
@@ -293,13 +294,19 @@ class EncExp:
                     coef = vec['coef']
                 else:
                     coef = (vec['coef'] * w).astype(precision)
-                if self.force_token:
-                    _ = coef.max()
-                    coef[self.bow.token2id[vec['label']]] = _
                 weights.append(coef)
             self.weights = np.vstack(weights)
             self.names = np.array([vec['label'] for vec in data['coefs']])
+            if self.force_token:
+                self.force_tokens_weights()
         return self._weights
+
+    def force_tokens_weights(self):
+        """Set the maximum weight"""
+        rows = np.arange(len(self.names))
+        cols = np.array([self.bow.token2id[x] for x in self.names])
+        _max = self.weights.max(axis=1)
+        self.weights[rows, cols] = _max
 
     @weights.setter
     def weights(self, value):
@@ -326,7 +333,7 @@ class EncExp:
         except AttributeError:
             self.weights
         return self._bow
-    
+
     @bow.setter
     def bow(self, value):
         self._bow = value
@@ -355,7 +362,11 @@ class EncExp:
             vec = _.sum(axis=1)
             if flag:
                 vec = vec.astype(np.float32)
-            enc.append(vec / np.linalg.norm(vec))
+            _norm = norm(vec)
+            if _norm == 0:
+                enc.append(vec)
+            else:
+                enc.append(vec / _norm)
         return np.vstack(enc)
 
     def predict(self, texts):
@@ -370,7 +381,7 @@ class EncExp:
         if hy.ndim == 1:
             return np.c_[hy]
         return hy
-    
+
     def train_predict_decision_function(self, D, y=None):
         """Train and predict the decision"""
         if y is None:
@@ -392,6 +403,19 @@ class EncExp:
         if hy.ndim == 1:
             return np.c_[hy]
         return hy
+
+    def fill(self, inplace: bool=True):
+        """Fill weights with the missing dimensions"""
+        weights = self.weights
+        w = np.empty((len(self.bow.names), weights.shape[1]),
+                     dtype=self.precision)
+        iden = {v:k for k, v in enumerate(self.bow.names)}
+        for key, value in zip(self.names, weights):
+            w[iden[key]] = value
+        if inplace:
+            self.weights = w
+            self.names = self.bow.names
+        return w
 
     def __sklearn_clone__(self):
         klass = self.__class__

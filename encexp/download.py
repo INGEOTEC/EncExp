@@ -73,6 +73,7 @@ def download_encexp(lang='es', voc_size_exponent: int=13,
             return read(output)
         except Exception:
             os.unlink(output)
+    assert precision.__name__ == 'float16'
     Download(EncExp_URL + f'/{voc_fname}', output)
     return read(output)
 

@@ -95,6 +95,8 @@ def build_encexp_token(index, vocabulary,
             del NEG[k]
         if len(POS) > max_pos:
             break
+    if len(POS) == 0 or len(NEG) == 0:
+        return None
     shuffle(NEG)
     NEG = NEG[:len(POS)]
     if transform is not None:
@@ -141,10 +143,14 @@ def build_encexp(vocabulary,
         fpt.write(bytes(json.dumps(vocabulary) + '\n',
                         encoding='utf-8'))
         for fname in fnames:
+            if fname is None:
+                continue
             data = next(tweet_iterator(fname))
             fpt.write(bytes(json.dumps(data) + '\n',
                             encoding='utf-8'))
     for fname in fnames:
+        if fname is None:
+            continue        
         os.unlink(fname)
     os.unlink(encode_fname)
 
