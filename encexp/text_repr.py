@@ -407,7 +407,7 @@ class EncExp:
     def fill(self, inplace: bool=True):
         """Fill weights with the missing dimensions"""
         weights = self.weights
-        w = np.empty((len(self.bow.names), weights.shape[1]),
+        w = np.zeros((len(self.bow.names), weights.shape[1]),
                      dtype=self.precision)
         iden = {v:k for k, v in enumerate(self.bow.names)}
         for key, value in zip(self.names, weights):
