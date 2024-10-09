@@ -355,19 +355,14 @@ class EncExp:
 
     def transform(self, texts):
         """Represents the texts into a matrix"""
-        enc = []
         flag = self.weights.dtype == np.float16
-        for data in texts:
-            _ = self.encode(data)
-            vec = _.sum(axis=1)
-            if flag:
-                vec = vec.astype(np.float32)
-            _norm = norm(vec)
-            if _norm == 0:
-                enc.append(vec)
-            else:
-                enc.append(vec / _norm)
-        return np.vstack(enc)
+        X = np.r_[[self.encode(data).sum(axis=1)
+                   for data in texts]]
+        if flag:
+            X = X.astype(np.float32)
+        _norm = norm(X, axis=1)
+        _norm[_norm == 0] = 1
+        return X / np.c_[_norm]
 
     def predict(self, texts):
         """Predict"""
