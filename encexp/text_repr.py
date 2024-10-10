@@ -29,10 +29,12 @@ class SeqTM(TextModel):
 
     def __init__(self, lang='es',
                  voc_size_exponent: int=13,
-                 vocabulary=None):
+                 vocabulary=None,
+                 prefix_suffix: bool=True):
         if vocabulary is None:
             vocabulary = download_seqtm(lang,
-                                        voc_size_exponent=voc_size_exponent)
+                                        voc_size_exponent=voc_size_exponent,
+                                        prefix_suffix=prefix_suffix)
         self._map = {}
         params = vocabulary['params']
         counter = vocabulary['counter']
@@ -43,6 +45,7 @@ class SeqTM(TextModel):
         self.language = lang
         self.voc_size_exponent = voc_size_exponent
         self.__vocabulary(counter)
+        self.prefix_suffix = prefix_suffix
 
     def __vocabulary(self, counter):
         """Vocabulary"""

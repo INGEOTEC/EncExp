@@ -46,6 +46,14 @@ def test_seqtm_vocabulary():
     assert len([k for k in _ if k[:2] == 'q:']) == 30
 
 
+def test_seqtm_ix_15():
+    """Test SeqTM"""
+    seqtm = SeqTM(lang='es', voc_size_exponent=15,
+                  prefix_suffix=True)
+    tokens = seqtm.tokenize('buenos dias')
+    assert tokens == ['buenos', 'dias']
+
+
 def test_seqtm_identifier():
     """Test SeqTM identifier"""
 
