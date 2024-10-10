@@ -276,6 +276,26 @@ class EncExp:
         self.estimator.fit(X, y)
         return self
 
+    def force_tokens_weights(self):
+        """Set the maximum weight"""
+        rows = np.arange(len(self.names))
+        cols = np.array([self.bow.token2id[x] for x in self.names])
+        _max = self.weights.max(axis=1)
+        self.weights[rows, cols] = _max
+
+    @property
+    def bias(self):
+        """Bias / Intercept"""
+        try:
+            return self._bias
+        except AttributeError:
+            self.weights
+        return self._bias
+    
+    @bias.setter
+    def bias(self, value):
+        self._bias = value
+
     @property
     def weights(self):
         """Weights"""
@@ -302,17 +322,12 @@ class EncExp:
                     coef = (vec['coef'] * w).astype(precision)
                 weights.append(coef)
             self.weights = np.vstack(weights)
+            self.bias = np.array([vec['intercept'] for vec in data['coefs']],
+                                 dtype=self.precision)
             self.names = np.array([vec['label'] for vec in data['coefs']])
             if self.force_token:
                 self.force_tokens_weights()
         return self._weights
-
-    def force_tokens_weights(self):
-        """Set the maximum weight"""
-        rows = np.arange(len(self.names))
-        cols = np.array([self.bow.token2id[x] for x in self.names])
-        _max = self.weights.max(axis=1)
-        self.weights[rows, cols] = _max
 
     @weights.setter
     def weights(self, value):
