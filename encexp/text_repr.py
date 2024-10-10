@@ -231,6 +231,7 @@ class EncExp:
     force_token: bool=True
     kfold_class: StratifiedKFold=StratifiedKFold
     kfold_kwargs: dict=None
+    intercept: bool=False
 
     def get_params(self):
         """Parameters"""
@@ -255,6 +256,8 @@ class EncExp:
             from sklearn.svm import LinearSVC
             params = dict(class_weight='balanced',
                           dual='auto')
+            if self.intercept:
+                params['fit_intercept'] = False
             if self.estimator_kwargs is not None:
                 params.update(self.estimator_kwargs)
             self.estimator_kwargs = params
@@ -363,6 +366,8 @@ class EncExp:
                    for data in texts]]
         if flag:
             X = X.astype(np.float32)
+        if self.intercept:
+            X = np.c_[X, np.ones(X.shape[0])]
         _norm = norm(X, axis=1)
         _norm[_norm == 0] = 1
         return X / np.c_[_norm]

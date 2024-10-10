@@ -246,3 +246,12 @@ def test_EncExp_force_tokens():
                  force_token=True)
     w[rows, cols] = _max
     assert_almost_equal(enc.weights, w)
+
+
+def test_EncExp_intercept():
+    """Test EncExp with intercept"""
+
+    enc = EncExp(lang='es', intercept=True)
+    assert enc.estimator.fit_intercept == False
+    X = enc.transform(['buenos dias'])
+    assert X.shape[1] == len(enc.names) + 1
