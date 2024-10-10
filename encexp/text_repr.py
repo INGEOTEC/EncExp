@@ -367,7 +367,7 @@ class EncExp:
         if flag:
             X = X.astype(np.float32)
         if self.intercept:
-            X = np.c_[X, np.ones(X.shape[0])]
+            X = np.c_[X, np.ones(X.shape[0], dtype=X.dtype)]
         _norm = norm(X, axis=1)
         _norm[_norm == 0] = 1
         return X / np.c_[_norm]
