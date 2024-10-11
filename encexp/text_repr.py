@@ -30,7 +30,8 @@ class SeqTM(TextModel):
     def __init__(self, lang='es',
                  voc_size_exponent: int=13,
                  vocabulary=None,
-                 prefix_suffix: bool=True):
+                 prefix_suffix: bool=True,
+                 precision=np.float32):
         if vocabulary is None:
             vocabulary = download_seqtm(lang,
                                         voc_size_exponent=voc_size_exponent,
@@ -46,6 +47,7 @@ class SeqTM(TextModel):
         self.voc_size_exponent = voc_size_exponent
         self.__vocabulary(counter)
         self.prefix_suffix = prefix_suffix
+        self.precision = precision
 
     def __vocabulary(self, counter):
         """Vocabulary"""
@@ -216,6 +218,29 @@ class SeqTM(TextModel):
             blocks.append([init, end])
         return blocks
 
+    def tonp(self, X):
+        """Sparse representation to sparce matrix
+
+        :param X: Sparse representation of matrix
+        :type X: list
+        :rtype: csr_matrix
+        """
+        from scipy.sparse import csr_matrix
+
+        if not isinstance(X, list):
+            return X
+        assert self.num_terms is not None
+        data = []
+        row = []
+        col = []
+        for r, x in enumerate(X):
+            col.extend([i for i, _ in x])
+            data.extend([v for _, v in x])
+            _ = [r] * len(x)
+            row.extend(_)
+        return csr_matrix((data, (row, col)),
+                          shape=(len(X), self.num_terms),
+                          dtype=self.precision)
 
 @dataclass
 class EncExp:
@@ -330,6 +355,8 @@ class EncExp:
             self.names = np.array([vec['label'] for vec in data['coefs']])
             if self.force_token:
                 self.force_tokens_weights()
+        if self.intercept:
+            self.weights = np.asarray(self._weights, order='F')
         return self._weights
 
     @weights.setter
@@ -380,12 +407,13 @@ class EncExp:
     def transform(self, texts):
         """Represents the texts into a matrix"""
         flag = self.weights.dtype == np.float16
-        X = np.r_[[self.encode(data).sum(axis=1)
-                   for data in texts]]
+        if self.intercept:
+            X = self.bow.transform(texts) @ self.weights.T + self.bias
+        else:
+            X = np.r_[[self.encode(data).sum(axis=1)
+                    for data in texts]]
         if flag:
             X = X.astype(np.float32)
-        if self.intercept:
-            X = np.c_[X, np.ones(X.shape[0], dtype=X.dtype)]
         _norm = norm(X, axis=1)
         _norm[_norm == 0] = 1
         return X / np.c_[_norm]

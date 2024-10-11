@@ -258,10 +258,14 @@ def test_EncExp_force_tokens():
     assert_almost_equal(enc.weights[0, 1:], enc2.weights[0, 1:])
 
 
-# def test_EncExp_intercept():
-#     """Test EncExp with intercept"""
+def test_EncExp_intercept():
+    """Test EncExp with intercept"""
 
-#     enc = EncExp(lang='es', intercept=True)
-#     assert enc.estimator.fit_intercept == False
-#     X = enc.transform(['buenos dias'])
-#     assert X.shape[1] == len(enc.names) + 1
+    texto = '# buenos dias'
+    enc = EncExp(lang='es', intercept=True, merge_IDF=False,
+                 force_token=False)
+    enc.force_tokens_weights(IDF=True)
+    enc2 = EncExp(lang='es')
+    X1 = enc.transform([texto])
+    X2 = enc2.transform([texto])
+    assert_almost_equal(X1, X2, decimal=4)
