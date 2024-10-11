@@ -256,8 +256,6 @@ class EncExp:
             from sklearn.svm import LinearSVC
             params = dict(class_weight='balanced',
                           dual='auto')
-            if self.intercept:
-                params['fit_intercept'] = False
             if self.estimator_kwargs is not None:
                 params.update(self.estimator_kwargs)
             self.estimator_kwargs = params
@@ -276,11 +274,16 @@ class EncExp:
         self.estimator.fit(X, y)
         return self
 
-    def force_tokens_weights(self):
+    def force_tokens_weights(self, IDF: bool=False):
         """Set the maximum weight"""
         rows = np.arange(len(self.names))
         cols = np.array([self.bow.token2id[x] for x in self.names])
-        _max = self.weights.max(axis=1)
+        w = self.weights
+        if IDF:
+            w = w * self.bow.weights
+            _max = (w.max(axis=1) / self.bow.weights).astype(self.precision)
+        else:
+            _max = w.max(axis=1)
         self.weights[rows, cols] = _max
 
     @property
@@ -291,7 +294,7 @@ class EncExp:
         except AttributeError:
             self.weights
         return self._bias
-    
+
     @bias.setter
     def bias(self, value):
         self._bias = value

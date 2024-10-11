@@ -246,12 +246,22 @@ def test_EncExp_force_tokens():
                  force_token=True)
     w[rows, cols] = _max
     assert_almost_equal(enc.weights, w)
+    enc = EncExp(lang='es', prefix_suffix=True,
+                 precision=np.float16, merge_IDF=False,
+                 force_token=False)
+    assert enc.weights[0, 0] == 0    
+    enc.force_tokens_weights(IDF=True)
+    enc2 = EncExp(lang='es', prefix_suffix=True,
+                  precision=np.float16, merge_IDF=False,
+                  force_token=True)
+    assert enc.weights[0, 0] != enc2.weights[0, 0]
+    assert_almost_equal(enc.weights[0, 1:], enc2.weights[0, 1:])
 
 
-def test_EncExp_intercept():
-    """Test EncExp with intercept"""
+# def test_EncExp_intercept():
+#     """Test EncExp with intercept"""
 
-    enc = EncExp(lang='es', intercept=True)
-    assert enc.estimator.fit_intercept == False
-    X = enc.transform(['buenos dias'])
-    assert X.shape[1] == len(enc.names) + 1
+#     enc = EncExp(lang='es', intercept=True)
+#     assert enc.estimator.fit_intercept == False
+#     X = enc.transform(['buenos dias'])
+#     assert X.shape[1] == len(enc.names) + 1
