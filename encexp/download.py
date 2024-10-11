@@ -21,11 +21,15 @@ import encexp
 
 
 def download_seqtm(lang, voc_size_exponent: int=13,
-                   output=None):
+                   output=None,
+                   prefix_suffix: bool=False):
     """Download SeqTM vocabulary"""
     if not isdir(MODELS):
         os.mkdir(MODELS)
     voc_fname = f'seqtm_{lang}_{voc_size_exponent}.json.gz'
+    if prefix_suffix:
+        a, b = voc_fname.split(f'_{lang}_')
+        voc_fname = f'{a}_ix_{lang}_{b}' 
     if output is None:
         output = join(MODELS, voc_fname)
     if isfile(output):

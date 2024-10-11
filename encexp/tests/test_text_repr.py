@@ -46,6 +46,14 @@ def test_seqtm_vocabulary():
     assert len([k for k in _ if k[:2] == 'q:']) == 30
 
 
+def test_seqtm_ix_15():
+    """Test SeqTM"""
+    seqtm = SeqTM(lang='es', voc_size_exponent=15,
+                  prefix_suffix=True)
+    tokens = seqtm.tokenize('buenos dias')
+    assert tokens == ['buenos', 'dias']
+
+
 def test_seqtm_identifier():
     """Test SeqTM identifier"""
 
@@ -238,3 +246,26 @@ def test_EncExp_force_tokens():
                  force_token=True)
     w[rows, cols] = _max
     assert_almost_equal(enc.weights, w)
+    enc = EncExp(lang='es', prefix_suffix=True,
+                 precision=np.float16, merge_IDF=False,
+                 force_token=False)
+    assert enc.weights[0, 0] == 0    
+    enc.force_tokens_weights(IDF=True)
+    enc2 = EncExp(lang='es', prefix_suffix=True,
+                  precision=np.float16, merge_IDF=False,
+                  force_token=True)
+    assert enc.weights[0, 0] != enc2.weights[0, 0]
+    assert_almost_equal(enc.weights[0, 1:], enc2.weights[0, 1:])
+
+
+def test_EncExp_intercept():
+    """Test EncExp with intercept"""
+
+    texto = '# buenos dias'
+    enc = EncExp(lang='es', intercept=True, merge_IDF=False,
+                 force_token=False)
+    enc.force_tokens_weights(IDF=True)
+    enc2 = EncExp(lang='es')
+    X1 = enc.transform([texto])
+    X2 = enc2.transform([texto])
+    assert_almost_equal(X1, X2, decimal=4)

@@ -128,6 +128,8 @@ def test_build_encexp():
 
 def test_build_encexp_estimator_kwargs():
     """Test build encexp with estimator_kwargs"""
+    import numpy as np
+    from encexp.text_repr import EncExp
     samples()
     data = compute_b4msa_vocabulary('es-mx-sample.json')
     voc = compute_seqtm_vocabulary(SeqTM, data,
@@ -138,7 +140,12 @@ def test_build_encexp_estimator_kwargs():
     assert isfile('encexp-es-mx.json.gz')
     lst = list(tweet_iterator('encexp-es-mx.json.gz'))
     assert lst[1]['intercept'] != 0
+    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz',
+                 precision=np.float32)
+    assert enc.bias.shape[0] == enc.weights.shape[0]
     os.unlink('encexp-es-mx.json.gz')
+
+    
 
 
 def test_build_encexp_transform():

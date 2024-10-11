@@ -29,10 +29,13 @@ class SeqTM(TextModel):
 
     def __init__(self, lang='es',
                  voc_size_exponent: int=13,
-                 vocabulary=None):
+                 vocabulary=None,
+                 prefix_suffix: bool=True,
+                 precision=np.float32):
         if vocabulary is None:
             vocabulary = download_seqtm(lang,
-                                        voc_size_exponent=voc_size_exponent)
+                                        voc_size_exponent=voc_size_exponent,
+                                        prefix_suffix=prefix_suffix)
         self._map = {}
         params = vocabulary['params']
         counter = vocabulary['counter']
@@ -43,6 +46,8 @@ class SeqTM(TextModel):
         self.language = lang
         self.voc_size_exponent = voc_size_exponent
         self.__vocabulary(counter)
+        self.prefix_suffix = prefix_suffix
+        self.precision = precision
 
     def __vocabulary(self, counter):
         """Vocabulary"""
@@ -213,6 +218,29 @@ class SeqTM(TextModel):
             blocks.append([init, end])
         return blocks
 
+    def tonp(self, X):
+        """Sparse representation to sparce matrix
+
+        :param X: Sparse representation of matrix
+        :type X: list
+        :rtype: csr_matrix
+        """
+        from scipy.sparse import csr_matrix
+
+        if not isinstance(X, list):
+            return X
+        assert self.num_terms is not None
+        data = []
+        row = []
+        col = []
+        for r, x in enumerate(X):
+            col.extend([i for i, _ in x])
+            data.extend([v for _, v in x])
+            _ = [r] * len(x)
+            row.extend(_)
+        return csr_matrix((data, (row, col)),
+                          shape=(len(X), self.num_terms),
+                          dtype=self.precision)
 
 @dataclass
 class EncExp:
@@ -228,6 +256,7 @@ class EncExp:
     force_token: bool=True
     kfold_class: StratifiedKFold=StratifiedKFold
     kfold_kwargs: dict=None
+    intercept: bool=False
 
     def get_params(self):
         """Parameters"""
@@ -270,6 +299,31 @@ class EncExp:
         self.estimator.fit(X, y)
         return self
 
+    def force_tokens_weights(self, IDF: bool=False):
+        """Set the maximum weight"""
+        rows = np.arange(len(self.names))
+        cols = np.array([self.bow.token2id[x] for x in self.names])
+        w = self.weights
+        if IDF:
+            w = w * self.bow.weights
+            _max = (w.max(axis=1) / self.bow.weights).astype(self.precision)
+        else:
+            _max = w.max(axis=1)
+        self.weights[rows, cols] = _max
+
+    @property
+    def bias(self):
+        """Bias / Intercept"""
+        try:
+            return self._bias
+        except AttributeError:
+            self.weights
+        return self._bias
+
+    @bias.setter
+    def bias(self, value):
+        self._bias = value
+
     @property
     def weights(self):
         """Weights"""
@@ -296,17 +350,14 @@ class EncExp:
                     coef = (vec['coef'] * w).astype(precision)
                 weights.append(coef)
             self.weights = np.vstack(weights)
+            self.bias = np.array([vec['intercept'] for vec in data['coefs']],
+                                 dtype=self.precision)
             self.names = np.array([vec['label'] for vec in data['coefs']])
             if self.force_token:
                 self.force_tokens_weights()
+        if self.intercept:
+            self.weights = np.asarray(self._weights, order='F')
         return self._weights
-
-    def force_tokens_weights(self):
-        """Set the maximum weight"""
-        rows = np.arange(len(self.names))
-        cols = np.array([self.bow.token2id[x] for x in self.names])
-        _max = self.weights.max(axis=1)
-        self.weights[rows, cols] = _max
 
     @weights.setter
     def weights(self, value):
@@ -355,19 +406,17 @@ class EncExp:
 
     def transform(self, texts):
         """Represents the texts into a matrix"""
-        enc = []
         flag = self.weights.dtype == np.float16
-        for data in texts:
-            _ = self.encode(data)
-            vec = _.sum(axis=1)
-            if flag:
-                vec = vec.astype(np.float32)
-            _norm = norm(vec)
-            if _norm == 0:
-                enc.append(vec)
-            else:
-                enc.append(vec / _norm)
-        return np.vstack(enc)
+        if self.intercept:
+            X = self.bow.transform(texts) @ self.weights.T + self.bias
+        else:
+            X = np.r_[[self.encode(data).sum(axis=1)
+                    for data in texts]]
+        if flag:
+            X = X.astype(np.float32)
+        _norm = norm(X, axis=1)
+        _norm[_norm == 0] = 1
+        return X / np.c_[_norm]
 
     def predict(self, texts):
         """Predict"""
@@ -407,7 +456,7 @@ class EncExp:
     def fill(self, inplace: bool=True):
         """Fill weights with the missing dimensions"""
         weights = self.weights
-        w = np.empty((len(self.bow.names), weights.shape[1]),
+        w = np.zeros((len(self.bow.names), weights.shape[1]),
                      dtype=self.precision)
         iden = {v:k for k, v in enumerate(self.bow.names)}
         for key, value in zip(self.names, weights):
