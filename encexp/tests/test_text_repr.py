@@ -261,11 +261,7 @@ def test_EncExp_force_tokens():
 def test_EncExp_intercept():
     """Test EncExp with intercept"""
 
-    texto = '# buenos dias'
-    enc = EncExp(lang='es', intercept=True, merge_IDF=False,
-                 force_token=False)
-    enc.force_tokens_weights(IDF=True)
-    enc2 = EncExp(lang='es')
-    X1 = enc.transform([texto])
-    X2 = enc2.transform([texto])
-    assert_almost_equal(X1, X2, decimal=4)
+    enc = EncExp(lang='es', intercept=True,
+                 merge_IDF=False,
+                 force_token=True)
+    assert np.all(enc.bias != 0)

@@ -44,7 +44,8 @@ def download_seqtm(lang, voc_size_exponent: int=13,
 def download_encexp(lang='es', voc_size_exponent: int=13,
                     precision=np.float32, country=None,
                     output=None,
-                    prefix_suffix=False):
+                    prefix_suffix=False,
+                    intercept=False):
     """Download EncExp"""
     def read(output):
         iter = tweet_iterator(output)
@@ -67,7 +68,10 @@ def download_encexp(lang='es', voc_size_exponent: int=13,
         _ = voc_fname.split('_')
         _.insert(1, 'float16')
         voc_fname = '_'.join(_)
-    if prefix_suffix:
+    if intercept:
+        a, b = voc_fname.split(f'_{lang}_')
+        voc_fname = f'{a}_W0_{lang}_{b}'    
+    elif prefix_suffix:
         a, b = voc_fname.split(f'_{lang}_')
         voc_fname = f'{a}_ix_{lang}_{b}'
     if output is None:
