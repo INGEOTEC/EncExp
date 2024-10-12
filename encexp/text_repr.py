@@ -357,7 +357,7 @@ class EncExp:
                                  dtype=self.precision)
             self.names = np.array([vec['label'] for vec in data['coefs']])
             if self.force_token:
-                self.force_tokens_weights()
+                self.force_tokens_weights(IDF=self.intercept)
         if self.intercept:
             self.weights = np.asarray(self._weights, order='F')
         return self._weights
