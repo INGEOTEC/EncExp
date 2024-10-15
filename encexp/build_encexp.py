@@ -162,8 +162,11 @@ def main(args):
     vocabulary = args.vocabulary
     voc = next(tweet_iterator(vocabulary))
     min_pos = args.min_pos
+    estimator_kwargs = None
+    if args.intercept:
+        estimator_kwargs = dict(fit_intercept=True)
     build_encexp(voc, filename, output,
-                 min_pos=min_pos)
+                 min_pos=min_pos, estimator_kwargs=estimator_kwargs)
 
 
 if __name__ == '__main__':
@@ -180,6 +183,9 @@ if __name__ == '__main__':
     parser.add_argument('--min-pos-examples',
                         help='Minimum number of positive examples',
                         dest='min_pos', type=int, default=512)
+    parser.add_argument('--intercept', 
+                        help='Estimate the intercept',
+                        dest='intercept', action='store_true')    
     parser.add_argument('file',
                         help='Input filename',
                         nargs=1, type=str)

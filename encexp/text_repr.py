@@ -334,11 +334,14 @@ class EncExp:
                 data = download_encexp(output=self.EncExp_filename,
                                        precision=self.precision)
             else:
+                if self.intercept:
+                    assert not self.merge_IDF
                 data = download_encexp(lang=self.lang,
                                        voc_size_exponent=self.voc_size_exponent,
                                        precision=self.precision,
                                        country=self.country,
-                                       prefix_suffix=self.prefix_suffix)
+                                       prefix_suffix=self.prefix_suffix,
+                                       intercept=self.intercept)
             self.bow = SeqTM(vocabulary=data['seqtm'])
             w = self.bow.weights
             weights = []
@@ -354,7 +357,7 @@ class EncExp:
                                  dtype=self.precision)
             self.names = np.array([vec['label'] for vec in data['coefs']])
             if self.force_token:
-                self.force_tokens_weights()
+                self.force_tokens_weights(IDF=self.intercept)
         if self.intercept:
             self.weights = np.asarray(self._weights, order='F')
         return self._weights
