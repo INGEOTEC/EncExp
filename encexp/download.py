@@ -42,7 +42,7 @@ def download_seqtm(lang, voc_size_exponent: int=13,
 
 
 def download_encexp(lang='es', voc_size_exponent: int=13,
-                    precision=np.float32, country=None,
+                    precision=np.float16, country=None,
                     output=None,
                     prefix_suffix=False,
                     intercept=False):
@@ -95,7 +95,7 @@ def main(args):
                        output=output)
     if args.encexp:
         country = args.country
-        precision = np.float32
+        precision = np.float16
         prefix_suffix = args.prefix_suffix
         if country is not None:
             precision = np.float16

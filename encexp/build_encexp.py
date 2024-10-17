@@ -68,7 +68,7 @@ def feasible_tokens(vocabulary, count, min_pos=512):
 
 def build_encexp_token(index, vocabulary,
                        fname, max_pos=2**13,
-                       precision=np.float32,
+                       precision=np.float16,
                        transform=None,
                        estimator_kwargs=None):
     """Build token classifier"""
@@ -123,7 +123,7 @@ def build_encexp(vocabulary,
                  min_pos=512,
                  max_pos=2**13,
                  n_jobs = -1,
-                 precision=np.float32,
+                 precision=np.float16,
                  estimator_kwargs=None,
                  transform=None):
     """Build EncExp"""
