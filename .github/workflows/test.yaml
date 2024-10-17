@@ -37,7 +37,6 @@ jobs:
       if: ${{ runner.os == 'Linux' }}
       run: |
         coverage run -m pytest encexp/tests
-        coverage report
     - name: Tests on macOS and Windows
       if: ${{ runner.os != 'Linux' }}
       run: |

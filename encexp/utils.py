@@ -102,7 +102,8 @@ def b4msa_params(lang='es'):
                    select_conn=False,
                    max_dimension=False,
                    unit_vector=True,
-                   q_grams_words=True)
+                   q_grams_words=True,
+                   norm_emojis=True)
     if lang == 'ja' or lang == 'zh':
         tm_kwargs['token_list'] = [1, 2, 3]
     else:

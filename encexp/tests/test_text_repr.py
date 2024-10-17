@@ -265,3 +265,19 @@ def test_EncExp_intercept():
                  merge_IDF=False,
                  force_token=True)
     assert np.all(enc.bias != 0)
+
+
+def test_SeqTM_text_transformations():
+    """Test SeqTM Text Transformations"""
+    seq = SeqTM()
+    assert seq.tokenize('🤣🤣') == ['🤣', '🤣']
+
+
+def test_SeqTM_jaja():
+    """Test SeqTM jaja"""
+
+    seq = SeqTM()
+    txt = seq.text_transformations('~jajaja~')
+    assert txt == '~ja~'
+    txt = seq.text_transformations('~jajaja~🤣~')
+    assert txt == '~ja~🤣~'

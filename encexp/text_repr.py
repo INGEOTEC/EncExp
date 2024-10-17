@@ -16,7 +16,7 @@ from collections import OrderedDict
 from sklearn.model_selection import StratifiedKFold
 from sklearn.base import clone
 from b4msa import TextModel
-from microtc.utils import tweet_iterator, Counter
+from microtc.utils import Counter
 from microtc import emoticons
 from microtc.weighting import TFIDF
 import numpy as np
@@ -48,6 +48,15 @@ class SeqTM(TextModel):
         self.__vocabulary(counter)
         self.prefix_suffix = prefix_suffix
         self.precision = precision
+        self.norm_tokens = emoticons.read_emojis()
+        _ = {jaja: 'ja' for jaja in ['jaja', 'jajaj', 'jajaja', 'jajajaj',
+                                     'jajajaja', 'jajajajaj', 'jajajajaja',
+                                     'jajajajajaja', 'jajajajajajaja',
+                                     'jajajajajajajaja', 'ajaj', 'ajaja',
+                                     'ajajajaj', 'aja']}
+        self.norm_tokens.update(_)
+        _ = {x: True for x in self.norm_tokens}
+        self.norm_head = emoticons.create_data_structure(_)
 
     def __vocabulary(self, counter):
         """Vocabulary"""
@@ -68,15 +77,15 @@ class SeqTM(TextModel):
             else:
                 key = f'~{key}~'
                 self._map[key] = value
-            tokens[key] = value
-        _ = join(dirname(__file__), 'data', 'emojis.json.gz')
-        emojis = next(tweet_iterator(_))
-        for k, v in emojis.items():
-            self._map[k] = v
-            tokens[k] = v
-            for x in [f'~{k}~', f'~{k}', f'{k}~']:
-                self._map[x] = v
-                tokens[x] = v
+            tokens[key] = False
+        # _ = join(dirname(__file__), 'data', 'emojis.json.gz')
+        # emojis = next(tweet_iterator(_))
+        # for k, v in emojis.items():
+        #     self._map[k] = v
+        #     tokens[k] = True
+        #     for x in [f'~{k}~', f'~{k}', f'{k}~']:
+        #         self._map[x] = v
+        #         tokens[x] = True
 
     @property
     def language(self):
@@ -196,8 +205,10 @@ class SeqTM(TextModel):
             try:
                 current = current[char]
                 i += 1
-                if "__end__" in current:
+                if '__end__' in current:
                     end = i
+                    if current['__end__'] == True:
+                        raise KeyError
             except KeyError:
                 current = head
                 if end > init:
