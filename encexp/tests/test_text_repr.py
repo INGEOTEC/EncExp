@@ -78,7 +78,8 @@ def test_EncExp_filename():
         voc = compute_seqtm_vocabulary(SeqTM, data,
                                        'es-mx-sample.json',
                                        voc_size_exponent=10)
-        build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz')
+        build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',
+                     precision=np.float32)
     enc = EncExp(EncExp_filename='encexp-es-mx.json.gz',
                  precision=np.float32)
     assert enc.weights.dtype == np.float32
@@ -216,9 +217,8 @@ def test_EncExp_fill():
     samples()
     if not isfile('encexp-es-mx.json.gz'):
         build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',
-                    min_pos=64)
-    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz',
-                 precision=np.float32)
+                     min_pos=64)
+    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz')
     iden = {v:k for k, v in enumerate(enc.bow.names)}
     comp = [x for x in enc.bow.names if x not in enc.names]
     key = enc.names[0]

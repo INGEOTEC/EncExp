@@ -31,7 +31,7 @@ class SeqTM(TextModel):
                  voc_size_exponent: int=13,
                  vocabulary=None,
                  prefix_suffix: bool=True,
-                 precision=np.float16):
+                 precision=np.float32):
         if vocabulary is None:
             vocabulary = download_seqtm(lang,
                                         voc_size_exponent=voc_size_exponent,

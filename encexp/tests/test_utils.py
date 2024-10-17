@@ -68,7 +68,7 @@ def test_compute_b4msa_vocabulary():
     data = compute_b4msa_vocabulary('es-mx-sample.json')
     _ = data['counter']
     counter = Counter(_["dict"], _["update_calls"])
-    assert counter.most_common()[0] == ('q:e~', 1847)
+    assert counter.most_common()[0] == ('q:e~', 1849)
     data = compute_b4msa_vocabulary('es-mx-sample.json', 10)
     _ = data['counter']
     counter = Counter(_["dict"], _["update_calls"])
