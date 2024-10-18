@@ -296,10 +296,11 @@ def replace_tokens(tm):
                                  'jajajaja', 'jajajajaj', 'jajajajaja',
                                  'jajajajajaja', 'jajajajajajaja',
                                  'jajajajajajajaja', 'ajaj', 'ajaja',
-                                 'ajajajaj', 'aja']}
+                                 'ajajajaj', 'aja', 'jaa', 'jaj', 'jajja']}
     tm.norm_tokens.update(_)
     _ = {haha: 'ha' for haha in ['haha', 'hahaha', 'hahahaha']}
     tm.norm_tokens.update(_)
+    tm.norm_tokens.update({'🧑‍':'🧑'})
     _ = {x: True for x in tm.norm_tokens}
     tm.norm_head = emoticons.create_data_structure(_)
     return tm
