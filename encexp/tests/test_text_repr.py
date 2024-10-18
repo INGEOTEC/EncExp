@@ -270,6 +270,7 @@ def test_EncExp_intercept():
 def test_SeqTM_text_transformations():
     """Test SeqTM Text Transformations"""
     seq = SeqTM()
+    seq.norm_emojis = True
     assert seq.tokenize('🤣🤣') == ['🤣', '🤣']
 
 
@@ -277,7 +278,12 @@ def test_SeqTM_jaja():
     """Test SeqTM jaja"""
 
     seq = SeqTM()
-    txt = seq.text_transformations('~jajaja~')
+    seq.norm_emojis = True
+    txt = seq.text_transformations('jajaja')
     assert txt == '~ja~'
-    txt = seq.text_transformations('~jajaja~🤣~')
+    txt = seq.text_transformations('hola ja')
+    assert txt == '~hola~ja~'
+    txt = seq.text_transformations('jajaja 🤣')
     assert txt == '~ja~🤣~'
+    txt = seq.text_transformations('🧑‍')
+    assert txt == '~🧑~' 

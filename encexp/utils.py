@@ -292,15 +292,14 @@ def set_to_zero(data, percentage: float=0.95):
 def replace_tokens(tm):
     """Replace tokens on TextModel"""
     tm.norm_tokens = emoticons.read_emojis()
-    _ = {jaja: 'ja' for jaja in ['jaja', 'jajaj', 'jajaja', 'jajajaj',
-                                 'jajajaja', 'jajajajaj', 'jajajajaja',
-                                 'jajajajajaja', 'jajajajajajaja',
-                                 'jajajajajajajaja', 'ajaj', 'ajaja',
-                                 'ajajajaj', 'aja', 'jaa', 'jaj', 'jajja']}
+    _ = {f'~{jaja}~': '~ja~' for jaja in ['jaja', 'jajaj', 'jajaja', 'jajajaj',
+                                          'jajajaja', 'jajajajaj', 'jajajajaja',
+                                          'jajajajajaja', 'jajajajajajaja',
+                                          'jajajajajajajaja', 'ajaj', 'ajaja',
+                                          'ajajajaj', 'aja', 'jaa', 'jaj', 'jajja']}
     tm.norm_tokens.update(_)
-    _ = {haha: 'ha' for haha in ['haha', 'hahaha', 'hahahaha']}
+    _ = {f'~{haha}~': '~ha~' for haha in ['haha', 'hahaha', 'hahahaha']}
     tm.norm_tokens.update(_)
-    tm.norm_tokens.update({'🧑‍':'🧑'})
     _ = {x: True for x in tm.norm_tokens}
     tm.norm_head = emoticons.create_data_structure(_)
     return tm
