@@ -56,7 +56,7 @@ def test_build_voc_stats():
     statistics = []
     build_voc('es-mx-sample.json', output='t.json.gz',
               voc_size_exponent=10, statistics=statistics)
-    assert statistics[:3] == [79030, 76536, 73824]
+    assert statistics[:3] == [78059, 75694, 72987]
     os.unlink('t.json.gz')
 
 
@@ -105,7 +105,7 @@ def test_build_encexp_token():
     tokens = feasible_tokens(voc, cnt)
     index, token = tokens[-3]
     fname = build_encexp_token(index, voc, output)
-    assert fname == '564-encode-es-mx-sample.json'
+    assert fname == '562-encode-es-mx-sample.json'
     os.unlink('encode-es-mx-sample.json')
     data = next(tweet_iterator(fname))
     assert data['label'] == token

@@ -21,6 +21,7 @@ try:
 except ImportError:
     USE_TQDM = False
 from microtc.utils import tweet_iterator, Counter
+from microtc import emoticons
 from b4msa import TextModel
 import numpy as np
 import gzip
@@ -127,7 +128,7 @@ def compute_b4msa_vocabulary(filename, limit=None, lang='es',
 
     params = b4msa_params(lang=lang)
     params.update(kwargs)
-    tokenize = TextModel(**params).tokenize
+    tokenize = replace_tokens(TextModel(**params)).tokenize
     if limit is None:
         limit = np.inf
     counter = Counter()
@@ -286,6 +287,22 @@ def set_to_zero(data, percentage: float=0.95):
         values = a_n
     data[data < values] = 0
     return data
+
+
+def replace_tokens(tm):
+    """Replace tokens on TextModel"""
+    tm.norm_tokens = emoticons.read_emojis()
+    _ = {jaja: 'ja' for jaja in ['jaja', 'jajaj', 'jajaja', 'jajajaj',
+                                 'jajajaja', 'jajajajaj', 'jajajajaja',
+                                 'jajajajajaja', 'jajajajajajaja',
+                                 'jajajajajajajaja', 'ajaj', 'ajaja',
+                                 'ajajajaj', 'aja']}
+    tm.norm_tokens.update(_)
+    _ = {haha: 'ha' for haha in ['haha', 'hahaha', 'hahahaha']}
+    tm.norm_tokens.update(_)
+    _ = {x: True for x in tm.norm_tokens}
+    tm.norm_head = emoticons.create_data_structure(_)
+    return tm
 
 
 if __name__ == '__main__':

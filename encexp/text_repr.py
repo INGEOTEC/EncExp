@@ -22,6 +22,7 @@ from microtc.weighting import TFIDF
 import numpy as np
 from numpy.linalg import norm
 from encexp.download import download_seqtm, download_encexp
+from encexp.utils import replace_tokens
 
 
 class SeqTM(TextModel):
@@ -48,15 +49,7 @@ class SeqTM(TextModel):
         self.__vocabulary(counter)
         self.prefix_suffix = prefix_suffix
         self.precision = precision
-        self.norm_tokens = emoticons.read_emojis()
-        _ = {jaja: 'ja' for jaja in ['jaja', 'jajaj', 'jajaja', 'jajajaj',
-                                     'jajajaja', 'jajajajaj', 'jajajajaja',
-                                     'jajajajajaja', 'jajajajajajaja',
-                                     'jajajajajajajaja', 'ajaj', 'ajaja',
-                                     'ajajajaj', 'aja']}
-        self.norm_tokens.update(_)
-        _ = {x: True for x in self.norm_tokens}
-        self.norm_head = emoticons.create_data_structure(_)
+        replace_tokens(self)
 
     def __vocabulary(self, counter):
         """Vocabulary"""
