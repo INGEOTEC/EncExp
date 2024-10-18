@@ -57,7 +57,7 @@ def encode(vocabulary, fname):
 def feasible_tokens(vocabulary, count, min_pos=512):
     """Feasible tokens"""
     seq = SeqTM(vocabulary=vocabulary)
-    tokens = sorted(seq.model.word2id)
+    tokens = seq.names
     output = []
     for k, v in enumerate(tokens):
         if count[v] < min_pos:
@@ -73,8 +73,7 @@ def build_encexp_token(index, vocabulary,
                        estimator_kwargs=None):
     """Build token classifier"""
     seq = SeqTM(vocabulary=vocabulary)
-    tokens = sorted(seq.model.word2id)
-    label = tokens[index]
+    label = seq.names[index]
     output_fname = encode_output(fname, prefix=f'{index}')
     POS = []
     NEG = []
