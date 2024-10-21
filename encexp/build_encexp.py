@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
-from sklearn.svm import LinearSVC
+from itertools import count
 from random import randint, shuffle
-from joblib import Parallel, delayed
-from os.path import isfile, basename
-import numpy as np
 import gzip
 import json
 import os
+from os.path import isfile, basename
+from sklearn.svm import LinearSVC
+from joblib import Parallel, delayed
+import numpy as np
 from microtc.utils import tweet_iterator, Counter
 import encexp
 from encexp.text_repr import SeqTM
@@ -39,15 +40,18 @@ def encode_output(fname, prefix='encode'):
     return output
 
 
-def encode(vocabulary, fname):
+def encode(vocabulary, fname, limit=None):
     """Encode file"""
+    limit = np.inf if limit is None else limit
+    loop = count() if limit == np.inf else range(limit)    
     output = encode_output(fname)
     seq = SeqTM(vocabulary=vocabulary)
     tokenize = seq.tokenize
     cnt = Counter()
     with open(output, 'w', encoding='utf-8') as fpt:
-        for tweet in progress_bar(tweet_iterator(fname),
-                                  desc=output):
+        for tweet, _ in progress_bar(zip(tweet_iterator(fname), loop),
+                                     total=limit,
+                                     desc=output):
             _ = tokenize(tweet)
             cnt.update(_)
             print(json.dumps(_), file=fpt)
@@ -125,6 +129,7 @@ def build_encexp(vocabulary,
                  n_jobs = -1,
                  precision=np.float32,
                  estimator_kwargs=None,
+                 limit=None,
                  transform=None):
     """Build EncExp"""
     encode_fname, cnt = encode(vocabulary, fname)
@@ -166,7 +171,8 @@ def main(args):
     if args.intercept:
         estimator_kwargs = dict(fit_intercept=True)
     build_encexp(voc, filename, output,
-                 min_pos=min_pos, estimator_kwargs=estimator_kwargs)
+                 min_pos=min_pos, limit=args.limit,
+                 estimator_kwargs=estimator_kwargs)
 
 
 if __name__ == '__main__':
@@ -179,13 +185,16 @@ if __name__ == '__main__':
                         dest='output', type=str)
     parser.add_argument('--vocabulary',
                         help='Vocabulary filename',
-                        dest='vocabulary', type=str) 
+                        dest='vocabulary', type=str)
     parser.add_argument('--min-pos-examples',
                         help='Minimum number of positive examples',
                         dest='min_pos', type=int, default=512)
-    parser.add_argument('--intercept', 
+    parser.add_argument('--limit', help='Maximum size of the dataset',
+                        dest='limit',
+                        type=int, default=None)
+    parser.add_argument('--intercept',
                         help='Estimate the intercept',
-                        dest='intercept', action='store_true')    
+                        dest='intercept', action='store_true')
     parser.add_argument('file',
                         help='Input filename',
                         nargs=1, type=str)
