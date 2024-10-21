@@ -147,8 +147,11 @@ def test_build_encexp_estimator_kwargs():
     enc = EncExp(EncExp_filename='encexp-es-mx.json.gz')
     assert enc.bias.shape[0] == enc.weights.shape[0]
     os.unlink('encexp-es-mx.json.gz')
-
-    
+    build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',
+                 limit=10,
+                 estimator_kwargs=dict(fit_intercept=True))
+    assert isfile('encexp-es-mx.json.gz')
+    os.unlink('encexp-es-mx.json.gz')
 
 
 def test_build_encexp_transform():
