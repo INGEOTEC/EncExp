@@ -132,7 +132,7 @@ def build_encexp(vocabulary,
                  limit=None,
                  transform=None):
     """Build EncExp"""
-    encode_fname, cnt = encode(vocabulary, fname)
+    encode_fname, cnt = encode(vocabulary, fname, limit=limit)
     tokens = feasible_tokens(vocabulary, cnt, min_pos=min_pos)
     fnames = Parallel(n_jobs=n_jobs)(delayed(build_encexp_token)(index,
                                                                  vocabulary,
