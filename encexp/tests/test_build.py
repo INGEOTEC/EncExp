@@ -105,7 +105,7 @@ def test_build_encexp_token():
     tokens = feasible_tokens(voc, cnt)
     index, token = tokens[-3]
     fname = build_encexp_token(index, voc, output)
-    assert fname == '560-encode-es-mx-sample.json'
+    assert fname == '559-encode-es-mx-sample.json'
     os.unlink('encode-es-mx-sample.json')
     data = next(tweet_iterator(fname))
     assert data['label'] == token
