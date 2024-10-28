@@ -21,15 +21,18 @@ import encexp
 
 
 def download_seqtm(lang, voc_size_exponent: int=13,
-                   output=None,
-                   prefix_suffix: bool=False):
+                   output=None, voc_source='mix',
+                   prefix_suffix: bool=True):
     """Download SeqTM vocabulary"""
     if not isdir(MODELS):
         os.mkdir(MODELS)
-    voc_fname = f'seqtm_{lang}_{voc_size_exponent}.json.gz'
+    flags = []
     if prefix_suffix:
-        a, b = voc_fname.split(f'_{lang}_')
-        voc_fname = f'{a}_ix_{lang}_{b}' 
+        flags.append('ix')
+    for flag in [voc_source]:
+        if flag is not None:
+            flags.append(flag)
+    voc_fname = f'seqtm_{"_".join(flags)}_{lang}_{voc_size_exponent}.json.gz'
     if output is None:
         output = join(MODELS, voc_fname)
     if isfile(output):
@@ -42,9 +45,9 @@ def download_seqtm(lang, voc_size_exponent: int=13,
 
 
 def download_encexp(lang='es', voc_size_exponent: int=13,
-                    precision=np.float32, country=None,
-                    output=None,
-                    prefix_suffix=False,
+                    precision=np.float16, voc_source=None,
+                    enc_source=None, output=None,
+                    prefix_suffix=True,
                     intercept=False):
     """Download EncExp"""
     def read(output):
@@ -60,20 +63,15 @@ def download_encexp(lang='es', voc_size_exponent: int=13,
 
     if not isdir(MODELS):
         os.mkdir(MODELS)
-    if country:
-        voc_fname = f'encexp_{country}_{lang}_{voc_size_exponent}.json.gz'
-    else:   
-        voc_fname = f'encexp_{lang}_{voc_size_exponent}.json.gz'
-    if precision.__name__ == 'float16':
-        _ = voc_fname.split('_')
-        _.insert(1, 'float16')
-        voc_fname = '_'.join(_)
+    flags = []
+    if prefix_suffix:
+        flags.append('ix')
+    for flag in [voc_source, enc_source]:
+        if flag is not None:
+            flags.append(flag)
     if intercept:
-        a, b = voc_fname.split(f'_{lang}_')
-        voc_fname = f'{a}_W0_{lang}_{b}'    
-    elif prefix_suffix:
-        a, b = voc_fname.split(f'_{lang}_')
-        voc_fname = f'{a}_ix_{lang}_{b}'
+        flags.append('W0')
+    voc_fname = f'encexp_{"_".join(flags)}_{lang}_{voc_size_exponent}.json.gz'
     if output is None:
         output = join(MODELS, voc_fname)
     if isfile(output):
@@ -94,16 +92,16 @@ def main(args):
         download_seqtm(lang=lang, voc_size_exponent=voc_size_exponent,
                        output=output)
     if args.encexp:
-        country = args.country
-        precision = np.float32
+        voc_source = args.voc_source
+        precision = np.float16
         prefix_suffix = args.prefix_suffix
-        if country is not None:
+        if voc_source is not None:
             precision = np.float16
 
         download_encexp(lang=lang,
                         voc_size_exponent=voc_size_exponent,
                         precision=precision,
-                        country=country,
+                        voc_source=voc_source,
                         output=output,
                         prefix_suffix=prefix_suffix)
     
@@ -122,8 +120,8 @@ if __name__ == '__main__':
                         help='Vocabulary size express as log2',
                         dest='voc_size_exponent',
                         type=int, default=13)
-    parser.add_argument('--country',
-                        help='Country', dest='country',
+    parser.add_argument('--voc_source',
+                        help='Vocabulary Source', dest='voc_source',
                         default=None)
     parser.add_argument('--SeqTM',
                         help='Download SeqTM vocabulary',
