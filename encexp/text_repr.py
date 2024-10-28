@@ -32,9 +32,10 @@ class SeqTM(TextModel):
                  voc_size_exponent: int=13,
                  vocabulary=None,
                  prefix_suffix: bool=True,
+                 voc_source: str='mix',
                  precision=np.float32):
         if vocabulary is None:
-            vocabulary = download_seqtm(lang,
+            vocabulary = download_seqtm(lang, voc_source=voc_source,
                                         voc_size_exponent=voc_size_exponent,
                                         prefix_suffix=prefix_suffix)
         self._map = {}
@@ -253,7 +254,8 @@ class EncExp:
     voc_size_exponent: int=13
     EncExp_filename: str=None
     precision: np.dtype=np.float16
-    country: str=None
+    voc_source: str='mix'
+    enc_source: str=None
     prefix_suffix: bool=True
     estimator_kwargs: dict=None
     merge_IDF: bool=True
@@ -268,7 +270,8 @@ class EncExp:
                     voc_size_exponent=self.voc_size_exponent,
                     EncExp_filename=self.EncExp_filename,
                     precision=self.precision,
-                    country=self.country,
+                    voc_source=self.voc_source,
+                    enc_source=self.enc_source,
                     prefix_suffix=self.prefix_suffix,
                     estimator_kwargs=self.estimator_kwargs,
                     merge_IDF=self.merge_IDF,
@@ -343,7 +346,8 @@ class EncExp:
                 data = download_encexp(lang=self.lang,
                                        voc_size_exponent=self.voc_size_exponent,
                                        precision=self.precision,
-                                       country=self.country,
+                                       voc_source=self.voc_source,
+                                       enc_source=self.enc_source,
                                        prefix_suffix=self.prefix_suffix,
                                        intercept=self.intercept)
             self.bow = SeqTM(vocabulary=data['seqtm'])
