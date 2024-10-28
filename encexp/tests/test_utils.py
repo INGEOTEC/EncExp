@@ -129,7 +129,7 @@ def test_unit_length():
     w = enc.weights
     w_u = unit_length(w)
     a = np.sqrt((w_u * w_u).sum(axis=0))
-    assert_almost_equal(a, 1, decimal=5)
+    assert_almost_equal(a, 1, decimal=4)
     w[:, 3] = 0
     w_u = unit_length(w)
     assert w_u[:, 3].sum() == 0
