@@ -34,12 +34,12 @@ def test_seqtm_build():
     A.output = None
     A.limit = None
     A.voc_size_exponent = 4
-    A.prefix_suffix = False
+    A.prefix_suffix = True
     main(A)
     data = next(tweet_iterator('seqtm_en_4.json.gz'))
     _ = data['counter']
     counter2 = Counter(_["dict"], _["update_calls"])
-    assert counter2.most_common()[0] == ('q:e~', 1848)
+    assert counter2.most_common()[0] == ('q:a~', 1813)
     os.unlink('seqtm_en_4.json.gz')
 
 
@@ -164,6 +164,7 @@ def test_build_encexp_transform():
     enc = EncExp(lang='es', precision=np.float16,
                  prefix_suffix=True)
     voc = download_encexp(lang='es', precision=np.float16,
+                          voc_source='mix',
                           prefix_suffix=True)['seqtm']
 
     build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',

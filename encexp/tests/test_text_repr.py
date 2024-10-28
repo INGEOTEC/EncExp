@@ -199,11 +199,14 @@ def test_EncExp_merge_IDF():
     enc = EncExp(lang='es', prefix_suffix=True,
                  precision=np.float16, merge_IDF=False,
                  force_token=False)
+    enc.fill(inplace=True)
+    
     for k, v in enc.bow.token2id.items():
         assert enc.weights[v, v] == 0
     enc2 = EncExp(lang='es', prefix_suffix=True,
                   precision=np.float16, merge_IDF=True,
                   force_token=False)
+    enc2.fill(inplace=True)
     _ = (enc.weights * enc.bow.weights).astype(enc.precision)
     assert_almost_equal(_, enc2.weights, decimal=5)
 
@@ -213,6 +216,7 @@ def test_EncExp_fill():
     from encexp.download import download_encexp
 
     voc = download_encexp(lang='es', precision=np.float16,
+                          voc_source='mix',
                           prefix_suffix=True)['seqtm']
     samples()
     if not isfile('encexp-es-mx.json.gz'):

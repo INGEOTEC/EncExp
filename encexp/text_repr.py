@@ -310,10 +310,10 @@ class EncExp:
         """Set the maximum weight"""
         rows = np.arange(len(self.names))
         cols = np.array([self.bow.token2id[x] for x in self.names])
-        w = self.weights
+        w = self.weights[:, cols]
         if IDF:
-            w = w * self.bow.weights
-            _max = (w.max(axis=1) / self.bow.weights).astype(self.precision)
+            w = w * self.bow.weights[cols]
+            _max = (w.max(axis=1) / self.bow.weights[cols]).astype(self.precision)
         else:
             _max = w.max(axis=1)
         self.weights[rows, cols] = _max
@@ -469,7 +469,7 @@ class EncExp:
         weights = self.weights
         w = np.zeros((len(self.bow.names), weights.shape[1]),
                      dtype=self.precision)
-        iden = {v:k for k, v in enumerate(self.bow.names)}
+        iden = {v: k for k, v in enumerate(self.bow.names)}
         for key, value in zip(self.names, weights):
             w[iden[key]] = value
         if inplace:
