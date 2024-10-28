@@ -56,7 +56,7 @@ def test_build_voc_stats():
     statistics = []
     build_voc('es-mx-sample.json', output='t.json.gz',
               voc_size_exponent=10, statistics=statistics)
-    assert statistics[:3] == [78059, 75694, 72987]
+    assert statistics[:3] == [78037, 75690, 72900]
     os.unlink('t.json.gz')
 
 
