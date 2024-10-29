@@ -22,7 +22,7 @@ from microtc.weighting import TFIDF
 import numpy as np
 from numpy.linalg import norm
 from encexp.download import download_seqtm, download_encexp
-from encexp.utils import replace_tokens
+from encexp.utils import replace_tokens, progress_bar
 
 
 class SeqTM(TextModel):
@@ -263,6 +263,7 @@ class EncExp:
     kfold_class: StratifiedKFold=StratifiedKFold
     kfold_kwargs: dict=None
     intercept: bool=False
+    progress_bar: bool=False
 
     def get_params(self):
         """Parameters"""
@@ -277,7 +278,8 @@ class EncExp:
                     merge_IDF=self.merge_IDF,
                     force_token=self.force_token,
                     kfold_class=self.kfold_class,
-                    kfold_kwargs=self.kfold_kwargs)
+                    kfold_kwargs=self.kfold_kwargs,
+                    progress_bar=self.progress_bar)
 
     @property
     def estimator(self):
@@ -366,8 +368,8 @@ class EncExp:
             self.names = np.array([vec['label'] for vec in data['coefs']])
             if self.force_token:
                 self.force_tokens_weights(IDF=self.intercept)
-        if self.intercept:
-            self.weights = np.asarray(self._weights, order='F')
+        # if self.intercept or True:
+        self.weights = np.asarray(self._weights, order='F')
         return self._weights
 
     @weights.setter
@@ -422,7 +424,9 @@ class EncExp:
             X = self.bow.transform(texts) @ self.weights.T + self.bias
         else:
             X = np.r_[[self.encode(data).sum(axis=1)
-                    for data in texts]]
+                      for data in progress_bar(texts, total=len(texts),
+                                               desc='Transform',
+                                               use_tqdm=self.progress_bar)]]
         if flag:
             X = X.astype(np.float32)
         _norm = norm(X, axis=1)

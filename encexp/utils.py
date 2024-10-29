@@ -112,10 +112,12 @@ def b4msa_params(lang='es'):
     return tm_kwargs
 
 
-def progress_bar(data, total=np.inf, **kwargs):
+def progress_bar(data, total=np.inf,
+                 use_tqdm: bool=True,
+                 **kwargs):
     """Progress bar"""
 
-    if not USE_TQDM:
+    if not USE_TQDM or not use_tqdm:
         return data
     if total == np.inf:
         total = None
