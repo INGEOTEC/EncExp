@@ -279,6 +279,7 @@ class EncExp:
                     force_token=self.force_token,
                     kfold_class=self.kfold_class,
                     kfold_kwargs=self.kfold_kwargs,
+                    intercept=self.intercept,
                     progress_bar=self.progress_bar)
 
     @property
