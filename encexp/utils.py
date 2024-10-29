@@ -21,6 +21,7 @@ try:
 except ImportError:
     USE_TQDM = False
 from microtc.utils import tweet_iterator, Counter
+from microtc import emoticons
 from b4msa import TextModel
 import numpy as np
 import gzip
@@ -102,7 +103,8 @@ def b4msa_params(lang='es'):
                    select_conn=False,
                    max_dimension=False,
                    unit_vector=True,
-                   q_grams_words=True)
+                   q_grams_words=True,
+                   norm_emojis=True)
     if lang == 'ja' or lang == 'zh':
         tm_kwargs['token_list'] = [1, 2, 3]
     else:
@@ -110,10 +112,12 @@ def b4msa_params(lang='es'):
     return tm_kwargs
 
 
-def progress_bar(data, total=np.inf, **kwargs):
+def progress_bar(data, total=np.inf,
+                 use_tqdm: bool=True,
+                 **kwargs):
     """Progress bar"""
 
-    if not USE_TQDM:
+    if not USE_TQDM or not use_tqdm:
         return data
     if total == np.inf:
         total = None
@@ -126,7 +130,7 @@ def compute_b4msa_vocabulary(filename, limit=None, lang='es',
 
     params = b4msa_params(lang=lang)
     params.update(kwargs)
-    tokenize = TextModel(**params).tokenize
+    tokenize = replace_tokens(TextModel(**params)).tokenize
     if limit is None:
         limit = np.inf
     counter = Counter()
@@ -285,6 +289,22 @@ def set_to_zero(data, percentage: float=0.95):
         values = a_n
     data[data < values] = 0
     return data
+
+
+def replace_tokens(tm):
+    """Replace tokens on TextModel"""
+    tm.norm_tokens = emoticons.read_emojis()
+    _ = {f'~{jaja}~': '~ja~' for jaja in ['jaja', 'jajaj', 'jajaja', 'jajajaj',
+                                          'jajajaja', 'jajajajaj', 'jajajajaja',
+                                          'jajajajajaja', 'jajajajajajaja',
+                                          'jajajajajajajaja', 'ajaj', 'ajaja',
+                                          'ajajajaj', 'aja', 'jaa', 'jaj', 'jajja']}
+    tm.norm_tokens.update(_)
+    _ = {f'~{haha}~': '~ha~' for haha in ['haha', 'hahaha', 'hahahaha']}
+    tm.norm_tokens.update(_)
+    _ = {x: True for x in tm.norm_tokens}
+    tm.norm_head = emoticons.create_data_structure(_)
+    return tm
 
 
 if __name__ == '__main__':

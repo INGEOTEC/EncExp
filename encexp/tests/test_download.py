@@ -29,7 +29,7 @@ def test_download_seqtm():
 def test_download_encexp():
     """Test download EncExp"""
 
-    data = download_encexp(lang='es', country='mx',
+    data = download_encexp(lang='es', voc_source='mix',
                            precision=np.float16)
     dim = 2**13
     # assert list(data.keys()) is None

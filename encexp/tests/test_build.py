@@ -34,12 +34,12 @@ def test_seqtm_build():
     A.output = None
     A.limit = None
     A.voc_size_exponent = 4
-    A.prefix_suffix = False
+    A.prefix_suffix = True
     main(A)
     data = next(tweet_iterator('seqtm_en_4.json.gz'))
     _ = data['counter']
     counter2 = Counter(_["dict"], _["update_calls"])
-    assert counter2.most_common()[0] == ('q:e~', 1846)
+    assert counter2.most_common()[0] == ('q:a~', 1813)
     os.unlink('seqtm_en_4.json.gz')
 
 
@@ -56,7 +56,7 @@ def test_build_voc_stats():
     statistics = []
     build_voc('es-mx-sample.json', output='t.json.gz',
               voc_size_exponent=10, statistics=statistics)
-    assert statistics[:3] == [78696, 75996, 73297]
+    assert statistics[:3] == [78037, 75690, 72900]
     os.unlink('t.json.gz')
 
 
@@ -105,7 +105,7 @@ def test_build_encexp_token():
     tokens = feasible_tokens(voc, cnt)
     index, token = tokens[-3]
     fname = build_encexp_token(index, voc, output)
-    assert fname == '561-encode-es-mx-sample.json'
+    assert fname == '559-encode-es-mx-sample.json'
     os.unlink('encode-es-mx-sample.json')
     data = next(tweet_iterator(fname))
     assert data['label'] == token
@@ -118,12 +118,16 @@ def test_build_encexp():
     data = compute_b4msa_vocabulary('es-mx-sample.json')
     voc = compute_seqtm_vocabulary(SeqTM, data,
                                    'es-mx-sample.json',
-                                   voc_size_exponent=10)
-    build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz')
+                                   voc_size_exponent=13)
+    build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',
+                 min_pos=16)
     assert isfile('encexp-es-mx.json.gz')
     lst = list(tweet_iterator('encexp-es-mx.json.gz'))
     assert lst[1]['intercept'] == 0
     os.unlink('encexp-es-mx.json.gz')
+    tokens = set(SeqTM(vocabulary=voc).names)
+    tokens_w = set([x['label'] for x in lst[1:]])
+    assert len(tokens_w - tokens) == 0
 
 
 def test_build_encexp_estimator_kwargs():
@@ -140,12 +144,14 @@ def test_build_encexp_estimator_kwargs():
     assert isfile('encexp-es-mx.json.gz')
     lst = list(tweet_iterator('encexp-es-mx.json.gz'))
     assert lst[1]['intercept'] != 0
-    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz',
-                 precision=np.float32)
+    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz')
     assert enc.bias.shape[0] == enc.weights.shape[0]
     os.unlink('encexp-es-mx.json.gz')
-
-    
+    build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',
+                 limit=10,
+                 estimator_kwargs=dict(fit_intercept=True))
+    assert isfile('encexp-es-mx.json.gz')
+    os.unlink('encexp-es-mx.json.gz')
 
 
 def test_build_encexp_transform():
@@ -158,6 +164,7 @@ def test_build_encexp_transform():
     enc = EncExp(lang='es', precision=np.float16,
                  prefix_suffix=True)
     voc = download_encexp(lang='es', precision=np.float16,
+                          voc_source='mix',
                           prefix_suffix=True)['seqtm']
 
     build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',

@@ -16,12 +16,13 @@ from collections import OrderedDict
 from sklearn.model_selection import StratifiedKFold
 from sklearn.base import clone
 from b4msa import TextModel
-from microtc.utils import tweet_iterator, Counter
+from microtc.utils import Counter
 from microtc import emoticons
 from microtc.weighting import TFIDF
 import numpy as np
 from numpy.linalg import norm
 from encexp.download import download_seqtm, download_encexp
+from encexp.utils import replace_tokens, progress_bar
 
 
 class SeqTM(TextModel):
@@ -31,9 +32,10 @@ class SeqTM(TextModel):
                  voc_size_exponent: int=13,
                  vocabulary=None,
                  prefix_suffix: bool=True,
+                 voc_source: str='mix',
                  precision=np.float32):
         if vocabulary is None:
-            vocabulary = download_seqtm(lang,
+            vocabulary = download_seqtm(lang, voc_source=voc_source,
                                         voc_size_exponent=voc_size_exponent,
                                         prefix_suffix=prefix_suffix)
         self._map = {}
@@ -48,6 +50,7 @@ class SeqTM(TextModel):
         self.__vocabulary(counter)
         self.prefix_suffix = prefix_suffix
         self.precision = precision
+        replace_tokens(self)
 
     def __vocabulary(self, counter):
         """Vocabulary"""
@@ -68,15 +71,15 @@ class SeqTM(TextModel):
             else:
                 key = f'~{key}~'
                 self._map[key] = value
-            tokens[key] = value
-        _ = join(dirname(__file__), 'data', 'emojis.json.gz')
-        emojis = next(tweet_iterator(_))
-        for k, v in emojis.items():
-            self._map[k] = v
-            tokens[k] = v
-            for x in [f'~{k}~', f'~{k}', f'{k}~']:
-                self._map[x] = v
-                tokens[x] = v
+            tokens[key] = False
+        # _ = join(dirname(__file__), 'data', 'emojis.json.gz')
+        # emojis = next(tweet_iterator(_))
+        # for k, v in emojis.items():
+        #     self._map[k] = v
+        #     tokens[k] = True
+        #     for x in [f'~{k}~', f'~{k}', f'{k}~']:
+        #         self._map[x] = v
+        #         tokens[x] = True
 
     @property
     def language(self):
@@ -196,8 +199,10 @@ class SeqTM(TextModel):
             try:
                 current = current[char]
                 i += 1
-                if "__end__" in current:
+                if '__end__' in current:
                     end = i
+                    if current['__end__'] == True:
+                        raise KeyError
             except KeyError:
                 current = head
                 if end > init:
@@ -249,7 +254,8 @@ class EncExp:
     voc_size_exponent: int=13
     EncExp_filename: str=None
     precision: np.dtype=np.float16
-    country: str=None
+    voc_source: str='mix'
+    enc_source: str=None
     prefix_suffix: bool=True
     estimator_kwargs: dict=None
     merge_IDF: bool=True
@@ -257,6 +263,7 @@ class EncExp:
     kfold_class: StratifiedKFold=StratifiedKFold
     kfold_kwargs: dict=None
     intercept: bool=False
+    progress_bar: bool=False
 
     def get_params(self):
         """Parameters"""
@@ -264,13 +271,16 @@ class EncExp:
                     voc_size_exponent=self.voc_size_exponent,
                     EncExp_filename=self.EncExp_filename,
                     precision=self.precision,
-                    country=self.country,
+                    voc_source=self.voc_source,
+                    enc_source=self.enc_source,
                     prefix_suffix=self.prefix_suffix,
                     estimator_kwargs=self.estimator_kwargs,
                     merge_IDF=self.merge_IDF,
                     force_token=self.force_token,
                     kfold_class=self.kfold_class,
-                    kfold_kwargs=self.kfold_kwargs)
+                    kfold_kwargs=self.kfold_kwargs,
+                    intercept=self.intercept,
+                    progress_bar=self.progress_bar)
 
     @property
     def estimator(self):
@@ -303,10 +313,10 @@ class EncExp:
         """Set the maximum weight"""
         rows = np.arange(len(self.names))
         cols = np.array([self.bow.token2id[x] for x in self.names])
-        w = self.weights
+        w = self.weights[:, cols]
         if IDF:
-            w = w * self.bow.weights
-            _max = (w.max(axis=1) / self.bow.weights).astype(self.precision)
+            w = w * self.bow.weights[cols]
+            _max = (w.max(axis=1) / self.bow.weights[cols]).astype(self.precision)
         else:
             _max = w.max(axis=1)
         self.weights[rows, cols] = _max
@@ -339,7 +349,8 @@ class EncExp:
                 data = download_encexp(lang=self.lang,
                                        voc_size_exponent=self.voc_size_exponent,
                                        precision=self.precision,
-                                       country=self.country,
+                                       voc_source=self.voc_source,
+                                       enc_source=self.enc_source,
                                        prefix_suffix=self.prefix_suffix,
                                        intercept=self.intercept)
             self.bow = SeqTM(vocabulary=data['seqtm'])
@@ -358,8 +369,8 @@ class EncExp:
             self.names = np.array([vec['label'] for vec in data['coefs']])
             if self.force_token:
                 self.force_tokens_weights(IDF=self.intercept)
-        if self.intercept:
-            self.weights = np.asarray(self._weights, order='F')
+        # if self.intercept or True:
+        self.weights = np.asarray(self._weights, order='F')
         return self._weights
 
     @weights.setter
@@ -414,7 +425,9 @@ class EncExp:
             X = self.bow.transform(texts) @ self.weights.T + self.bias
         else:
             X = np.r_[[self.encode(data).sum(axis=1)
-                    for data in texts]]
+                      for data in progress_bar(texts, total=len(texts),
+                                               desc='Transform',
+                                               use_tqdm=self.progress_bar)]]
         if flag:
             X = X.astype(np.float32)
         _norm = norm(X, axis=1)
@@ -461,7 +474,7 @@ class EncExp:
         weights = self.weights
         w = np.zeros((len(self.bow.names), weights.shape[1]),
                      dtype=self.precision)
-        iden = {v:k for k, v in enumerate(self.bow.names)}
+        iden = {v: k for k, v in enumerate(self.bow.names)}
         for key, value in zip(self.names, weights):
             w[iden[key]] = value
         if inplace:
