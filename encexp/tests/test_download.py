@@ -48,7 +48,7 @@ def test_download_main():
         voc_size_exponent = 13
         lang = 'es'
         output = None
-        voc_source = 'mix'
+        voc_source = 'noGeo'
         enc_source = None
         seqtm = False
         encexp = True

@@ -242,7 +242,7 @@ def test_EncExp_fill():
     from encexp.download import download_encexp
 
     voc = download_encexp(lang='es', precision=np.float16,
-                          voc_source='mix',
+                          voc_source='noGeo',
                           prefix_suffix=True)['seqtm']
     samples()
     if not isfile('encexp-es-mx.json.gz'):

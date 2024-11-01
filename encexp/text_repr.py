@@ -33,7 +33,7 @@ class SeqTM(TextModel):
                  voc_size_exponent: int=13,
                  vocabulary=None,
                  prefix_suffix: bool=True,
-                 voc_source: str='mix',
+                 voc_source: str='noGeo',
                  precision=np.float32):
         if vocabulary is None:
             vocabulary = download_seqtm(lang, voc_source=voc_source,
@@ -480,17 +480,19 @@ class EncExp:
             return np.c_[hy]
         return hy
 
-    def fill(self, inplace: bool=True):
+    def fill(self, inplace: bool=True, names: list=None):
         """Fill weights with the missing dimensions"""
         weights = self.weights
-        w = np.zeros((len(self.bow.names), weights.shape[1]),
+        if names is None:
+            names = self.bow.names
+        w = np.zeros((len(names), weights.shape[1]),
                      dtype=self.precision)
-        iden = {v: k for k, v in enumerate(self.bow.names)}
+        iden = {v: k for k, v in enumerate(names)}
         for key, value in zip(self.names, weights):
             w[iden[key]] = value
         if inplace:
             self.weights = w
-            self.names = self.bow.names
+            self.names = names
         return w
 
     def __sklearn_clone__(self):

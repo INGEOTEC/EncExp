@@ -164,7 +164,7 @@ def test_build_encexp_transform():
     enc = EncExp(lang='es', precision=np.float16,
                  prefix_suffix=True)
     voc = download_encexp(lang='es', precision=np.float16,
-                          voc_source='mix',
+                          voc_source='noGeo',
                           prefix_suffix=True)['seqtm']
 
     build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',
