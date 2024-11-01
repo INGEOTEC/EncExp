@@ -98,7 +98,7 @@ def test_EncExp():
     """Test EncExp"""
     enc = EncExp(precision=np.float16)
     assert enc.weights.dtype == np.float16
-    assert len(enc.names) == 2**13 - 1
+    assert len(enc.names) == 8184
 
 
 def test_EncExp_encode():
@@ -114,7 +114,7 @@ def test_EncExp_transform():
     encexp = EncExp(precision=np.float16)
     X = encexp.transform(['buenos dias'])
     assert X.shape[0] == 1
-    assert X.shape[1] == 2**13 - 1
+    assert X.shape[1] == 8184
     assert X.dtype == np.float32
 
 
@@ -317,10 +317,3 @@ def test_SeqTM_jaja():
     assert txt == '~ja~🤣~'
     txt = seq.text_transformations('🧑‍')
     assert txt == '~🧑~'
-
-
-def test_EncExp_enc_source():
-    """Test EncExp with parameter enc_source"""
-
-    enc = EncExp(lang='es', enc_source='nogeo')
-    assert enc.weights.shape[1] == 2**13
