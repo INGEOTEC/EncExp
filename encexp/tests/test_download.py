@@ -11,10 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from dataclasses import dataclass
 from os.path import isfile
 import os
 import numpy as np
-from encexp.download import download_seqtm, download_encexp
+from encexp.download import download_seqtm, download_encexp, main
 
 
 def test_download_seqtm():
@@ -38,3 +39,20 @@ def test_download_encexp():
     for coef in data['coefs']:
         assert coef['coef'].shape[0] == dim
         assert coef['coef'].dtype == np.float16
+
+
+def test_download_main():
+    """Test download main"""
+    @dataclass
+    class A:
+        voc_size_exponent = 13
+        lang = 'es'
+        output = None
+        voc_source = 'mix'
+        enc_source = None
+        seqtm = False
+        encexp = True
+        prefix_suffix = True
+        
+    args = A()
+    main(args)

@@ -51,10 +51,10 @@ def download_encexp(lang='es', voc_size_exponent: int=13,
                     intercept=False):
     """Download EncExp"""
     def read(output):
-        iter = tweet_iterator(output)
-        params = next(iter)
+        iter_ = tweet_iterator(output)
+        params = next(iter_)
         coefs = []
-        for coef in iter:
+        for coef in iter_:
             _ = np.frombuffer(bytearray.fromhex(coef['coef']),
                               dtype=precision)
             coef['coef'] = _
@@ -93,6 +93,7 @@ def main(args):
                        output=output)
     if args.encexp:
         voc_source = args.voc_source
+        enc_source = args.enc_source
         precision = np.float16
         prefix_suffix = args.prefix_suffix
         if voc_source is not None:
@@ -102,6 +103,7 @@ def main(args):
                         voc_size_exponent=voc_size_exponent,
                         precision=precision,
                         voc_source=voc_source,
+                        enc_source=enc_source,
                         output=output,
                         prefix_suffix=prefix_suffix)
     
@@ -122,7 +124,10 @@ if __name__ == '__main__':
                         type=int, default=13)
     parser.add_argument('--voc_source',
                         help='Vocabulary Source', dest='voc_source',
-                        default=None)
+                        default='mix')
+    parser.add_argument('--voc_enc',
+                        help='Embedding Source', dest='enc_source',
+                        default=None)    
     parser.add_argument('--SeqTM',
                         help='Download SeqTM vocabulary',
                         dest='seqtm', action='store_true')

@@ -163,6 +163,32 @@ def test_EncExp_fit():
     assert df.dtype == np.float64
 
 
+def test_EncExp_fit_sgd():
+    """Test EncExp fit"""
+    from sklearn.linear_model import SGDClassifier
+    from itertools import repeat
+    samples()
+    mx = list(tweet_iterator('es-mx-sample.json'))
+    samples(filename='es-ar-sample.json.zip')
+    ar = list(tweet_iterator('es-ar-sample.json'))
+    y = ['mx'] * len(mx)
+    y += ['ar'] * len(ar)
+    D = mx + ar
+    # while len(D) < 2**17:
+    for i in range(5):
+        D.extend(D)
+        y.extend(y)
+    D.append(D[0])
+    y.append(y[0])
+    enc = EncExp(lang='es').fit(D, y)
+    assert isinstance(enc.estimator, SGDClassifier)
+    hy = enc.predict(ar)
+    assert hy.shape[0] == len(ar)
+    df = enc.decision_function(ar)
+    assert df.shape[0] == len(ar)
+    assert df.dtype == np.float64    
+
+
 def test_EncExp_train_predict_decision_function():
     """Test EncExp train_predict_decision_function"""
     samples()
