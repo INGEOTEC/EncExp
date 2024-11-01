@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from collections import OrderedDict
 from sklearn.model_selection import StratifiedKFold
 from sklearn.base import clone
+from sklearn.linear_model import SGDClassifier
 from b4msa import TextModel
 from microtc.utils import Counter
 from microtc import emoticons
@@ -32,7 +33,7 @@ class SeqTM(TextModel):
                  voc_size_exponent: int=13,
                  vocabulary=None,
                  prefix_suffix: bool=True,
-                 voc_source: str='mix',
+                 voc_source: str='noGeo',
                  precision=np.float32):
         if vocabulary is None:
             vocabulary = download_seqtm(lang, voc_source=voc_source,
@@ -55,7 +56,6 @@ class SeqTM(TextModel):
     def __vocabulary(self, counter):
         """Vocabulary"""
 
-        from os.path import join, dirname
         tfidf = TFIDF()
         tfidf.N = counter.update_calls
         tfidf.word2id, tfidf.wordWeight = tfidf.counter2weight(counter)
@@ -72,14 +72,6 @@ class SeqTM(TextModel):
                 key = f'~{key}~'
                 self._map[key] = value
             tokens[key] = False
-        # _ = join(dirname(__file__), 'data', 'emojis.json.gz')
-        # emojis = next(tweet_iterator(_))
-        # for k, v in emojis.items():
-        #     self._map[k] = v
-        #     tokens[k] = True
-        #     for x in [f'~{k}~', f'~{k}', f'{k}~']:
-        #         self._map[x] = v
-        #         tokens[x] = True
 
     @property
     def language(self):
@@ -104,10 +96,11 @@ class SeqTM(TextModel):
     @property
     def identifier(self):
         """Function id"""
+
         lang = self.language
         voc = self.voc_size_exponent
         return f'seqtm_{lang}_{voc}'
-    
+
     @property
     def sequence(self):
         """Vocabulary compute on sequence text-transformation"""
@@ -128,8 +121,12 @@ class SeqTM(TextModel):
             _names = [None] * len(self.id2token)
             for k, v in self.id2token.items():
                 _names[k] = v
-            self._names = np.array(_names)
+            self.names = np.array(_names)
             return self._names
+        
+    @names.setter
+    def names(self, value):
+        self._names = value
 
     @property
     def weights(self):
@@ -141,8 +138,12 @@ class SeqTM(TextModel):
             w = [None] * len(self.token_weight)
             for k, v in self.token_weight.items():
                 w[k] = v
-            self._weights = np.array(w)
+            self.weights = np.array(w)
             return self._weights
+        
+    @weights.setter
+    def weights(self, value):
+        self._weights = value
 
     @property
     def tokens(self):
@@ -153,6 +154,10 @@ class SeqTM(TextModel):
         except AttributeError:
             self._tokens = OrderedDict()
         return self._tokens
+    
+    @tokens.setter
+    def tokens(self, value):
+        self._tokens = value
 
     @property
     def data_structure(self):
@@ -164,6 +169,10 @@ class SeqTM(TextModel):
             _ = emoticons.create_data_structure
             self._data_structure = _(self.tokens)
         return self._data_structure
+
+    @data_structure.setter
+    def data_structure(self, value):
+        self._data_structure = value
 
     def compute_tokens(self, text):
         """
@@ -201,7 +210,7 @@ class SeqTM(TextModel):
                 i += 1
                 if '__end__' in current:
                     end = i
-                    if current['__end__'] == True:
+                    if current['__end__'] is True:
                         raise KeyError
             except KeyError:
                 current = head
@@ -254,8 +263,8 @@ class EncExp:
     voc_size_exponent: int=13
     EncExp_filename: str=None
     precision: np.dtype=np.float16
-    voc_source: str='mix'
-    enc_source: str=None
+    voc_source: str='noGeo'
+    enc_source: str='mix'
     prefix_suffix: bool=True
     estimator_kwargs: dict=None
     merge_IDF: bool=True
@@ -305,6 +314,8 @@ class EncExp:
         """Estimate the parameters"""
         if y is None:
             y = [x['klass'] for x in D]
+        if not hasattr(self, '_estimator') and len(D) > 2**17:
+            self.estimator = SGDClassifier(class_weight='balanced')
         X = self.transform(D)
         self.estimator.fit(X, y)
         return self
@@ -469,17 +480,19 @@ class EncExp:
             return np.c_[hy]
         return hy
 
-    def fill(self, inplace: bool=True):
+    def fill(self, inplace: bool=True, names: list=None):
         """Fill weights with the missing dimensions"""
         weights = self.weights
-        w = np.zeros((len(self.bow.names), weights.shape[1]),
+        if names is None:
+            names = self.bow.names
+        w = np.zeros((len(names), weights.shape[1]),
                      dtype=self.precision)
-        iden = {v: k for k, v in enumerate(self.bow.names)}
+        iden = {v: k for k, v in enumerate(names)}
         for key, value in zip(self.names, weights):
             w[iden[key]] = value
         if inplace:
             self.weights = w
-            self.names = self.bow.names
+            self.names = names
         return w
 
     def __sklearn_clone__(self):
@@ -489,4 +502,5 @@ class EncExp:
         ins.weights = self.weights
         ins.bow = self.bow
         ins.names = self.names
+        ins.estimator = clone(self.estimator)
         return ins
