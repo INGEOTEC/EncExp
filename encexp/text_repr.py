@@ -262,7 +262,7 @@ class EncExp:
     lang: str='es'
     voc_size_exponent: int=13
     EncExp_filename: str=None
-    precision: np.dtype=np.float16
+    precision: np.dtype=np.float32
     voc_source: str='noGeo'
     enc_source: str='mix'
     prefix_suffix: bool=True
@@ -359,7 +359,7 @@ class EncExp:
                     assert not self.merge_IDF
                 data = download_encexp(lang=self.lang,
                                        voc_size_exponent=self.voc_size_exponent,
-                                       precision=self.precision,
+                                       # precision=self.precision,
                                        voc_source=self.voc_source,
                                        enc_source=self.enc_source,
                                        prefix_suffix=self.prefix_suffix,

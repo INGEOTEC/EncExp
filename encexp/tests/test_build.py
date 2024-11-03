@@ -144,7 +144,8 @@ def test_build_encexp_estimator_kwargs():
     assert isfile('encexp-es-mx.json.gz')
     lst = list(tweet_iterator('encexp-es-mx.json.gz'))
     assert lst[1]['intercept'] != 0
-    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz')
+    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz',
+                 precision=np.float16)
     assert enc.bias.shape[0] == enc.weights.shape[0]
     os.unlink('encexp-es-mx.json.gz')
     build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',
