@@ -494,6 +494,41 @@ class EncExp:
             self.weights = w
             self.names = names
         return w
+    
+    def __iadd__(self, other):
+        """Add weights"""
+
+        assert np.all(self.bow.names == other.bow.names)
+        _ = self.precision == np.float32
+        weights_ = self.weights if _ else self.weights.astype(np.float32)
+        _ = other.precision == np.float32
+        w_other = other.weights if _ else other.weights.astype(np.float32)
+        w_norm = np.linalg.norm(weights_, axis=1)
+        other_norm = np.linalg.norm(w_other, axis=1)
+        w = dict(zip(self.names, weights_ / np.c_[w_norm]))
+        w_other = dict(zip(other.names, w_other / np.c_[other_norm]))
+        w_norm = dict(zip(self.names, w_norm))
+        other_norm = dict(zip(other.names, other_norm))
+        names = sorted(set(self.names).union(set(other.names)))
+        weights = []
+        norms = []
+        for name in names:
+            if name in w and name in w_other:
+                _ = (w[name] + w_other[name]) / 2
+                weights.append(_)
+                norms.append(w_norm[name])
+            elif name in w:
+                weights.append(w[name])
+                norms.append(w_norm[name])
+            else:
+                weights.append(w_other[name])
+                norms.append(other_norm[name])
+        weights = np.asarray(weights, order='F')
+        weights = weights / np.c_[np.linalg.norm(weights, axis=1)]
+        self.weights = np.asarray(weights * np.c_[np.array(norms)],
+                                  dtype=self.precision, order='F')
+        self.names = np.array(names)
+        return self
 
     def __sklearn_clone__(self):
         klass = self.__class__
