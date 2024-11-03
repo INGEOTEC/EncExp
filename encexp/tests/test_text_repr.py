@@ -248,7 +248,8 @@ def test_EncExp_fill():
     if not isfile('encexp-es-mx.json.gz'):
         build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',
                      min_pos=64)
-    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz')
+    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz',
+                 precision=np.float16)
     iden = {v:k for k, v in enumerate(enc.bow.names)}
     comp = [x for x in enc.bow.names if x not in enc.names]
     key = enc.names[0]
@@ -258,6 +259,28 @@ def test_EncExp_fill():
     assert_almost_equal(w[iden[comp[0]]], 0)
     os.unlink('encexp-es-mx.json.gz')
     assert np.all(enc.names == enc.bow.names)
+
+
+def test_EncExp_iadd():
+    """Test EncExp iadd"""
+
+    from encexp.download import download_encexp
+
+    voc = download_encexp(lang='es', precision=np.float16,
+                          voc_source='noGeo',
+                          prefix_suffix=True)['seqtm']
+    samples()
+    if not isfile('encexp-es-mx.json.gz'):
+        build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',
+                     min_pos=64)
+    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz',
+                 precision=np.float16)
+    w = enc.weights
+    enc += enc
+    assert_almost_equal(w, enc.weights)
+    os.unlink('encexp-es-mx.json.gz')
+    enc2 = EncExp(lang='es', voc_source='noGeo')
+    enc2 += enc
 
 
 def test_EncExp_force_tokens():
