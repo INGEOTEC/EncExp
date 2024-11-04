@@ -495,6 +495,11 @@ class EncExp:
             self.names = names
         return w
     
+    def __add__(self, other):
+        """Add weights"""
+        ins = clone(self)
+        return ins.__iadd__(other)
+
     def __iadd__(self, other):
         """Add weights"""
 

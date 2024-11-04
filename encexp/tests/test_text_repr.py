@@ -281,6 +281,10 @@ def test_EncExp_iadd():
     os.unlink('encexp-es-mx.json.gz')
     enc2 = EncExp(lang='es', voc_source='noGeo')
     enc2 += enc
+    enc2 = EncExp(lang='es', voc_source='noGeo')
+    r = enc2 + enc2
+    r.weights[:, :] = 0
+    assert enc2.weights[0, 0] != 0
 
 
 def test_EncExp_force_tokens():
