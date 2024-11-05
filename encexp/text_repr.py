@@ -378,11 +378,24 @@ class EncExp:
             self.bias = np.array([vec['intercept'] for vec in data['coefs']],
                                  dtype=self.precision)
             self.names = np.array([vec['label'] for vec in data['coefs']])
+            self.enc_training_size = {vec['label']: vec['N'] for vec in data['coefs']}
             if self.force_token:
                 self.force_tokens_weights(IDF=self.intercept)
-        # if self.intercept or True:
         self.weights = np.asarray(self._weights, order='F')
         return self._weights
+    
+    @property
+    def enc_training_size(self):
+        """Training size of each embedding"""
+        try:
+            return self._enc_training_size
+        except AttributeError:
+            self.weights
+        return self._enc_training_size
+    
+    @enc_training_size.setter
+    def enc_training_size(self, value):
+        self._enc_training_size = value
 
     @weights.setter
     def weights(self, value):
@@ -495,6 +508,11 @@ class EncExp:
             self.names = names
         return w
     
+    def __add__(self, other):
+        """Add weights"""
+        ins = clone(self)
+        return ins.__iadd__(other)
+
     def __iadd__(self, other):
         """Add weights"""
 
@@ -538,4 +556,5 @@ class EncExp:
         ins.bow = self.bow
         ins.names = self.names
         ins.estimator = clone(self.estimator)
+        ins.enc_training_size = self.enc_training_size
         return ins

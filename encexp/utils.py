@@ -307,6 +307,37 @@ def replace_tokens(tm):
     return tm
 
 
+def transform_from_tokens(enc):
+    """Transform from token list"""
+
+    def dense(text):
+        token2id = enc.bow.token2id
+        seq = []
+        for token in text:
+            try:
+                seq.append(token2id[token])
+            except KeyError:
+                continue
+        W = enc.weights
+        if len(seq) == 0:
+            x = np.ones(W.shape[0], dtype=W.dtype)
+        else:
+            x = W[:, seq].sum(axis=1)
+        return x
+
+    def inner(texts):
+        X = np.r_[[dense(text) for text in texts]]
+        _norm = np.linalg.norm(X, axis=1)
+        _norm[_norm == 0] = 1
+        return X / np.c_[_norm]
+
+    return inner
+        
+
+    
+
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Compute SeqTM Vocabulary',
                                      prog='EncExp.utils')

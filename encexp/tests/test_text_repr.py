@@ -281,6 +281,10 @@ def test_EncExp_iadd():
     os.unlink('encexp-es-mx.json.gz')
     enc2 = EncExp(lang='es', voc_source='noGeo')
     enc2 += enc
+    enc2 = EncExp(lang='es', voc_source='noGeo')
+    r = enc2 + enc2
+    r.weights[:, :] = 0
+    assert enc2.weights[0, 0] != 0
 
 
 def test_EncExp_force_tokens():
@@ -340,3 +344,12 @@ def test_SeqTM_jaja():
     assert txt == '~ja~🤣~'
     txt = seq.text_transformations('🧑‍')
     assert txt == '~🧑~'
+
+
+def test_EncExp_enc_training_size():
+    """Test training size of the embeddings"""
+
+    enc = EncExp(lang='es')
+    assert isinstance(enc.enc_training_size, dict)
+    for k in enc.enc_training_size:
+        assert k in enc.names

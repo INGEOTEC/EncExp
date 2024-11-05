@@ -19,7 +19,7 @@ from numpy.testing import assert_almost_equal
 from microtc.utils import Counter, tweet_iterator
 from encexp.utils import Download, DialectID_URL, compute_b4msa_vocabulary
 from encexp.utils import to_float16, compute_seqtm_vocabulary, unit_length
-from encexp.utils import set_to_zero
+from encexp.utils import set_to_zero, transform_from_tokens
 
 
 def test_download():
@@ -148,6 +148,21 @@ def test_set_to_zero():
                   [0.0, 0, 0.33],
                   [0.4, 0, 0.33]])
     assert_almost_equal(a, b)
+
+
+def test_transform_from_tokens():
+    """Test transform"""
+
+    from encexp.text_repr import EncExp
+    samples()
+    enc = EncExp(lang='es')
+    D = list(tweet_iterator('es-mx-sample.json'))
+    data = [enc.bow.tokenize(x)
+            for x in D]
+    W = transform_from_tokens(enc)(data)
+    W2 = enc.transform(D)
+    assert_almost_equal(W, W2)
+
 
     
     
