@@ -344,3 +344,12 @@ def test_SeqTM_jaja():
     assert txt == '~ja~🤣~'
     txt = seq.text_transformations('🧑‍')
     assert txt == '~🧑~'
+
+
+def test_EncExp_enc_training_size():
+    """Test training size of the embeddings"""
+
+    enc = EncExp(lang='es')
+    assert isinstance(enc.enc_training_size, dict)
+    for k in enc.enc_training_size:
+        assert k in enc.names
