@@ -50,16 +50,6 @@ def test_build_voc():
     os.unlink('t.json.gz')
 
 
-def test_build_voc_stats():
-    """Test build voc statistics"""
-    samples()
-    statistics = []
-    build_voc('es-mx-sample.json', output='t.json.gz',
-              voc_size_exponent=10, statistics=statistics)
-    assert statistics[:3] == [78037, 75690, 72900]
-    os.unlink('t.json.gz')
-
-
 def test_encexp_encode():
     """Test encode method"""
     samples()
@@ -104,8 +94,8 @@ def test_build_encexp_token():
     output, cnt = encode(voc, 'es-mx-sample.json')
     tokens = feasible_tokens(voc, cnt)
     index, token = tokens[-3]
-    fname = build_encexp_token(index, voc, output)
-    assert fname == '559-encode-es-mx-sample.json'
+    fname = build_encexp_token(index, voc, output, label=token)
+    assert fname == f'{index}-encode-es-mx-sample.json'
     os.unlink('encode-es-mx-sample.json')
     data = next(tweet_iterator(fname))
     assert data['label'] == token
@@ -199,7 +189,7 @@ def test_build_encexp_tokens():
     tokens = feasible_tokens(voc, cnt, tokens=words,
                              min_pos=8)
     fname = build_encexp_token(0, voc, output, precision=np.float16,
-                               tokens=tokens)
+                               label=tokens[0][1])
     assert isfile(fname)
     assert next(tweet_iterator(fname))['label'] == tokens[0][1]
 
@@ -207,7 +197,7 @@ def test_build_encexp_tokens():
     # assert output == 'encode-es-mx-sample.json'
     # os.unlink('encode-es-mx-sample.json')
     build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',
-                 tokens=words, min_pos=8, n_jobs=1)
+                 tokens=words, min_pos=8)
     assert isfile('encexp-es-mx.json.gz')
     enc = EncExp(lang=None, voc_source=None,
                  EncExp_filename='encexp-es-mx.json.gz',

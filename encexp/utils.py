@@ -151,8 +151,7 @@ def compute_b4msa_vocabulary(filename, limit=None, lang='es',
 def compute_seqtm_vocabulary(instance, vocabulary,
                              filename, limit=None,
                              voc_size_exponent=13,
-                             prefix_suffix=False,
-                             statistics=None):
+                             prefix_suffix=False):
     """Compute SeqTM"""
 
     def current_lost_words():
@@ -193,18 +192,6 @@ def compute_seqtm_vocabulary(instance, vocabulary,
                 _ = {token: base_voc[word] for token in tokens}
                 cnt.update(_)
             current = [k for k, v in cnt.most_common(n=2**voc_size_exponent)]
-            if statistics is not None:
-                _ = Counter(dict(cnt.most_common(n=2**voc_size_exponent)),
-                                 update_calls=base_voc.update_calls)
-                _ = dict(params=vocabulary['params'],
-                         counter=_)
-                tok2 = instance(vocabulary=_).tokenize 
-                tot = 0
-                for token in words:
-                    _ = ''.join([tok.replace('~', '').replace('q:', '')
-                                 for tok in set(tok2(token))])
-                    tot += base_voc[token] * (len(token) - len(_))
-                statistics.append(tot)
         return cnt.most_common(n=2**voc_size_exponent)
 
     limit = np.inf if limit is None else limit

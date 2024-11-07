@@ -56,7 +56,8 @@ def update_tokens(seq, tokens=None):
     return seq
 
 
-def encode(vocabulary, fname, tokens=None, limit=None):
+def encode(vocabulary:dict, fname: str, tokens: list=None,
+           limit: int=None):
     """Encode file"""
     limit = np.inf if limit is None else limit
     loop = count() if limit == np.inf else range(limit)    
@@ -75,9 +76,9 @@ def encode(vocabulary, fname, tokens=None, limit=None):
     return output, cnt
 
 
-def feasible_tokens(vocabulary, count,
-                    tokens=None,
-                    min_pos=512):
+def feasible_tokens(vocabulary: dict, count: dict,
+                    tokens: list=None,
+                    min_pos: int=512):
     """Feasible tokens"""
     seq = SeqTM(vocabulary=vocabulary)
     tokens = seq.names if tokens is None else tokens
@@ -94,10 +95,9 @@ def build_encexp_token(index, vocabulary,
                        precision=np.float16,
                        transform=None,
                        estimator_kwargs=None,
-                       tokens=None):
+                       label=None):
     """Build token classifier"""
     seq = SeqTM(vocabulary=vocabulary)
-    label = seq.names[index] if tokens is None else tokens[index][1]
     output_fname = encode_output(fname, prefix=f'{index}')
     POS = []
     NEG = []
@@ -141,16 +141,11 @@ def build_encexp_token(index, vocabulary,
     return output_fname
 
 
-def build_encexp(vocabulary,
-                 fname, output,
-                 min_pos=512,
-                 max_pos=2**13,
-                 n_jobs = -1,
-                 precision=np.float16,
-                 estimator_kwargs=None,
-                 limit=None,
-                 transform=None,
-                 tokens=None):
+def build_encexp(vocabulary, fname, output,
+                 min_pos: int=512, max_pos: int=2**13,
+                 n_jobs: int = -1, precision=np.float16,
+                 estimator_kwargs: dict=None, limit: int=None,
+                 transform=None, tokens: list=None):
     """Build EncExp"""
     encode_fname, cnt = encode(vocabulary, fname, tokens=tokens, 
                                limit=limit)
@@ -163,8 +158,8 @@ def build_encexp(vocabulary,
                                                                  max_pos=max_pos,
                                                                  estimator_kwargs=estimator_kwargs,
                                                                  transform=transform,
-                                                                 tokens=tokens)
-                                     for index, _ in progress_bar(tokens,
+                                                                 label=label)
+                                     for index, label in progress_bar(tokens,
                                                                   desc=output,
                                                                   total=len(tokens)))
     with gzip.open(output, 'wb') as fpt:
