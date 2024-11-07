@@ -14,7 +14,7 @@
 from microtc.utils import Counter, tweet_iterator
 from encexp.tests.test_utils import samples
 from encexp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary
-from encexp.text_repr import SeqTM
+from encexp.text_repr import SeqTM, EncExp
 from encexp.build_encexp import encode_output, encode, feasible_tokens, build_encexp_token, build_encexp
 from encexp.build_voc import main, build_voc
 from os.path import isfile
@@ -175,3 +175,44 @@ def test_build_encexp_transform():
     lst = list(tweet_iterator('encexp-es-mx.json.gz'))
     assert lst[1]['intercept'] != 0
     os.unlink('encexp-es-mx.json.gz')
+
+
+def test_build_encexp_tokens():
+    """Test encexp with specific topics"""
+    import numpy as np
+    from b4msa import TextModel
+    from microtc.utils import Counter
+    from encexp.download import download_seqtm
+    from encexp.utils import b4msa_params, replace_tokens
+    
+
+    samples()
+    params = b4msa_params(lang='es')
+    tokenize = replace_tokens(TextModel(**params)).tokenize    
+    cnt = Counter()
+    for txt in tweet_iterator('es-mx-sample.json'):
+        cnt.update([x for x in tokenize(txt) if x[:2] != 'q:'])
+    voc = download_seqtm(lang='es', voc_source='noGeo')
+    words = set(cnt.keys()) - set(voc['counter']['dict'])
+    words = sorted([word for word in words if cnt[word] >= 8])
+    output, cnt = encode(voc, 'es-mx-sample.json', tokens=words)
+    tokens = feasible_tokens(voc, cnt, tokens=words,
+                             min_pos=8)
+    fname = build_encexp_token(0, voc, output, precision=np.float16,
+                               tokens=tokens)
+    assert isfile(fname)
+    assert next(tweet_iterator(fname))['label'] == tokens[0][1]
+
+    # assert isfile(output)
+    # assert output == 'encode-es-mx-sample.json'
+    # os.unlink('encode-es-mx-sample.json')
+    build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',
+                 tokens=words, min_pos=8, n_jobs=1)
+    assert isfile('encexp-es-mx.json.gz')
+    enc = EncExp(lang=None, voc_source=None,
+                 EncExp_filename='encexp-es-mx.json.gz',
+                 precision=np.float16)
+    assert enc.weights.shape[0] == len(tokens)
+    os.unlink('encexp-es-mx.json.gz')
+    assert np.all(enc.names == np.array(words))
+    

@@ -323,7 +323,11 @@ class EncExp:
     def force_tokens_weights(self, IDF: bool=False):
         """Set the maximum weight"""
         rows = np.arange(len(self.names))
-        cols = np.array([self.bow.token2id[x] for x in self.names])
+
+        cols = np.array([self.bow.token2id[x] for x in self.names
+                         if x in self.bow.token2id])
+        if cols.shape[0] == 0:
+            return
         w = self.weights[:, cols]
         if IDF:
             w = w * self.bow.weights[cols]
