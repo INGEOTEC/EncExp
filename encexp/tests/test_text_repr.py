@@ -17,7 +17,7 @@ from numpy.testing import assert_almost_equal
 import os
 from microtc.utils import tweet_iterator
 from encexp.tests.test_utils import samples
-from encexp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary, to_float16
+from encexp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary
 from encexp.build_encexp import build_encexp
 from encexp.text_repr import SeqTM, EncExp
 from sklearn.base import clone
@@ -78,20 +78,11 @@ def test_EncExp_filename():
         voc = compute_seqtm_vocabulary(SeqTM, data,
                                        'es-mx-sample.json',
                                        voc_size_exponent=10)
-        build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',
-                     precision=np.float32)
-    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz',
-                 precision=np.float32)
+        build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz')
+    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz')
     assert enc.weights.dtype == np.float32
     assert len(enc.names) == 11
-    to_float16('encexp-es-mx.json.gz', 'encexp-float16-es-mx.json.gz')
-    enc2 = EncExp(EncExp_filename='encexp-float16-es-mx.json.gz',
-                  precision=np.float16)
-    assert enc2.weights.dtype == np.float16
-    w = enc.weights
-    assert np.all(enc2.weights.shape == enc.weights.shape)
     os.unlink('encexp-es-mx.json.gz')
-    os.unlink('encexp-float16-es-mx.json.gz')
     
 
 def test_EncExp():
@@ -239,17 +230,14 @@ def test_EncExp_merge_IDF():
 
 def test_EncExp_fill():
     """Test EncExp fill weights"""
-    from encexp.download import download_encexp
+    from encexp.download import download_seqtm
 
-    voc = download_encexp(lang='es', precision=np.float16,
-                          voc_source='noGeo',
-                          prefix_suffix=True)['seqtm']
+    voc = download_seqtm(lang='es')
     samples()
     if not isfile('encexp-es-mx.json.gz'):
         build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',
                      min_pos=64)
-    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz',
-                 precision=np.float16)
+    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz')
     iden = {v:k for k, v in enumerate(enc.bow.names)}
     comp = [x for x in enc.bow.names if x not in enc.names]
     key = enc.names[0]
@@ -264,20 +252,17 @@ def test_EncExp_fill():
 def test_EncExp_iadd():
     """Test EncExp iadd"""
 
-    from encexp.download import download_encexp
+    from encexp.download import download_seqtm
 
-    voc = download_encexp(lang='es', precision=np.float16,
-                          voc_source='noGeo',
-                          prefix_suffix=True)['seqtm']
+    voc = download_seqtm(lang='es')
     samples()
     if not isfile('encexp-es-mx.json.gz'):
         build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',
                      min_pos=64)
-    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz',
-                 precision=np.float16)
+    enc = EncExp(EncExp_filename='encexp-es-mx.json.gz')
     w = enc.weights
     enc += enc
-    assert_almost_equal(w, enc.weights)
+    assert_almost_equal(w, enc.weights, decimal=4)
     os.unlink('encexp-es-mx.json.gz')
     enc2 = EncExp(lang='es', voc_source='noGeo')
     enc2 += enc
