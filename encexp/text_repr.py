@@ -331,7 +331,7 @@ class EncExp:
         if cols.shape[0] == 0:
             return
         if IDF:
-            w = self.weights[rows][cols] * self.bow.weights[cols]
+            w = self.weights[rows][:, cols] * self.bow.weights[cols]
             _max = (w.max(axis=1) / self.bow.weights[cols]).astype(self.precision)
         else:
             _max = self.weights[rows].max(axis=1)

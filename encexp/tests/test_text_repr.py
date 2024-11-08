@@ -306,7 +306,7 @@ def test_EncExp_force_tokens():
     enc = EncExp(lang='es', prefix_suffix=True,
                  precision=np.float16, merge_IDF=False,
                  force_token=False)
-    assert enc.weights[0, 0] == 0    
+    assert enc.weights[0, 0] == 0
     enc.force_tokens_weights(IDF=True)
     enc2 = EncExp(lang='es', prefix_suffix=True,
                   precision=np.float16, merge_IDF=False,
