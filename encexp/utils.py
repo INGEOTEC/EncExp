@@ -151,8 +151,7 @@ def compute_b4msa_vocabulary(filename, limit=None, lang='es',
 def compute_seqtm_vocabulary(instance, vocabulary,
                              filename, limit=None,
                              voc_size_exponent=13,
-                             prefix_suffix=False,
-                             statistics=None):
+                             prefix_suffix=False):
     """Compute SeqTM"""
 
     def current_lost_words():
@@ -193,18 +192,6 @@ def compute_seqtm_vocabulary(instance, vocabulary,
                 _ = {token: base_voc[word] for token in tokens}
                 cnt.update(_)
             current = [k for k, v in cnt.most_common(n=2**voc_size_exponent)]
-            if statistics is not None:
-                _ = Counter(dict(cnt.most_common(n=2**voc_size_exponent)),
-                                 update_calls=base_voc.update_calls)
-                _ = dict(params=vocabulary['params'],
-                         counter=_)
-                tok2 = instance(vocabulary=_).tokenize 
-                tot = 0
-                for token in words:
-                    _ = ''.join([tok.replace('~', '').replace('q:', '')
-                                 for tok in set(tok2(token))])
-                    tot += base_voc[token] * (len(token) - len(_))
-                statistics.append(tot)
         return cnt.most_common(n=2**voc_size_exponent)
 
     limit = np.inf if limit is None else limit
@@ -241,21 +228,6 @@ def uniform_sample(N, avail_data):
         remaining[remaining < 0] = 0
         M = (avail_data - remaining).sum()
     return avail_data - remaining
-
-
-def to_float16(input_filename, output_filename):
-    """Convert EncExp model from float32 to float16"""
-    with gzip.open(output_filename, 'wb') as fpt:
-        iter = tweet_iterator(input_filename)
-        data = next(iter)
-        fpt.write(bytes(json.dumps(data) + '\n',
-                  encoding='utf-8'))
-        for data in iter:
-            _ = np.frombuffer(bytearray.fromhex(data['coef']),
-                              dtype=np.float32).astype(np.float16)
-            data['coef'] = _.tobytes().hex()
-            fpt.write(bytes(json.dumps(data) + '\n',
-                      encoding='utf-8'))
 
 
 def unit_length(data):
@@ -332,30 +304,3 @@ def transform_from_tokens(enc):
         return X / np.c_[_norm]
 
     return inner
-        
-
-    
-
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Compute SeqTM Vocabulary',
-                                     prog='EncExp.utils')
-    parser.add_argument('-v', '--version', action='version',
-                        version=f'EncExp {encexp.__version__}')
-    parser.add_argument('-o', '--output',
-                        help='Output filename',
-                        dest='output', type=str)
-    parser.add_argument('file',
-                        help='Input filename',
-                        nargs=1, type=str)
-    parser.add_argument('--to-float16',
-                        help='Convert EncExp model from float32 to float16',
-                        dest='float16', action='store_true')
-    args = parser.parse_args()
-    input = args.file[0]
-    output = args.output
-    if args.float16:
-        to_float16(input, output)
-
-

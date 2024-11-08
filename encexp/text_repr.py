@@ -322,14 +322,19 @@ class EncExp:
 
     def force_tokens_weights(self, IDF: bool=False):
         """Set the maximum weight"""
-        rows = np.arange(len(self.names))
-        cols = np.array([self.bow.token2id[x] for x in self.names])
-        w = self.weights[:, cols]
+        # rows = np.arange(len(self.names))
+        rows = np.array([i for i, k in enumerate(self.names)
+                         if k in self.bow.token2id])
+
+        cols = np.array([self.bow.token2id[x] for x in self.names
+                         if x in self.bow.token2id])
+        if cols.shape[0] == 0:
+            return
         if IDF:
-            w = w * self.bow.weights[cols]
+            w = self.weights[rows][:, cols] * self.bow.weights[cols]
             _max = (w.max(axis=1) / self.bow.weights[cols]).astype(self.precision)
         else:
-            _max = w.max(axis=1)
+            _max = self.weights[rows].max(axis=1)
         self.weights[rows, cols] = _max
 
     @property
@@ -352,8 +357,8 @@ class EncExp:
             return self._weights
         except AttributeError:
             if self.EncExp_filename is not None:
-                data = download_encexp(output=self.EncExp_filename,
-                                       precision=self.precision)
+                data = download_encexp(output=self.EncExp_filename)
+                                       # precision=self.precision)
             else:
                 if self.intercept:
                     assert not self.merge_IDF
@@ -555,6 +560,7 @@ class EncExp:
         ins.weights = self.weights
         ins.bow = self.bow
         ins.names = self.names
-        ins.estimator = clone(self.estimator)
+        if hasattr(self, '_estimator'):
+            ins.estimator = clone(self.estimator)
         ins.enc_training_size = self.enc_training_size
         return ins

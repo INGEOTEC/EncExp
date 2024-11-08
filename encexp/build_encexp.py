@@ -40,12 +40,30 @@ def encode_output(fname, prefix='encode'):
     return output
 
 
-def encode(vocabulary, fname, limit=None):
+def update_tokens(seq, tokens=None):
+    """Update the tokens in SeqTM"""
+
+    from microtc import emoticons
+    if tokens is None:
+        return seq
+    for token in tokens:
+        key = f'~{token}~'
+        if key not in seq.tokens:
+            seq.tokens[key] = token
+            seq._map[key] = token
+    _ = emoticons.create_data_structure
+    seq.data_structure = _(seq.tokens)
+    return seq
+
+
+def encode(vocabulary:dict, fname: str, tokens: list=None,
+           limit: int=None):
     """Encode file"""
     limit = np.inf if limit is None else limit
     loop = count() if limit == np.inf else range(limit)    
     output = encode_output(fname)
-    seq = SeqTM(vocabulary=vocabulary)
+    seq = update_tokens(SeqTM(vocabulary=vocabulary),
+                        tokens=tokens)
     tokenize = seq.tokenize
     cnt = Counter()
     with open(output, 'w', encoding='utf-8') as fpt:
@@ -58,10 +76,12 @@ def encode(vocabulary, fname, limit=None):
     return output, cnt
 
 
-def feasible_tokens(vocabulary, count, min_pos=512):
+def feasible_tokens(vocabulary: dict, count: dict,
+                    tokens: list=None,
+                    min_pos: int=512):
     """Feasible tokens"""
     seq = SeqTM(vocabulary=vocabulary)
-    tokens = seq.names
+    tokens = seq.names if tokens is None else tokens
     output = []
     for k, v in enumerate(tokens):
         if count[v] < min_pos:
@@ -74,10 +94,10 @@ def build_encexp_token(index, vocabulary,
                        fname, max_pos=2**13,
                        precision=np.float16,
                        transform=None,
-                       estimator_kwargs=None):
+                       estimator_kwargs=None,
+                       label=None):
     """Build token classifier"""
     seq = SeqTM(vocabulary=vocabulary)
-    label = seq.names[index]
     output_fname = encode_output(fname, prefix=f'{index}')
     POS = []
     NEG = []
@@ -121,26 +141,25 @@ def build_encexp_token(index, vocabulary,
     return output_fname
 
 
-def build_encexp(vocabulary,
-                 fname, output,
-                 min_pos=512,
-                 max_pos=2**13,
-                 n_jobs = -1,
-                 precision=np.float16,
-                 estimator_kwargs=None,
-                 limit=None,
-                 transform=None):
+def build_encexp(vocabulary, fname, output,
+                 min_pos: int=512, max_pos: int=2**13,
+                 n_jobs: int = -1, precision=np.float16,
+                 estimator_kwargs: dict=None, limit: int=None,
+                 transform=None, tokens: list=None):
     """Build EncExp"""
-    encode_fname, cnt = encode(vocabulary, fname, limit=limit)
-    tokens = feasible_tokens(vocabulary, cnt, min_pos=min_pos)
+    encode_fname, cnt = encode(vocabulary, fname, tokens=tokens, 
+                               limit=limit)
+    tokens = feasible_tokens(vocabulary, cnt, tokens=tokens,
+                             min_pos=min_pos)
     fnames = Parallel(n_jobs=n_jobs)(delayed(build_encexp_token)(index,
                                                                  vocabulary,
                                                                  encode_fname,
                                                                  precision=precision,
                                                                  max_pos=max_pos,
                                                                  estimator_kwargs=estimator_kwargs,
-                                                                 transform=transform)
-                                     for index, _ in progress_bar(tokens,
+                                                                 transform=transform,
+                                                                 label=label)
+                                     for index, label in progress_bar(tokens,
                                                                   desc=output,
                                                                   total=len(tokens)))
     with gzip.open(output, 'wb') as fpt:

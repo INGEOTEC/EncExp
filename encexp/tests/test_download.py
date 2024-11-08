@@ -31,6 +31,7 @@ def test_download_encexp():
     """Test download EncExp"""
 
     data = download_encexp(lang='es', voc_source='mix',
+                           enc_source=None,
                            precision=np.float16)
     dim = 2**13
     # assert list(data.keys()) is None

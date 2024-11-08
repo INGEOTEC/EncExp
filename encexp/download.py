@@ -21,7 +21,7 @@ import encexp
 
 
 def download_seqtm(lang, voc_size_exponent: int=13,
-                   output=None, voc_source='mix',
+                   output=None, voc_source='noGeo',
                    prefix_suffix: bool=True):
     """Download SeqTM vocabulary"""
     if not isdir(MODELS):
@@ -45,8 +45,8 @@ def download_seqtm(lang, voc_size_exponent: int=13,
 
 
 def download_encexp(lang='es', voc_size_exponent: int=13,
-                    precision=np.float16, voc_source=None,
-                    enc_source=None, output=None,
+                    precision=np.float16, voc_source='noGeo',
+                    enc_source='mix', output=None,
                     prefix_suffix=True,
                     intercept=False):
     """Download EncExp"""

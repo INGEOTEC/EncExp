@@ -14,7 +14,7 @@
 from microtc.utils import Counter, tweet_iterator
 from encexp.tests.test_utils import samples
 from encexp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary
-from encexp.text_repr import SeqTM
+from encexp.text_repr import SeqTM, EncExp
 from encexp.build_encexp import encode_output, encode, feasible_tokens, build_encexp_token, build_encexp
 from encexp.build_voc import main, build_voc
 from os.path import isfile
@@ -47,16 +47,6 @@ def test_build_voc():
     """Test build voc"""
     samples()
     build_voc('es-mx-sample.json', output='t.json.gz')
-    os.unlink('t.json.gz')
-
-
-def test_build_voc_stats():
-    """Test build voc statistics"""
-    samples()
-    statistics = []
-    build_voc('es-mx-sample.json', output='t.json.gz',
-              voc_size_exponent=10, statistics=statistics)
-    assert statistics[:3] == [78037, 75690, 72900]
     os.unlink('t.json.gz')
 
 
@@ -104,8 +94,8 @@ def test_build_encexp_token():
     output, cnt = encode(voc, 'es-mx-sample.json')
     tokens = feasible_tokens(voc, cnt)
     index, token = tokens[-3]
-    fname = build_encexp_token(index, voc, output)
-    assert fname == '559-encode-es-mx-sample.json'
+    fname = build_encexp_token(index, voc, output, label=token)
+    assert fname == f'{index}-encode-es-mx-sample.json'
     os.unlink('encode-es-mx-sample.json')
     data = next(tweet_iterator(fname))
     assert data['label'] == token
@@ -175,3 +165,46 @@ def test_build_encexp_transform():
     lst = list(tweet_iterator('encexp-es-mx.json.gz'))
     assert lst[1]['intercept'] != 0
     os.unlink('encexp-es-mx.json.gz')
+
+
+def test_build_encexp_tokens():
+    """Test encexp with specific topics"""
+    import numpy as np
+    from b4msa import TextModel
+    from microtc.utils import Counter
+    from encexp.download import download_seqtm
+    from encexp.utils import b4msa_params, replace_tokens
+    
+
+    samples()
+    params = b4msa_params(lang='es')
+    tokenize = replace_tokens(TextModel(**params)).tokenize    
+    cnt = Counter()
+    for txt in tweet_iterator('es-mx-sample.json'):
+        cnt.update([x for x in tokenize(txt) if x[:2] != 'q:'])
+    voc = download_seqtm(lang='es', voc_source='noGeo')
+    # words = set(cnt.keys()) - set(voc['counter']['dict'])
+    words = [word for word in cnt if cnt[word] >= 8]
+    words.append('de')
+    words = sorted(words)
+    output, cnt = encode(voc, 'es-mx-sample.json', tokens=words)
+    tokens = feasible_tokens(voc, cnt, tokens=words,
+                             min_pos=8)
+    fname = build_encexp_token(0, voc, output, precision=np.float16,
+                               label=tokens[0][1])
+    assert isfile(fname)
+    assert next(tweet_iterator(fname))['label'] == tokens[0][1]
+
+    # assert isfile(output)
+    # assert output == 'encode-es-mx-sample.json'
+    # os.unlink('encode-es-mx-sample.json')
+    build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz',
+                 tokens=words, min_pos=8)
+    assert isfile('encexp-es-mx.json.gz')
+    enc = EncExp(lang=None, voc_source=None,
+                 EncExp_filename='encexp-es-mx.json.gz',
+                 precision=np.float16)
+    assert enc.weights.shape[0] == len(tokens)
+    os.unlink('encexp-es-mx.json.gz')
+    assert np.all(enc.names == np.array(words))
+    
