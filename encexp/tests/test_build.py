@@ -183,8 +183,10 @@ def test_build_encexp_tokens():
     for txt in tweet_iterator('es-mx-sample.json'):
         cnt.update([x for x in tokenize(txt) if x[:2] != 'q:'])
     voc = download_seqtm(lang='es', voc_source='noGeo')
-    words = set(cnt.keys()) - set(voc['counter']['dict'])
-    words = sorted([word for word in words if cnt[word] >= 8])
+    # words = set(cnt.keys()) - set(voc['counter']['dict'])
+    words = [word for word in cnt if cnt[word] >= 8]
+    words.append('de')
+    words = sorted(words)
     output, cnt = encode(voc, 'es-mx-sample.json', tokens=words)
     tokens = feasible_tokens(voc, cnt, tokens=words,
                              min_pos=8)
