@@ -187,8 +187,9 @@ def compute_seqtm_vocabulary(instance, vocabulary,
         for length in progress_bar(lengths, desc='qgrams'):
             tokenize = tokenizer(length, current)
             cnt = Counter()
+            vacia = set(['~'])
             for word in words:
-                tokens = set(tokenize(word))
+                tokens = set(tokenize(word)) - vacia
                 _ = {token: base_voc[word] for token in tokens}
                 cnt.update(_)
             current = [k for k, v in cnt.most_common(n=2**voc_size_exponent)]
