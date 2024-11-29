@@ -338,3 +338,15 @@ def test_EncExp_enc_training_size():
     assert isinstance(enc.enc_training_size, dict)
     for k in enc.enc_training_size:
         assert k in enc.names
+
+
+def test_EncExp_distance():
+    """Test distance to hyperplane"""
+
+    txt = 'buenos días'
+    enc = EncExp(lang='es', transform_distance=True)
+    assert enc.weights_norm.shape[0] == enc.weights.shape[0]
+    X = enc.transform([txt])
+    X2 = EncExp(lang='es',
+                transform_distance=False).transform([txt])
+    assert np.fabs(X - X2).sum() != 0
