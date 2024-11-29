@@ -469,10 +469,9 @@ class EncExp:
                                                desc='Transform',
                                                use_tqdm=self.progress_bar)]]
         if self.transform_distance:
-            return X / self.weights_norm
-        else:
-            _norm = norm(X, axis=1)
-            _norm[_norm == 0] = 1
+            X = X / self.weights_norm
+        _norm = norm(X, axis=1)
+        _norm[_norm == 0] = 1
         return X / np.c_[_norm]
 
     def predict(self, texts):
