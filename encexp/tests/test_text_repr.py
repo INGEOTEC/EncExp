@@ -89,7 +89,7 @@ def test_EncExp():
     """Test EncExp"""
     enc = EncExp(precision=np.float16)
     assert enc.weights.dtype == np.float16
-    assert len(enc.names) == 8184
+    assert len(enc.names) == 8192
 
 
 def test_EncExp_encode():
@@ -105,7 +105,7 @@ def test_EncExp_transform():
     encexp = EncExp(precision=np.float16)
     X = encexp.transform(['buenos dias'])
     assert X.shape[0] == 1
-    assert X.shape[1] == 8184
+    assert X.shape[1] == 8192
     assert X.dtype == np.float32
 
 
@@ -350,3 +350,15 @@ def test_EncExp_distance():
     X2 = EncExp(lang='es',
                 transform_distance=False).transform([txt])
     assert np.fabs(X - X2).sum() != 0
+
+
+def test_EncExp_unit_vector():
+    """Test distance to hyperplane"""
+
+    txt = 'buenos días'
+    enc = EncExp(lang='es', unit_vector=False)
+    X = enc.transform([txt])
+    assert np.linalg.norm(X) != 1
+    enc = EncExp(lang='es')
+    X = enc.transform([txt])
+    assert np.linalg.norm(X) == 1

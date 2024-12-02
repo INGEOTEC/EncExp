@@ -273,6 +273,7 @@ class EncExp:
     kfold_kwargs: dict=None
     intercept: bool=False
     transform_distance: bool=False
+    unit_vector: bool=True
     progress_bar: bool=False
 
     def get_params(self):
@@ -291,6 +292,7 @@ class EncExp:
                     kfold_kwargs=self.kfold_kwargs,
                     intercept=self.intercept,
                     transform_distance=self.transform_distance,
+                    unit_vector=self.unit_vector,
                     progress_bar=self.progress_bar)
 
     @property
@@ -470,9 +472,11 @@ class EncExp:
                                                use_tqdm=self.progress_bar)]]
         if self.transform_distance:
             X = X / self.weights_norm
-        _norm = norm(X, axis=1)
-        _norm[_norm == 0] = 1
-        return X / np.c_[_norm]
+        if self.unit_vector:
+            _norm = norm(X, axis=1)
+            _norm[_norm == 0] = 1
+            return X / np.c_[_norm]
+        return X
 
     def predict(self, texts):
         """Predict"""
