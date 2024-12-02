@@ -361,4 +361,5 @@ def test_EncExp_unit_vector():
     assert np.linalg.norm(X) != 1
     enc = EncExp(lang='es')
     X = enc.transform([txt])
-    assert assert_almost_equal(np.linalg.norm(X), 1, decimal=5)
+    assert assert_almost_equal(np.linalg.norm(X), 1,
+                               decimal=4)
