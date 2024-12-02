@@ -102,7 +102,7 @@ def test_EncExp_encode():
 def test_EncExp_transform():
     """Test EncExp transform"""
 
-    encexp = EncExp(precision=np.float16)
+    encexp = EncExp()
     X = encexp.transform(['buenos dias'])
     assert X.shape[0] == 1
     assert X.shape[1] == 8192
@@ -361,4 +361,4 @@ def test_EncExp_unit_vector():
     assert np.linalg.norm(X) != 1
     enc = EncExp(lang='es')
     X = enc.transform([txt])
-    assert np.linalg.norm(X) == 1
+    assert assert_almost_equal(np.linalg.norm(X), 1)
