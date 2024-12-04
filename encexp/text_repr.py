@@ -272,6 +272,8 @@ class EncExp:
     kfold_class: StratifiedKFold=StratifiedKFold
     kfold_kwargs: dict=None
     intercept: bool=False
+    transform_distance: bool=False
+    unit_vector: bool=True
     progress_bar: bool=False
 
     def get_params(self):
@@ -289,6 +291,8 @@ class EncExp:
                     kfold_class=self.kfold_class,
                     kfold_kwargs=self.kfold_kwargs,
                     intercept=self.intercept,
+                    transform_distance=self.transform_distance,
+                    unit_vector=self.unit_vector,
                     progress_bar=self.progress_bar)
 
     @property
@@ -388,7 +392,17 @@ class EncExp:
                 self.force_tokens_weights(IDF=self.intercept)
         self.weights = np.asarray(self._weights, order='F')
         return self._weights
-    
+
+    @property
+    def weights_norm(self):
+        """Weights norm"""
+        try:
+            return self._weights_norm
+        except AttributeError:
+            _ = np.linalg.norm(self.weights, axis=1)
+            self._weights_norm = _
+        return self._weights_norm
+
     @property
     def enc_training_size(self):
         """Training size of each embedding"""
@@ -397,7 +411,7 @@ class EncExp:
         except AttributeError:
             self.weights
         return self._enc_training_size
-    
+
     @enc_training_size.setter
     def enc_training_size(self, value):
         self._enc_training_size = value
@@ -449,7 +463,6 @@ class EncExp:
 
     def transform(self, texts):
         """Represents the texts into a matrix"""
-        flag = self.weights.dtype == np.float16
         if self.intercept:
             X = self.bow.transform(texts) @ self.weights.T + self.bias
         else:
@@ -457,11 +470,13 @@ class EncExp:
                       for data in progress_bar(texts, total=len(texts),
                                                desc='Transform',
                                                use_tqdm=self.progress_bar)]]
-        if flag:
-            X = X.astype(np.float32)
-        _norm = norm(X, axis=1)
-        _norm[_norm == 0] = 1
-        return X / np.c_[_norm]
+        if self.transform_distance:
+            X = X / self.weights_norm
+        if self.unit_vector:
+            _norm = norm(X, axis=1)
+            _norm[_norm == 0] = 1
+            return X / np.c_[_norm]
+        return X
 
     def predict(self, texts):
         """Predict"""

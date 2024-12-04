@@ -43,7 +43,7 @@ def test_seqtm_vocabulary():
                                    voc_size_exponent=5)
     assert len(voc['counter']['dict']) == 32
     _ = voc['counter']['dict']
-    assert len([k for k in _ if k[:2] == 'q:']) == 30
+    assert len([k for k in _ if k[:2] == 'q:']) == 29
 
 
 # def test_seqtm_ix_15():
@@ -89,7 +89,7 @@ def test_EncExp():
     """Test EncExp"""
     enc = EncExp(precision=np.float16)
     assert enc.weights.dtype == np.float16
-    assert len(enc.names) == 8184
+    assert len(enc.names) == 8192
 
 
 def test_EncExp_encode():
@@ -102,10 +102,10 @@ def test_EncExp_encode():
 def test_EncExp_transform():
     """Test EncExp transform"""
 
-    encexp = EncExp(precision=np.float16)
+    encexp = EncExp()
     X = encexp.transform(['buenos dias'])
     assert X.shape[0] == 1
-    assert X.shape[1] == 8184
+    assert X.shape[1] == 8192
     assert X.dtype == np.float32
 
 
@@ -338,3 +338,27 @@ def test_EncExp_enc_training_size():
     assert isinstance(enc.enc_training_size, dict)
     for k in enc.enc_training_size:
         assert k in enc.names
+
+
+def test_EncExp_distance():
+    """Test distance to hyperplane"""
+
+    txt = 'buenos días'
+    enc = EncExp(lang='es', transform_distance=True)
+    assert enc.weights_norm.shape[0] == enc.weights.shape[0]
+    X = enc.transform([txt])
+    X2 = EncExp(lang='es',
+                transform_distance=False).transform([txt])
+    assert np.fabs(X - X2).sum() != 0
+
+
+def test_EncExp_unit_vector():
+    """Test distance to hyperplane"""
+
+    txt = 'buenos días'
+    enc = EncExp(lang='es', unit_vector=False)
+    X = enc.transform([txt])
+    assert np.linalg.norm(X) != 1
+    enc = EncExp(lang='es')
+    X = enc.transform([txt])
+    assert_almost_equal(np.linalg.norm(X), 1)
