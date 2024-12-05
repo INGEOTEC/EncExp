@@ -183,6 +183,7 @@ def main(args):
     filename  = args.file[0]
     output = args.output
     vocabulary = args.vocabulary
+    n_jobs = args.n_jobs
     voc = next(tweet_iterator(vocabulary))
     min_pos = args.min_pos
     estimator_kwargs = None
@@ -190,6 +191,7 @@ def main(args):
         estimator_kwargs = dict(fit_intercept=True)
     build_encexp(voc, filename, output,
                  min_pos=min_pos, limit=args.limit,
+                 n_jobs=n_jobs,
                  estimator_kwargs=estimator_kwargs)
 
 
@@ -213,6 +215,9 @@ if __name__ == '__main__':
     parser.add_argument('--intercept',
                         help='Estimate the intercept',
                         dest='intercept', action='store_true')
+    parser.add_argument('--n-jobs',
+                        help='Number of jobs',
+                        dest='n_jobs', type=int, default=-1)    
     parser.add_argument('file',
                         help='Input filename',
                         nargs=1, type=str)
