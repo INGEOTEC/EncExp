@@ -275,7 +275,7 @@ class EncExp:
     intercept: bool=False
     transform_distance: bool=False
     unit_vector: bool=True
-    tailored: Union[bool|str]=False
+    tailored: Union[bool, str]=False
     progress_bar: bool=False
 
     def get_params(self):
