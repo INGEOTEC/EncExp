@@ -362,3 +362,24 @@ def test_EncExp_unit_vector():
     enc = EncExp(lang='es')
     X = enc.transform([txt])
     assert_almost_equal(np.linalg.norm(X), 1)
+
+
+def test_EncExp_build_tailored():
+    """Test the development of tailored models"""
+
+    samples()
+    mx = list(tweet_iterator('es-mx-sample.json'))
+    samples(filename='es-ar-sample.json.zip')
+    ar = list(tweet_iterator('es-ar-sample.json'))
+    y = ['mx'] * len(mx)
+    y += ['ar'] * len(ar)
+
+    enc = EncExp(lang='es',
+                 tailored=True)
+    w = enc.weights
+    enc.build_tailored(mx + ar)    
+    assert isfile(enc.tailored)
+    enc = EncExp(lang='es',
+                 tailored=enc.tailored).fit(mx + ar, y)
+    assert np.fabs(w - enc.weights).sum() != 0
+    os.unlink(enc.tailored)

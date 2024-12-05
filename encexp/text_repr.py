@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
+from typing import Union
 from collections import OrderedDict
 from sklearn.model_selection import StratifiedKFold
 from sklearn.base import clone
@@ -263,8 +264,8 @@ class EncExp:
     voc_size_exponent: int=13
     EncExp_filename: str=None
     precision: np.dtype=np.float32
-    voc_source: str='noGeo'
-    enc_source: str='mix'
+    voc_source: str='mix'
+    enc_source: str=None
     prefix_suffix: bool=True
     estimator_kwargs: dict=None
     merge_IDF: bool=True
@@ -274,6 +275,7 @@ class EncExp:
     intercept: bool=False
     transform_distance: bool=False
     unit_vector: bool=True
+    tailored: Union[bool|str]=False
     progress_bar: bool=False
 
     def get_params(self):
@@ -293,6 +295,7 @@ class EncExp:
                     intercept=self.intercept,
                     transform_distance=self.transform_distance,
                     unit_vector=self.unit_vector,
+                    tailored=self.tailored,
                     progress_bar=self.progress_bar)
 
     @property
@@ -316,6 +319,8 @@ class EncExp:
 
     def fit(self, D, y=None):
         """Estimate the parameters"""
+        if self.tailored is not False:
+            self.build_tailored(D)
         if y is None:
             y = [x['klass'] for x in D]
         if not hasattr(self, '_estimator') and len(D) > 2**17:
@@ -527,7 +532,40 @@ class EncExp:
             self.weights = w
             self.names = names
         return w
-    
+
+    def build_tailored(self, data, **kwargs):
+        """Build a tailored model with data"""
+
+        import os
+        from os.path import isfile
+        from tempfile import mkstemp
+        from json import dumps
+        from microtc.utils import tweet_iterator
+        from encexp.download import download_seqtm
+        from encexp.build_encexp import build_encexp
+
+        get_text = self.bow.get_text
+        if isinstance(self.tailored, str) and isfile(self.tailored):
+            _ = self.__class__(EncExp_filename=self.tailored)
+            self.__iadd__(_)
+            return None
+        iden, path = mkstemp()
+        with open(iden, 'w', encoding='utf-8') as fpt:
+            for d in data:
+                print(dumps(dict(text=get_text(d))), file=fpt)
+        if isinstance(self.tailored, bool):
+            _, self.tailored = mkstemp(suffix='.gz')
+        if self.EncExp_filename is not None:
+            voc = next(tweet_iterator(self.EncExp_filename))
+        else:
+            voc = download_seqtm(self.lang, self.voc_size_exponent,
+                                 voc_source=self.voc_source)
+        build_kw = dict(min_pos=16, tokens=self.names)
+        build_kw.update(kwargs)
+        build_encexp(voc, path, self.tailored, **build_kw)
+        os.unlink(path)
+        self.__iadd__(self.__class__(EncExp_filename=self.tailored))
+
     def __add__(self, other):
         """Add weights"""
         ins = clone(self)
