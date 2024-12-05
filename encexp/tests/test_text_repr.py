@@ -382,4 +382,4 @@ def test_EncExp_build_tailored():
     enc = EncExp(lang='es',
                  tailored=enc.tailored).fit(mx + ar, y)
     assert np.fabs(w - enc.weights).sum() != 0
-    os.unlink(enc.tailored)
+    # os.unlink(enc.tailored)
