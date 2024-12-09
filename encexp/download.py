@@ -22,6 +22,7 @@ import encexp
 
 def download_seqtm(lang, voc_size_exponent: int=13,
                    output=None, voc_source='noGeo',
+                   prefix='seqtm',
                    prefix_suffix: bool=True):
     """Download SeqTM vocabulary"""
     if not isdir(MODELS):
@@ -32,7 +33,7 @@ def download_seqtm(lang, voc_size_exponent: int=13,
     for flag in [voc_source]:
         if flag is not None:
             flags.append(flag)
-    voc_fname = f'seqtm_{"_".join(flags)}_{lang}_{voc_size_exponent}.json.gz'
+    voc_fname = f'{prefix}_{"_".join(flags)}_{lang}_{voc_size_exponent}.json.gz'
     if output is None:
         output = join(MODELS, voc_fname)
     if isfile(output):

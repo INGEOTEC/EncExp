@@ -39,6 +39,7 @@ class TM(TextModel):
         if vocabulary is None:
             vocabulary = download_seqtm(lang, voc_source=voc_source,
                                         voc_size_exponent=voc_size_exponent,
+                                        prefix=self.__class__.__name__.lower(),
                                         prefix_suffix=prefix_suffix)
         self._map = {}
         params = vocabulary['params']
