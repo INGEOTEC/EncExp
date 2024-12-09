@@ -27,8 +27,8 @@ from encexp.download import download_seqtm, download_encexp
 from encexp.utils import replace_tokens, progress_bar
 
 
-class SeqTM(TextModel):
-    """TextModel where the utterance is segmented in a sequence."""
+class TM(TextModel):
+    """TextModel where the vocabulary is obtained with SeqTM"""
 
     def __init__(self, lang='es',
                  voc_size_exponent: int=13,
@@ -49,30 +49,18 @@ class SeqTM(TextModel):
         super().__init__(**params)
         self.language = lang
         self.voc_size_exponent = voc_size_exponent
-        self.__vocabulary(counter)
+        self._vocabulary(counter)
         self.prefix_suffix = prefix_suffix
         self.precision = precision
         replace_tokens(self)
 
-    def __vocabulary(self, counter):
+    def _vocabulary(self, counter):
         """Vocabulary"""
 
         tfidf = TFIDF()
         tfidf.N = counter.update_calls
         tfidf.word2id, tfidf.wordWeight = tfidf.counter2weight(counter)
         self.model = tfidf
-        tokens = self.tokens
-        for value in tfidf.word2id:
-            key = value
-            if value[:2] == 'q:':
-                key = value[2:]
-                if key in self._map:
-                    continue
-                self._map[key] = value
-            else:
-                key = f'~{key}~'
-                self._map[key] = value
-            tokens[key] = False
 
     @property
     def language(self):
@@ -103,16 +91,6 @@ class SeqTM(TextModel):
         return f'seqtm_{lang}_{voc}'
 
     @property
-    def sequence(self):
-        """Vocabulary compute on sequence text-transformation"""
-
-        return self._sequence
-
-    @sequence.setter
-    def sequence(self, value):
-        self._sequence = value
-
-    @property
     def names(self):
         """Vector space components"""
 
@@ -124,7 +102,7 @@ class SeqTM(TextModel):
                 _names[k] = v
             self.names = np.array(_names)
             return self._names
-        
+
     @names.setter
     def names(self, value):
         self._names = value
@@ -141,10 +119,71 @@ class SeqTM(TextModel):
                 w[k] = v
             self.weights = np.array(w)
             return self._weights
-        
+
     @weights.setter
     def weights(self, value):
         self._weights = value
+
+
+    def tonp(self, X):
+        """Sparse representation to sparce matrix
+
+        :param X: Sparse representation of matrix
+        :type X: list
+        :rtype: csr_matrix
+        """
+        from scipy.sparse import csr_matrix
+
+        if not isinstance(X, list):
+            return X
+        assert self.num_terms is not None
+        data = []
+        row = []
+        col = []
+        for r, x in enumerate(X):
+            col.extend([i for i, _ in x])
+            data.extend([v for _, v in x])
+            _ = [r] * len(x)
+            row.extend(_)
+        return csr_matrix((data, (row, col)),
+                          shape=(len(X), self.num_terms),
+                          dtype=self.precision)
+
+
+class SeqTM(TM):
+    """TextModel where the utterance is segmented in a sequence."""
+    def _vocabulary(self, counter):
+        """Vocabulary"""
+
+        super(SeqTM, self)._vocabulary(counter)
+        tfidf = self.model
+        tokens = self.tokens
+        for value in tfidf.word2id:
+            key = value
+            if value[:2] == 'q:':
+                key = value[2:]
+                if key in self._map:
+                    continue
+                self._map[key] = value
+            else:
+                key = f'~{key}~'
+                self._map[key] = value
+            tokens[key] = False    
+
+    def compute_tokens(self, text):
+        """
+        Labels in a text
+
+        :param text:
+        :type text: str
+        :returns: The labels in the text
+        :rtype: set
+        """
+
+        get = self._map.get
+        lst = self.find_token(text)
+        _ = [text[a:b] for a, b in lst]
+        return [[get(x, x) for x in _]]
 
     @property
     def tokens(self):
@@ -174,21 +213,6 @@ class SeqTM(TextModel):
     @data_structure.setter
     def data_structure(self, value):
         self._data_structure = value
-
-    def compute_tokens(self, text):
-        """
-        Labels in a text
-
-        :param text:
-        :type text: str
-        :returns: The labels in the text
-        :rtype: set
-        """
-
-        get = self._map.get
-        lst = self.find_token(text)
-        _ = [text[a:b] for a, b in lst]
-        return [[get(x, x) for x in _]]
 
     def find_token(self, text):
         """Obtain the position of each label in the text
@@ -233,29 +257,6 @@ class SeqTM(TextModel):
             blocks.append([init, end])
         return blocks
 
-    def tonp(self, X):
-        """Sparse representation to sparce matrix
-
-        :param X: Sparse representation of matrix
-        :type X: list
-        :rtype: csr_matrix
-        """
-        from scipy.sparse import csr_matrix
-
-        if not isinstance(X, list):
-            return X
-        assert self.num_terms is not None
-        data = []
-        row = []
-        col = []
-        for r, x in enumerate(X):
-            col.extend([i for i, _ in x])
-            data.extend([v for _, v in x])
-            _ = [r] * len(x)
-            row.extend(_)
-        return csr_matrix((data, (row, col)),
-                          shape=(len(X), self.num_terms),
-                          dtype=self.precision)
 
 @dataclass
 class EncExp:

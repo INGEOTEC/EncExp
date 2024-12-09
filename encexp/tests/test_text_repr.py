@@ -19,9 +19,15 @@ from microtc.utils import tweet_iterator
 from encexp.tests.test_utils import samples
 from encexp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary
 from encexp.build_encexp import build_encexp
-from encexp.text_repr import SeqTM, EncExp
+from encexp.text_repr import SeqTM, EncExp, TM
 from sklearn.base import clone
 
+
+def test_tm():
+    """Test TM"""
+    tm = TM(voc_source='mix')
+    _ = tm['buenos dias mxeico']
+    assert len(_) == 13
 
 def test_seqtm():
     """Test SeqTM"""
