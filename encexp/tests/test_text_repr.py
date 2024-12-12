@@ -385,7 +385,10 @@ def test_EncExp_build_tailored():
     w = enc.weights
     enc.build_tailored(mx + ar)    
     assert isfile(enc.tailored)
+    assert hasattr(enc, '_tailored_built')
     enc = EncExp(lang='es',
                  tailored=enc.tailored).fit(mx + ar, y)
     assert np.fabs(w - enc.weights).sum() != 0
+    enc2 = clone(enc)
+    assert hasattr(enc2, '_tailored_built')
     # os.unlink(enc.tailored)
