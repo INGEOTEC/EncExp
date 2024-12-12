@@ -545,11 +545,14 @@ class EncExp:
         from microtc.utils import tweet_iterator
         from encexp.download import download_seqtm
         from encexp.build_encexp import build_encexp
+        if hasattr(self, '_tailored_built'):
+            return None
 
         get_text = self.bow.get_text
         if isinstance(self.tailored, str) and isfile(self.tailored):
             _ = self.__class__(EncExp_filename=self.tailored)
             self.__iadd__(_)
+            self._tailored_built = True
             return None
         iden, path = mkstemp()
         with open(iden, 'w', encoding='utf-8') as fpt:
@@ -567,6 +570,7 @@ class EncExp:
         build_encexp(voc, path, self.tailored, **build_kw)
         os.unlink(path)
         self.__iadd__(self.__class__(EncExp_filename=self.tailored))
+        self._tailored_built = True
 
     def __add__(self, other):
         """Add weights"""
@@ -618,4 +622,6 @@ class EncExp:
         if hasattr(self, '_estimator'):
             ins.estimator = clone(self.estimator)
         ins.enc_training_size = self.enc_training_size
+        if hasattr(self, '_tailored_built'):
+            ins._tailored_built = self._tailored_built
         return ins
