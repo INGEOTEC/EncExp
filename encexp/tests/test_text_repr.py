@@ -19,7 +19,7 @@ from microtc.utils import tweet_iterator
 from encexp.tests.test_utils import samples
 from encexp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary
 from encexp.build_encexp import build_encexp
-from encexp.text_repr import SeqTM, EncExp, TM
+from encexp.text_repr import SeqTM, EncExp, TM, EncExpT
 from sklearn.base import clone
 
 
@@ -391,4 +391,65 @@ def test_EncExp_build_tailored():
     assert np.fabs(w - enc.weights).sum() != 0
     enc2 = clone(enc)
     assert hasattr(enc2, '_tailored_built')
+    assert hasattr(enc2, '_estimator')
     # os.unlink(enc.tailored)
+
+def test_pipeline_tm():
+    """Test Pipeline"""
+    samples()
+    mx = list(tweet_iterator('es-mx-sample.json'))
+    samples(filename='es-ar-sample.json.zip')
+    ar = list(tweet_iterator('es-ar-sample.json'))
+    y = ['mx'] * len(mx)
+    y += ['ar'] * len(ar)
+
+    from sklearn.pipeline import Pipeline
+    from sklearn.svm import LinearSVC
+    from sklearn.model_selection import GridSearchCV
+    from sklearn.model_selection import StratifiedShuffleSplit
+
+    pipe = Pipeline([('bow', 'passthrough'),
+                    ('cl', LinearSVC(class_weight='balanced'))])
+    params = {'cl__C': [0.01, 0.1, 1, 10],
+              'bow': [SeqTM(lang='es', voc_source='mix'),
+                      TM(lang='es', voc_source='mix')]}
+    sss = StratifiedShuffleSplit(random_state=0,
+                                 n_splits=1,
+                                 test_size=0.3)
+
+    grid = GridSearchCV(pipe,
+                        param_grid=params,
+                        cv=sss,
+                        n_jobs=-1,
+                        scoring='f1_macro').fit(mx + ar, y)
+    assert grid.best_score_ > 0.7
+
+
+def test_pipeline_encexp():
+    """Test Pipeline in EncExpT"""
+    from sklearn.pipeline import Pipeline
+    from sklearn.svm import LinearSVC
+    from sklearn.model_selection import GridSearchCV
+    from sklearn.model_selection import StratifiedShuffleSplit
+
+    samples()
+    mx = list(tweet_iterator('es-mx-sample.json'))
+    samples(filename='es-ar-sample.json.zip')
+    ar = list(tweet_iterator('es-ar-sample.json'))
+    y = ['mx'] * len(mx)
+    y += ['ar'] * len(ar)
+
+    pipe = Pipeline([('encexp', EncExpT(lang='es')),
+                     ('cl', LinearSVC(class_weight='balanced'))])
+    params = {'cl__C': [0.01, 0.1, 1, 10],
+              'encexp__voc_source': ['mix', 'noGeo']}
+    sss = StratifiedShuffleSplit(random_state=0,
+                                n_splits=1,
+                                test_size=0.3)
+
+    grid = GridSearchCV(pipe,
+                        param_grid=params,
+                        cv=sss,
+                        n_jobs=1,
+                        scoring='f1_macro').fit(mx + ar, y)
+    assert grid.best_score_ > 0.7
