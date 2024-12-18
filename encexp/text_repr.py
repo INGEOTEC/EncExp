@@ -464,19 +464,6 @@ class EncExpT:
             return X / np.c_[_norm]
         return X
 
-    def predict(self, texts):
-        """Predict"""
-        X = self.transform(texts)
-        return self.estimator.predict(X)
-
-    def decision_function(self, texts):
-        """Decision function"""
-        X = self.transform(texts)
-        hy = self.estimator.decision_function(X)
-        if hy.ndim == 1:
-            return np.c_[hy]
-        return hy
-
     def fill(self, inplace: bool=True, names: list=None):
         """Fill weights with the missing dimensions"""
         weights = self.weights
@@ -629,6 +616,19 @@ class EncExp(EncExpT):
     @estimator.setter
     def estimator(self, value):
         self._estimator = value
+
+    def predict(self, texts):
+        """Predict"""
+        X = self.transform(texts)
+        return self.estimator.predict(X)
+
+    def decision_function(self, texts):
+        """Decision function"""
+        X = self.transform(texts)
+        hy = self.estimator.decision_function(X)
+        if hy.ndim == 1:
+            return np.c_[hy]
+        return hy
 
     def train_predict_decision_function(self, D, y=None):
         """Train and predict the decision"""
