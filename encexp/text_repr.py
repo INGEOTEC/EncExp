@@ -276,11 +276,8 @@ class EncExpT:
     voc_source: str='mix'
     enc_source: str=None
     prefix_suffix: bool=True
-    estimator_kwargs: dict=None
     merge_IDF: bool=True
     force_token: bool=True
-    kfold_class: StratifiedKFold=StratifiedKFold
-    kfold_kwargs: dict=None
     intercept: bool=False
     transform_distance: bool=False
     unit_vector: bool=True
@@ -309,29 +306,10 @@ class EncExpT:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    @property
-    def estimator(self):
-        """Estimator (classifier/regressor)"""
-        try:
-            return self._estimator
-        except AttributeError:
-            from sklearn.svm import LinearSVC
-            params = dict(class_weight='balanced',
-                          dual='auto')
-            if self.estimator_kwargs is not None:
-                params.update(self.estimator_kwargs)
-            self.estimator_kwargs = params
-            self.estimator = LinearSVC(**self.estimator_kwargs)
-        return self._estimator
-
-    @estimator.setter
-    def estimator(self, value):
-        self._estimator = value
-
     def fit(self, D, y=None):
         """Estimate the parameters"""
         if self.tailored is not False:
-            self.build_tailored(D)
+            self.build_tailored(D, load=True)
         return self
 
     def force_tokens_weights(self, IDF: bool=False):
@@ -536,7 +514,7 @@ class EncExpT:
             self.names = names
         return w
 
-    def build_tailored(self, data, **kwargs):
+    def build_tailored(self, data, load=False, **kwargs):
         """Build a tailored model with data"""
 
         import os
@@ -550,7 +528,7 @@ class EncExpT:
             return None
 
         get_text = self.bow.get_text
-        if isinstance(self.tailored, str) and isfile(self.tailored):
+        if load and isinstance(self.tailored, str) and isfile(self.tailored):
             _ = self.__class__(EncExp_filename=self.tailored)
             self.__iadd__(_)
             self._tailored_built = True
@@ -570,8 +548,9 @@ class EncExpT:
         build_kw.update(kwargs)
         build_encexp(voc, path, self.tailored, **build_kw)
         os.unlink(path)
-        self.__iadd__(self.__class__(EncExp_filename=self.tailored))
-        self._tailored_built = True
+        if load:
+            self.__iadd__(self.__class__(EncExp_filename=self.tailored))
+            self._tailored_built = True
 
     def __add__(self, other):
         """Add weights"""
@@ -629,6 +608,11 @@ class EncExpT:
 @dataclass
 class EncExp(EncExpT):
     """EncExp (Encaje Explicable)"""
+
+    estimator_kwargs: dict=None
+    kfold_class: StratifiedKFold=StratifiedKFold
+    kfold_kwargs: dict=None
+
     def get_params(self, deep=None):
         """Parameters"""
         params = super(EncExp, self).get_params()
@@ -647,6 +631,25 @@ class EncExp(EncExpT):
         X = self.transform(D)
         self.estimator.fit(X, y)
         return self
+    
+    @property
+    def estimator(self):
+        """Estimator (classifier/regressor)"""
+        try:
+            return self._estimator
+        except AttributeError:
+            from sklearn.svm import LinearSVC
+            params = dict(class_weight='balanced',
+                          dual='auto')
+            if self.estimator_kwargs is not None:
+                params.update(self.estimator_kwargs)
+            self.estimator_kwargs = params
+            self.estimator = LinearSVC(**self.estimator_kwargs)
+        return self._estimator
+
+    @estimator.setter
+    def estimator(self, value):
+        self._estimator = value    
 
     def __sklearn_clone__(self):
         ins = super(EncExp, self).__sklearn_clone__()
