@@ -383,7 +383,7 @@ def test_EncExp_build_tailored():
     enc = EncExp(lang='es',
                  tailored=True)
     w = enc.weights
-    enc.build_tailored(mx + ar)    
+    enc.build_tailored(mx + ar, load=True)    
     assert isfile(enc.tailored)
     assert hasattr(enc, '_tailored_built')
     enc = EncExp(lang='es',
