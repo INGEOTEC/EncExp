@@ -15,6 +15,6 @@
 import sys
 
 if not '-m' in sys.argv:
-    from encexp.text_repr import EncExp
+    from encexp.text_repr import EncExp, EncExpT
 
 __version__ = "0.0.19"

@@ -34,7 +34,7 @@ class TM(TextModel):
                  voc_size_exponent: int=13,
                  vocabulary=None,
                  prefix_suffix: bool=True,
-                 voc_source: str='noGeo',
+                 voc_source: str='mix',
                  precision=np.float32):
         if vocabulary is None:
             vocabulary = download_seqtm(lang, voc_source=voc_source,
@@ -54,6 +54,10 @@ class TM(TextModel):
         self.prefix_suffix = prefix_suffix
         self.precision = precision
         replace_tokens(self)
+
+    def fit(self, X, y):
+        """fit"""
+        return self
 
     def _vocabulary(self, counter):
         """Vocabulary"""
@@ -260,8 +264,11 @@ class SeqTM(TM):
 
 
 @dataclass
-class EncExp:
-    """EncExp (Encaje Explicable)"""
+class EncExpT:
+    """EncExpT (Encaje Explicable)
+    
+    Represent a text in the embedding using the `transform`method.
+    """
     lang: str='es'
     voc_size_exponent: int=13
     EncExp_filename: str=None
@@ -280,7 +287,7 @@ class EncExp:
     tailored: Union[bool, str]=False
     progress_bar: bool=False
 
-    def get_params(self):
+    def get_params(self, deep=None):
         """Parameters"""
         return dict(lang=self.lang,
                     voc_size_exponent=self.voc_size_exponent,
@@ -289,16 +296,18 @@ class EncExp:
                     voc_source=self.voc_source,
                     enc_source=self.enc_source,
                     prefix_suffix=self.prefix_suffix,
-                    estimator_kwargs=self.estimator_kwargs,
                     merge_IDF=self.merge_IDF,
                     force_token=self.force_token,
-                    kfold_class=self.kfold_class,
-                    kfold_kwargs=self.kfold_kwargs,
                     intercept=self.intercept,
                     transform_distance=self.transform_distance,
                     unit_vector=self.unit_vector,
                     tailored=self.tailored,
                     progress_bar=self.progress_bar)
+
+    def set_params(self, **kwargs):
+        """Set the parameters"""
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
     @property
     def estimator(self):
@@ -323,12 +332,6 @@ class EncExp:
         """Estimate the parameters"""
         if self.tailored is not False:
             self.build_tailored(D)
-        if y is None:
-            y = [x['klass'] for x in D]
-        if not hasattr(self, '_estimator') and len(D) > 2**17:
-            self.estimator = SGDClassifier(class_weight='balanced')
-        X = self.transform(D)
-        self.estimator.fit(X, y)
         return self
 
     def force_tokens_weights(self, IDF: bool=False):
@@ -369,13 +372,11 @@ class EncExp:
         except AttributeError:
             if self.EncExp_filename is not None:
                 data = download_encexp(output=self.EncExp_filename)
-                                       # precision=self.precision)
             else:
                 if self.intercept:
                     assert not self.merge_IDF
                 data = download_encexp(lang=self.lang,
                                        voc_size_exponent=self.voc_size_exponent,
-                                       # precision=self.precision,
                                        voc_source=self.voc_source,
                                        enc_source=self.enc_source,
                                        prefix_suffix=self.prefix_suffix,
@@ -619,9 +620,36 @@ class EncExp:
         ins.weights = self.weights
         ins.bow = self.bow
         ins.names = self.names
-        if hasattr(self, '_estimator'):
-            ins.estimator = clone(self.estimator)
         ins.enc_training_size = self.enc_training_size
         if hasattr(self, '_tailored_built'):
             ins._tailored_built = self._tailored_built
+        return ins
+
+
+@dataclass
+class EncExp(EncExpT):
+    """EncExp (Encaje Explicable)"""
+    def get_params(self, deep=None):
+        """Parameters"""
+        params = super(EncExp, self).get_params()
+        params.update(dict(estimator_kwargs=self.estimator_kwargs,
+                           kfold_class=self.kfold_class,
+                           kfold_kwargs=self.kfold_kwargs))
+        return params
+
+    def fit(self, D, y=None):
+        """Estimate the parameters"""
+        super(EncExp, self).fit(D, y=y)
+        if y is None:
+            y = [x['klass'] for x in D]
+        if not hasattr(self, '_estimator') and len(D) > 2**17:
+            self.estimator = SGDClassifier(class_weight='balanced')
+        X = self.transform(D)
+        self.estimator.fit(X, y)
+        return self
+
+    def __sklearn_clone__(self):
+        ins = super(EncExp, self).__sklearn_clone__()
+        if hasattr(self, '_estimator'):
+            ins.estimator = clone(self.estimator)
         return ins
