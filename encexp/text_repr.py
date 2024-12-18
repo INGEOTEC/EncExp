@@ -27,18 +27,19 @@ from encexp.download import download_seqtm, download_encexp
 from encexp.utils import replace_tokens, progress_bar
 
 
-class SeqTM(TextModel):
-    """TextModel where the utterance is segmented in a sequence."""
+class TM(TextModel):
+    """TextModel where the vocabulary is obtained with SeqTM"""
 
     def __init__(self, lang='es',
                  voc_size_exponent: int=13,
                  vocabulary=None,
                  prefix_suffix: bool=True,
-                 voc_source: str='noGeo',
+                 voc_source: str='mix',
                  precision=np.float32):
         if vocabulary is None:
             vocabulary = download_seqtm(lang, voc_source=voc_source,
                                         voc_size_exponent=voc_size_exponent,
+                                        prefix=self.__class__.__name__.lower(),
                                         prefix_suffix=prefix_suffix)
         self._map = {}
         params = vocabulary['params']
@@ -49,30 +50,22 @@ class SeqTM(TextModel):
         super().__init__(**params)
         self.language = lang
         self.voc_size_exponent = voc_size_exponent
-        self.__vocabulary(counter)
+        self._vocabulary(counter)
         self.prefix_suffix = prefix_suffix
         self.precision = precision
         replace_tokens(self)
 
-    def __vocabulary(self, counter):
+    def fit(self, X, y):
+        """fit"""
+        return self
+
+    def _vocabulary(self, counter):
         """Vocabulary"""
 
         tfidf = TFIDF()
         tfidf.N = counter.update_calls
         tfidf.word2id, tfidf.wordWeight = tfidf.counter2weight(counter)
         self.model = tfidf
-        tokens = self.tokens
-        for value in tfidf.word2id:
-            key = value
-            if value[:2] == 'q:':
-                key = value[2:]
-                if key in self._map:
-                    continue
-                self._map[key] = value
-            else:
-                key = f'~{key}~'
-                self._map[key] = value
-            tokens[key] = False
 
     @property
     def language(self):
@@ -103,16 +96,6 @@ class SeqTM(TextModel):
         return f'seqtm_{lang}_{voc}'
 
     @property
-    def sequence(self):
-        """Vocabulary compute on sequence text-transformation"""
-
-        return self._sequence
-
-    @sequence.setter
-    def sequence(self, value):
-        self._sequence = value
-
-    @property
     def names(self):
         """Vector space components"""
 
@@ -124,7 +107,7 @@ class SeqTM(TextModel):
                 _names[k] = v
             self.names = np.array(_names)
             return self._names
-        
+
     @names.setter
     def names(self, value):
         self._names = value
@@ -141,10 +124,71 @@ class SeqTM(TextModel):
                 w[k] = v
             self.weights = np.array(w)
             return self._weights
-        
+
     @weights.setter
     def weights(self, value):
         self._weights = value
+
+
+    def tonp(self, X):
+        """Sparse representation to sparce matrix
+
+        :param X: Sparse representation of matrix
+        :type X: list
+        :rtype: csr_matrix
+        """
+        from scipy.sparse import csr_matrix
+
+        if not isinstance(X, list):
+            return X
+        assert self.num_terms is not None
+        data = []
+        row = []
+        col = []
+        for r, x in enumerate(X):
+            col.extend([i for i, _ in x])
+            data.extend([v for _, v in x])
+            _ = [r] * len(x)
+            row.extend(_)
+        return csr_matrix((data, (row, col)),
+                          shape=(len(X), self.num_terms),
+                          dtype=self.precision)
+
+
+class SeqTM(TM):
+    """TextModel where the utterance is segmented in a sequence."""
+    def _vocabulary(self, counter):
+        """Vocabulary"""
+
+        super(SeqTM, self)._vocabulary(counter)
+        tfidf = self.model
+        tokens = self.tokens
+        for value in tfidf.word2id:
+            key = value
+            if value[:2] == 'q:':
+                key = value[2:]
+                if key in self._map:
+                    continue
+                self._map[key] = value
+            else:
+                key = f'~{key}~'
+                self._map[key] = value
+            tokens[key] = False    
+
+    def compute_tokens(self, text):
+        """
+        Labels in a text
+
+        :param text:
+        :type text: str
+        :returns: The labels in the text
+        :rtype: set
+        """
+
+        get = self._map.get
+        lst = self.find_token(text)
+        _ = [text[a:b] for a, b in lst]
+        return [[get(x, x) for x in _]]
 
     @property
     def tokens(self):
@@ -174,21 +218,6 @@ class SeqTM(TextModel):
     @data_structure.setter
     def data_structure(self, value):
         self._data_structure = value
-
-    def compute_tokens(self, text):
-        """
-        Labels in a text
-
-        :param text:
-        :type text: str
-        :returns: The labels in the text
-        :rtype: set
-        """
-
-        get = self._map.get
-        lst = self.find_token(text)
-        _ = [text[a:b] for a, b in lst]
-        return [[get(x, x) for x in _]]
 
     def find_token(self, text):
         """Obtain the position of each label in the text
@@ -233,33 +262,13 @@ class SeqTM(TextModel):
             blocks.append([init, end])
         return blocks
 
-    def tonp(self, X):
-        """Sparse representation to sparce matrix
-
-        :param X: Sparse representation of matrix
-        :type X: list
-        :rtype: csr_matrix
-        """
-        from scipy.sparse import csr_matrix
-
-        if not isinstance(X, list):
-            return X
-        assert self.num_terms is not None
-        data = []
-        row = []
-        col = []
-        for r, x in enumerate(X):
-            col.extend([i for i, _ in x])
-            data.extend([v for _, v in x])
-            _ = [r] * len(x)
-            row.extend(_)
-        return csr_matrix((data, (row, col)),
-                          shape=(len(X), self.num_terms),
-                          dtype=self.precision)
 
 @dataclass
-class EncExp:
-    """EncExp (Encaje Explicable)"""
+class EncExpT:
+    """EncExpT (Encaje Explicable)
+    
+    Represent a text in the embedding using the `transform`method.
+    """
     lang: str='es'
     voc_size_exponent: int=13
     EncExp_filename: str=None
@@ -267,18 +276,15 @@ class EncExp:
     voc_source: str='mix'
     enc_source: str=None
     prefix_suffix: bool=True
-    estimator_kwargs: dict=None
     merge_IDF: bool=True
     force_token: bool=True
-    kfold_class: StratifiedKFold=StratifiedKFold
-    kfold_kwargs: dict=None
     intercept: bool=False
     transform_distance: bool=False
     unit_vector: bool=True
     tailored: Union[bool, str]=False
     progress_bar: bool=False
 
-    def get_params(self):
+    def get_params(self, deep=None):
         """Parameters"""
         return dict(lang=self.lang,
                     voc_size_exponent=self.voc_size_exponent,
@@ -287,46 +293,23 @@ class EncExp:
                     voc_source=self.voc_source,
                     enc_source=self.enc_source,
                     prefix_suffix=self.prefix_suffix,
-                    estimator_kwargs=self.estimator_kwargs,
                     merge_IDF=self.merge_IDF,
                     force_token=self.force_token,
-                    kfold_class=self.kfold_class,
-                    kfold_kwargs=self.kfold_kwargs,
                     intercept=self.intercept,
                     transform_distance=self.transform_distance,
                     unit_vector=self.unit_vector,
                     tailored=self.tailored,
                     progress_bar=self.progress_bar)
 
-    @property
-    def estimator(self):
-        """Estimator (classifier/regressor)"""
-        try:
-            return self._estimator
-        except AttributeError:
-            from sklearn.svm import LinearSVC
-            params = dict(class_weight='balanced',
-                          dual='auto')
-            if self.estimator_kwargs is not None:
-                params.update(self.estimator_kwargs)
-            self.estimator_kwargs = params
-            self.estimator = LinearSVC(**self.estimator_kwargs)
-        return self._estimator
-
-    @estimator.setter
-    def estimator(self, value):
-        self._estimator = value
+    def set_params(self, **kwargs):
+        """Set the parameters"""
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
     def fit(self, D, y=None):
         """Estimate the parameters"""
         if self.tailored is not False:
-            self.build_tailored(D)
-        if y is None:
-            y = [x['klass'] for x in D]
-        if not hasattr(self, '_estimator') and len(D) > 2**17:
-            self.estimator = SGDClassifier(class_weight='balanced')
-        X = self.transform(D)
-        self.estimator.fit(X, y)
+            self.build_tailored(D, load=True)
         return self
 
     def force_tokens_weights(self, IDF: bool=False):
@@ -367,13 +350,11 @@ class EncExp:
         except AttributeError:
             if self.EncExp_filename is not None:
                 data = download_encexp(output=self.EncExp_filename)
-                                       # precision=self.precision)
             else:
                 if self.intercept:
                     assert not self.merge_IDF
                 data = download_encexp(lang=self.lang,
                                        voc_size_exponent=self.voc_size_exponent,
-                                       # precision=self.precision,
                                        voc_source=self.voc_source,
                                        enc_source=self.enc_source,
                                        prefix_suffix=self.prefix_suffix,
@@ -533,7 +514,7 @@ class EncExp:
             self.names = names
         return w
 
-    def build_tailored(self, data, **kwargs):
+    def build_tailored(self, data, load=False, **kwargs):
         """Build a tailored model with data"""
 
         import os
@@ -543,11 +524,14 @@ class EncExp:
         from microtc.utils import tweet_iterator
         from encexp.download import download_seqtm
         from encexp.build_encexp import build_encexp
+        if hasattr(self, '_tailored_built'):
+            return None
 
         get_text = self.bow.get_text
-        if isinstance(self.tailored, str) and isfile(self.tailored):
+        if load and isinstance(self.tailored, str) and isfile(self.tailored):
             _ = self.__class__(EncExp_filename=self.tailored)
             self.__iadd__(_)
+            self._tailored_built = True
             return None
         iden, path = mkstemp()
         with open(iden, 'w', encoding='utf-8') as fpt:
@@ -564,7 +548,9 @@ class EncExp:
         build_kw.update(kwargs)
         build_encexp(voc, path, self.tailored, **build_kw)
         os.unlink(path)
-        self.__iadd__(self.__class__(EncExp_filename=self.tailored))
+        if load:
+            self.__iadd__(self.__class__(EncExp_filename=self.tailored))
+            self._tailored_built = True
 
     def __add__(self, other):
         """Add weights"""
@@ -613,7 +599,60 @@ class EncExp:
         ins.weights = self.weights
         ins.bow = self.bow
         ins.names = self.names
+        ins.enc_training_size = self.enc_training_size
+        if hasattr(self, '_tailored_built'):
+            ins._tailored_built = self._tailored_built
+        return ins
+
+
+@dataclass
+class EncExp(EncExpT):
+    """EncExp (Encaje Explicable)"""
+
+    estimator_kwargs: dict=None
+    kfold_class: StratifiedKFold=StratifiedKFold
+    kfold_kwargs: dict=None
+
+    def get_params(self, deep=None):
+        """Parameters"""
+        params = super(EncExp, self).get_params()
+        params.update(dict(estimator_kwargs=self.estimator_kwargs,
+                           kfold_class=self.kfold_class,
+                           kfold_kwargs=self.kfold_kwargs))
+        return params
+
+    def fit(self, D, y=None):
+        """Estimate the parameters"""
+        super(EncExp, self).fit(D, y=y)
+        if y is None:
+            y = [x['klass'] for x in D]
+        if not hasattr(self, '_estimator') and len(D) > 2**17:
+            self.estimator = SGDClassifier(class_weight='balanced')
+        X = self.transform(D)
+        self.estimator.fit(X, y)
+        return self
+    
+    @property
+    def estimator(self):
+        """Estimator (classifier/regressor)"""
+        try:
+            return self._estimator
+        except AttributeError:
+            from sklearn.svm import LinearSVC
+            params = dict(class_weight='balanced',
+                          dual='auto')
+            if self.estimator_kwargs is not None:
+                params.update(self.estimator_kwargs)
+            self.estimator_kwargs = params
+            self.estimator = LinearSVC(**self.estimator_kwargs)
+        return self._estimator
+
+    @estimator.setter
+    def estimator(self, value):
+        self._estimator = value    
+
+    def __sklearn_clone__(self):
+        ins = super(EncExp, self).__sklearn_clone__()
         if hasattr(self, '_estimator'):
             ins.estimator = clone(self.estimator)
-        ins.enc_training_size = self.enc_training_size
         return ins
