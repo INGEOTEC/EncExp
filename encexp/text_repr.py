@@ -464,41 +464,6 @@ class EncExpT:
             return X / np.c_[_norm]
         return X
 
-    def predict(self, texts):
-        """Predict"""
-        X = self.transform(texts)
-        return self.estimator.predict(X)
-
-    def decision_function(self, texts):
-        """Decision function"""
-        X = self.transform(texts)
-        hy = self.estimator.decision_function(X)
-        if hy.ndim == 1:
-            return np.c_[hy]
-        return hy
-
-    def train_predict_decision_function(self, D, y=None):
-        """Train and predict the decision"""
-        if y is None:
-            y = np.array([x['klass'] for x in D])
-        if not isinstance(y, np.ndarray):
-            y = np.array(y)
-        nclass = np.unique(y).shape[0]
-        X = self.transform(D)
-        if nclass == 2:
-            hy = np.empty(X.shape[0])
-        else:
-            hy = np.empty((X.shape[0], nclass))
-        kwargs = dict(random_state=0, shuffle=True)
-        if self.kfold_kwargs is not None:
-            kwargs.update(self.kfold_kwargs)
-        for tr, vs in self.kfold_class(**kwargs).split(X, y):
-            m = clone(self).estimator.fit(X[tr], y[tr])
-            hy[vs] = m.decision_function(X[vs])
-        if hy.ndim == 1:
-            return np.c_[hy]
-        return hy
-
     def fill(self, inplace: bool=True, names: list=None):
         """Fill weights with the missing dimensions"""
         weights = self.weights
@@ -528,10 +493,11 @@ class EncExpT:
             return None
 
         get_text = self.bow.get_text
-        if load and isinstance(self.tailored, str) and isfile(self.tailored):
-            _ = self.__class__(EncExp_filename=self.tailored)
-            self.__iadd__(_)
-            self._tailored_built = True
+        if isinstance(self.tailored, str) and isfile(self.tailored):
+            if load:
+                _ = self.__class__(EncExp_filename=self.tailored)
+                self.__iadd__(_)
+                self._tailored_built = True
             return None
         iden, path = mkstemp()
         with open(iden, 'w', encoding='utf-8') as fpt:
@@ -649,7 +615,42 @@ class EncExp(EncExpT):
 
     @estimator.setter
     def estimator(self, value):
-        self._estimator = value    
+        self._estimator = value
+
+    def predict(self, texts):
+        """Predict"""
+        X = self.transform(texts)
+        return self.estimator.predict(X)
+
+    def decision_function(self, texts):
+        """Decision function"""
+        X = self.transform(texts)
+        hy = self.estimator.decision_function(X)
+        if hy.ndim == 1:
+            return np.c_[hy]
+        return hy
+
+    def train_predict_decision_function(self, D, y=None):
+        """Train and predict the decision"""
+        if y is None:
+            y = np.array([x['klass'] for x in D])
+        if not isinstance(y, np.ndarray):
+            y = np.array(y)
+        nclass = np.unique(y).shape[0]
+        X = self.transform(D)
+        if nclass == 2:
+            hy = np.empty(X.shape[0])
+        else:
+            hy = np.empty((X.shape[0], nclass))
+        kwargs = dict(random_state=0, shuffle=True)
+        if self.kfold_kwargs is not None:
+            kwargs.update(self.kfold_kwargs)
+        for tr, vs in self.kfold_class(**kwargs).split(X, y):
+            m = clone(self).estimator.fit(X[tr], y[tr])
+            hy[vs] = m.decision_function(X[vs])
+        if hy.ndim == 1:
+            return np.c_[hy]
+        return hy
 
     def __sklearn_clone__(self):
         ins = super(EncExp, self).__sklearn_clone__()
