@@ -483,7 +483,7 @@ def test_TextModel_tokenize():
                       'q:o', 'q:l', 'q:a', 'q:~', 'q:~', 'q:d', 
                       'q:i', 'q:o', 'q:s', 'q:~']
     tm = TextModel(token_list=[7], q_grams_words=False)
-    tokens = tm.tokenize('buenos💁🏿dia colegas')
+    tokens = tm.tokenize('buenos💁🏿dia colegas _url _usr')
     assert tokens == ['q:~buenos', 'q:buenos~', 'q:~dia~co',
                       'q:dia~col', 'q:ia~cole', 'q:a~coleg',
                       'q:~colega', 'q:colegas', 'q:olegas~']

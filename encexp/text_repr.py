@@ -75,7 +75,8 @@ class TextModel(microTCTM):
 
     def _norm_tokens(self):
         """Normalize tokens"""
-        self.norm_tokens = {}
+        _ = ['_htag', '_ent', '_num', '_url', '_usr']
+        self.norm_tokens = {k: f'~u:{k}~' for k in _}
         if self.norm_emojis:
             _ = {k:f'~u:{v.replace("~", "")}~'
                  for k, v in emoticons.read_emojis().items()}
