@@ -14,18 +14,143 @@
 from dataclasses import dataclass
 from typing import Union
 from collections import OrderedDict
+import re
 from sklearn.model_selection import StratifiedKFold
 from sklearn.base import clone
 from sklearn.linear_model import SGDClassifier
-from b4msa import TextModel
+from microtc.params import OPTION_NONE, OPTION_DELETE
 from microtc.utils import Counter
-from microtc import emoticons
+from microtc import emoticons, TextModel as microTCTM
+from microtc.textmodel import SKIP_SYMBOLS
 from microtc.weighting import TFIDF
 import numpy as np
 from numpy.linalg import norm
 from encexp.download import download_seqtm, download_encexp
-from encexp.utils import replace_tokens, progress_bar
+from encexp.utils import progress_bar
 
+
+class TextModel(microTCTM):
+    """TextModel"""
+
+    def __init__(self, lang: str=None, text: str='text',
+                 num_option: str=OPTION_NONE, usr_option: str=OPTION_DELETE,
+                 url_option: str=OPTION_DELETE, emo_option: str=OPTION_NONE,
+                 hashtag_option: str=OPTION_NONE, ent_option: str=OPTION_NONE,
+                 lc: bool=True, del_dup: bool=False, del_punc: bool=True,
+                 del_diac: bool=True, select_ent: bool=False, select_suff: bool=False,
+                 select_conn: bool=False, max_dimension: bool=False,
+                 unit_vector: bool=True, q_grams_words: bool=True,
+                 norm_emojis: bool=True, token_list: list=None,
+                 token_min_filter: Union[int, float]=0,
+                 token_max_filter: Union[int, float]=1,
+                 weighting: str='tfidf', norm_punc: bool=False):
+        if token_list is None:
+            if lang in ['ja', 'zh']:
+                token_list = [1, 2, 3]
+            else:
+                token_list = [-1, 2, 3, 4, 5, 6, 7, 8]
+        super().__init__(text=text, num_option=num_option, usr_option=usr_option,
+                         url_option=url_option, emo_option=emo_option,
+                         hashtag_option=hashtag_option, ent_option=ent_option,
+                         lc=lc, del_dup=del_dup, del_punc=del_punc, del_diac=del_diac,
+                         select_ent=select_ent, select_suff=select_suff,
+                         select_conn=select_conn, max_dimension=max_dimension, 
+                         unit_vector=unit_vector, q_grams_words=q_grams_words,
+                         norm_emojis=False, token_list=token_list,
+                         token_min_filter=token_min_filter,
+                         token_max_filter=token_max_filter, weighting=weighting)
+        self.text = self._text
+        self.lang = lang
+        self.norm_emojis = norm_emojis
+        assert norm_punc | del_punc
+        self.norm_punc = norm_punc
+        self._norm_tokens()
+
+    def get_params(self):
+        """TextModel parameters"""
+        import inspect
+        sig = inspect.signature(self.__class__)
+        params = sorted(sig.parameters.keys())
+        return {k: getattr(self, k) for k in params}
+
+    def _norm_tokens(self):
+        """Normalize tokens"""
+        self.norm_tokens = {}
+        if self.norm_emojis:
+            _ = {k:f'~u:{v.replace("~", "")}~'
+                 for k, v in emoticons.read_emojis().items()}
+            self.norm_tokens.update(_)
+        if self.norm_punc:
+            _ = {k: f'~u:{k}~' for k in SKIP_SYMBOLS if k != '~'}
+            self.norm_tokens.update(_)
+
+        # _ = {f'~{jaja}~': '~u:ja~' for jaja in ['jaja', 'jajaj', 'jajaja', 'jajajaj',
+        #                                         'jajajaja', 'jajajajaj', 'jajajajaja',
+        #                                         'jajajajajaja', 'jajajajajajaja',
+        #                                         'jajajajajajajaja', 'ajaj', 'ajaja',
+        #                                         'ajajajaj', 'aja', 'jaa', 'jaj', 'jajja']}
+        # tm.norm_tokens.update(_)
+        # _ = {f'~{haha}~': '~u:ha~' for haha in ['haha', 'hahaha', 'hahahaha']}
+        # tm.norm_tokens.update(_)
+        _ = {x: True for x in self.norm_tokens}
+        self.norm_head = emoticons.create_data_structure(_)
+
+    def text_transformations(self, text:str):
+        """Text transformations
+
+        :param text: text
+        :type text: str
+
+        :rtype: str
+        """
+
+        text = super(TextModel, self).text_transformations(text)
+        return re.sub('~+', '~', text)        
+
+    def get_word_list(self, text):
+        """Words from normalize text"""
+        data = text.split('~')
+        return data[1:-1]
+
+    def compute_q_grams_words(self, textlist):
+        """q-grams only on words"""
+        output = []
+        textlist = ['~' + x + '~' for x in textlist if x[:2] != 'u:']
+        for qsize in self.q_grams:
+            _ = qsize - 1
+            extra = [x for x in textlist if len(x) >= _]
+            qgrams = [["".join(output) for output in zip(*[text[i:] for i in range(qsize)])] 
+                      for text in extra]
+            for _ in qgrams:
+                for x in _:
+                    output.append("q:" + x)
+        return output
+
+    def compute_q_grams(self, text):
+        """q-grams"""
+        output = []
+        inner = []
+        for word in self.get_word_list(text):
+            if word[:2] == 'u:':
+                if len(inner) > 0:
+                    output.extend(self.compute_q_grams_words(['~'.join(inner)]))
+                    inner = []
+                continue
+            inner.append(word)
+        if len(inner) > 0 :
+            output.extend(self.compute_q_grams_words(['~'.join(inner)]))
+        return output
+
+    @property
+    def identifier(self):
+        """Identifier - parameters md5"""
+        import hashlib
+        cdn = ' '.join([f'{k}={v}'
+                        for k, v in self.get_params().items()])
+        _ = hashlib.md5(bytes(cdn,
+                              encoding='utf-8')).hexdigest()
+        return f'{self.__class__.__name__}_{_}'
+    
 
 class TM(TextModel):
     """TextModel where the vocabulary is obtained with SeqTM"""
@@ -53,7 +178,6 @@ class TM(TextModel):
         self._vocabulary(counter)
         self.prefix_suffix = prefix_suffix
         self.precision = precision
-        replace_tokens(self)
 
     def fit(self, X, y):
         """fit"""

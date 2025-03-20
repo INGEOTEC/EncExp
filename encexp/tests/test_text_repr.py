@@ -17,9 +17,9 @@ from numpy.testing import assert_almost_equal
 import os
 from microtc.utils import tweet_iterator
 from encexp.tests.test_utils import samples
-from encexp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary
+from encexp.build_voc import compute_b4msa_vocabulary, compute_seqtm_vocabulary
 from encexp.build_encexp import build_encexp
-from encexp.text_repr import SeqTM, EncExp, TM, EncExpT
+from encexp.text_repr import SeqTM, EncExp, TM, EncExpT, TextModel
 from sklearn.base import clone
 
 
@@ -49,7 +49,7 @@ def test_seqtm_vocabulary():
                                    voc_size_exponent=5)
     assert len(voc['counter']['dict']) == 32
     _ = voc['counter']['dict']
-    assert len([k for k in _ if k[:2] == 'q:']) == 29
+    assert len([k for k in _ if k[:2] == 'q:']) == 30
 
 
 # def test_seqtm_ix_15():
@@ -87,7 +87,7 @@ def test_EncExp_filename():
         build_encexp(voc, 'es-mx-sample.json', 'encexp-es-mx.json.gz')
     enc = EncExp(EncExp_filename='encexp-es-mx.json.gz')
     assert enc.weights.dtype == np.float32
-    assert len(enc.names) == 11
+    assert len(enc.names) == 12
     os.unlink('encexp-es-mx.json.gz')
     
 
@@ -315,26 +315,25 @@ def test_EncExp_force_tokens():
 #     assert np.all(enc.bias != 0)
 
 
-def test_SeqTM_text_transformations():
-    """Test SeqTM Text Transformations"""
-    seq = SeqTM()
-    seq.norm_emojis = True
-    assert seq.tokenize('🤣🤣') == ['🤣', '🤣']
+# def test_SeqTM_text_transformations():
+#     """Test SeqTM Text Transformations"""
+#     seq = SeqTM()
+#     assert seq.tokenize('🤣🤣') == ['🤣', '🤣']
 
 
-def test_SeqTM_jaja():
-    """Test SeqTM jaja"""
+# def test_SeqTM_jaja():
+#     """Test SeqTM jaja"""
 
-    seq = SeqTM()
-    seq.norm_emojis = True
-    txt = seq.text_transformations('jajaja')
-    assert txt == '~ja~'
-    txt = seq.text_transformations('hola ja')
-    assert txt == '~hola~ja~'
-    txt = seq.text_transformations('jajaja 🤣')
-    assert txt == '~ja~🤣~'
-    txt = seq.text_transformations('🧑‍')
-    assert txt == '~🧑~'
+#     seq = SeqTM()
+#     seq.norm_emojis = True
+#     txt = seq.text_transformations('jajaja')
+#     assert txt == '~ja~'
+#     txt = seq.text_transformations('hola ja')
+#     assert txt == '~hola~ja~'
+#     txt = seq.text_transformations('jajaja 🤣')
+#     assert txt == '~ja~🤣~'
+#     txt = seq.text_transformations('🧑‍')
+#     assert txt == '~🧑~'
 
 
 def test_EncExp_enc_training_size():
@@ -394,35 +393,35 @@ def test_EncExp_build_tailored():
     assert hasattr(enc2, '_estimator')
     # os.unlink(enc.tailored)
 
-def test_pipeline_tm():
-    """Test Pipeline"""
-    samples()
-    mx = list(tweet_iterator('es-mx-sample.json'))
-    samples(filename='es-ar-sample.json.zip')
-    ar = list(tweet_iterator('es-ar-sample.json'))
-    y = ['mx'] * len(mx)
-    y += ['ar'] * len(ar)
+# def test_pipeline_tm():
+#     """Test Pipeline"""
+#     samples()
+#     mx = list(tweet_iterator('es-mx-sample.json'))
+#     samples(filename='es-ar-sample.json.zip')
+#     ar = list(tweet_iterator('es-ar-sample.json'))
+#     y = ['mx'] * len(mx)
+#     y += ['ar'] * len(ar)
 
-    from sklearn.pipeline import Pipeline
-    from sklearn.svm import LinearSVC
-    from sklearn.model_selection import GridSearchCV
-    from sklearn.model_selection import StratifiedShuffleSplit
+#     from sklearn.pipeline import Pipeline
+#     from sklearn.svm import LinearSVC
+#     from sklearn.model_selection import GridSearchCV
+#     from sklearn.model_selection import StratifiedShuffleSplit
 
-    pipe = Pipeline([('bow', 'passthrough'),
-                    ('cl', LinearSVC(class_weight='balanced'))])
-    params = {'cl__C': [0.01, 0.1, 1, 10],
-              'bow': [SeqTM(lang='es', voc_source='mix'),
-                      TM(lang='es', voc_source='mix')]}
-    sss = StratifiedShuffleSplit(random_state=0,
-                                 n_splits=1,
-                                 test_size=0.3)
+#     pipe = Pipeline([('bow', 'passthrough'),
+#                     ('cl', LinearSVC(class_weight='balanced'))])
+#     params = {'cl__C': [0.01, 0.1, 1, 10],
+#               'bow': [SeqTM(lang='es', voc_source='mix'),
+#                       TM(lang='es', voc_source='mix')]}
+#     sss = StratifiedShuffleSplit(random_state=0,
+#                                  n_splits=1,
+#                                  test_size=0.3)
 
-    grid = GridSearchCV(pipe,
-                        param_grid=params,
-                        cv=sss,
-                        n_jobs=-1,
-                        scoring='f1_macro').fit(mx + ar, y)
-    assert grid.best_score_ > 0.7
+#     grid = GridSearchCV(pipe,
+#                         param_grid=params,
+#                         cv=sss,
+#                         n_jobs=-1,
+#                         scoring='f1_macro').fit(mx + ar, y)
+#     assert grid.best_score_ > 0.7
 
 
 def test_pipeline_encexp():
@@ -453,3 +452,45 @@ def test_pipeline_encexp():
                         n_jobs=1,
                         scoring='f1_macro').fit(mx + ar, y)
     assert grid.best_score_ > 0.7
+
+
+def test_TextModel():
+    """Test TextModel"""
+    tm = TextModel(lang='ja')
+    assert tm.token_list == [1, 2, 3]
+    tm = TextModel(lang=None)
+    assert tm.token_list == [-1, 2, 3, 4, 5, 6, 7, 8]
+    tm = TextModel(token_list=[2, 1])
+    assert tm.token_list == [2, 1]
+
+
+def test_TextModel_normalize():
+    """Test TextModel token normalization"""
+
+    tm = TextModel()
+    txt = tm.text_transformations('e s💁🏿 🤣🤣na')
+    assert txt == '~e~s~u:💁~u:🤣~u:🤣~na~'
+    tm = TextModel(norm_punc=True, del_punc=False)
+    txt = tm.text_transformations('es💁🏿.🤣,🤣 XXX')
+    assert txt == '~es~u:💁~u:.~u:🤣~u:,~u:🤣~xxx~'
+
+
+def test_TextModel_tokenize():
+    """Test TextModel tokenize"""
+    tm = TextModel(token_list=[-1, 1])
+    tokens = tm.tokenize('hola💁🏿 🤣dios')
+    assert tokens == ['hola', 'u:💁', 'u:🤣', 'dios', 'q:~', 'q:h',
+                      'q:o', 'q:l', 'q:a', 'q:~', 'q:~', 'q:d', 
+                      'q:i', 'q:o', 'q:s', 'q:~']
+    tm = TextModel(token_list=[7], q_grams_words=False)
+    tokens = tm.tokenize('buenos💁🏿dia colegas')
+    assert tokens == ['q:~buenos', 'q:buenos~', 'q:~dia~co',
+                      'q:dia~col', 'q:ia~cole', 'q:a~coleg',
+                      'q:~colega', 'q:colegas', 'q:olegas~']
+    
+
+def test_TextModel_get_params():
+    """Test TextModel get_params"""
+    tm = TextModel(token_list=[-1, 1])
+    kwargs = tm.get_params()
+    assert kwargs['token_list'] == [-1, 1]

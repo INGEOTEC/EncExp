@@ -13,12 +13,43 @@
 # limitations under the License.
 from microtc.utils import Counter, tweet_iterator
 from encexp.tests.test_utils import samples
-from encexp.utils import compute_b4msa_vocabulary, compute_seqtm_vocabulary
 from encexp.text_repr import SeqTM, EncExp
 from encexp.build_encexp import encode_output, encode, feasible_tokens, build_encexp_token, build_encexp
+from encexp.build_voc import compute_b4msa_vocabulary, compute_seqtm_vocabulary
 from encexp.build_voc import main, build_voc
 from os.path import isfile
 import os
+
+
+def test_compute_seqtm_vocabulary_prefix_suffix():
+    """Test encode method"""
+    from encexp.text_repr import SeqTM
+
+    samples()
+    data = compute_b4msa_vocabulary('es-mx-sample.json')
+    voc = compute_seqtm_vocabulary(SeqTM, data,
+                                   'es-mx-sample.json',
+                                   voc_size_exponent=10,
+                                   prefix_suffix=True)
+    for k in voc['counter']['dict']:
+        if k[:2] != 'q:':
+            continue
+        if len(k) < 6:
+            assert k[3] == '~' or k[-1] == '~'
+
+
+def test_compute_b4msa_vocabulary():
+    """Compute vocabulary"""
+
+    samples()
+    data = compute_b4msa_vocabulary('es-mx-sample.json')
+    _ = data['counter']
+    counter = Counter(_["dict"], _["update_calls"])
+    assert counter.most_common()[0] == ('q:e~', 1849)
+    data = compute_b4msa_vocabulary('es-mx-sample.json', 10)
+    _ = data['counter']
+    counter = Counter(_["dict"], _["update_calls"])
+    assert counter.update_calls == 10
 
 
 def test_seqtm_build():
@@ -39,7 +70,7 @@ def test_seqtm_build():
     data = next(tweet_iterator('seqtm_en_4.json.gz'))
     _ = data['counter']
     counter2 = Counter(_["dict"], _["update_calls"])
-    assert counter2.most_common()[0] == ('q:a~', 1813)
+    assert counter2.most_common()[0] == ('q:a~', 1834)
     os.unlink('seqtm_en_4.json.gz')
 
 
@@ -80,7 +111,7 @@ def test_feasible_tokens():
                                    voc_size_exponent=10)
     output, cnt = encode(voc, 'es-mx-sample.json')
     tokens = feasible_tokens(voc, cnt)
-    assert len(tokens) == 11
+    assert len(tokens) == 12
     os.unlink('encode-es-mx-sample.json')
 
 
@@ -170,15 +201,14 @@ def test_build_encexp_transform():
 def test_build_encexp_tokens():
     """Test encexp with specific topics"""
     import numpy as np
-    from b4msa import TextModel
+    from encexp.text_repr import TextModel
     from microtc.utils import Counter
     from encexp.download import download_seqtm
-    from encexp.utils import b4msa_params, replace_tokens
+    from encexp.utils import b4msa_params
     
 
     samples()
-    params = b4msa_params(lang='es')
-    tokenize = replace_tokens(TextModel(**params)).tokenize    
+    tokenize = TextModel().tokenize    
     cnt = Counter()
     for txt in tweet_iterator('es-mx-sample.json'):
         cnt.update([x for x in tokenize(txt) if x[:2] != 'q:'])
