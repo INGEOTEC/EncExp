@@ -18,7 +18,7 @@ import re
 from sklearn.model_selection import StratifiedKFold
 from sklearn.base import clone
 from sklearn.linear_model import SGDClassifier
-from microtc.params import OPTION_NONE, OPTION_DELETE
+from microtc.params import OPTION_NONE, OPTION_GROUP
 from microtc.utils import Counter
 from microtc import emoticons, TextModel as microTCTM
 from microtc.textmodel import SKIP_SYMBOLS
@@ -33,8 +33,8 @@ class TextModel(microTCTM):
     """TextModel"""
 
     def __init__(self, lang: str=None, text: str='text',
-                 num_option: str=OPTION_NONE, usr_option: str=OPTION_DELETE,
-                 url_option: str=OPTION_DELETE, emo_option: str=OPTION_NONE,
+                 num_option: str=OPTION_NONE, usr_option: str=OPTION_GROUP,
+                 url_option: str=OPTION_GROUP, emo_option: str=OPTION_NONE,
                  hashtag_option: str=OPTION_NONE, ent_option: str=OPTION_NONE,
                  lc: bool=True, del_dup: bool=False, del_punc: bool=True,
                  del_diac: bool=True, select_ent: bool=False, select_suff: bool=False,
@@ -152,6 +152,76 @@ class TextModel(microTCTM):
                               encoding='utf-8')).hexdigest()
         return f'{self.__class__.__name__}_{_}'
     
+    @property
+    def names(self):
+        """Vector space components"""
+
+        try:
+            return self._names
+        except AttributeError:
+            _names = [None] * len(self.id2token)
+            for k, v in self.id2token.items():
+                _names[k] = v
+            self.names = np.array(_names)
+            return self._names
+
+    @names.setter
+    def names(self, value):
+        self._names = value
+
+    @property
+    def weights(self):
+        """Vector space weights"""
+
+        try:
+            return self._weights
+        except AttributeError:
+            w = [None] * len(self.token_weight)
+            for k, v in self.token_weight.items():
+                w[k] = v
+            self.weights = np.array(w)
+            return self._weights
+
+    @weights.setter
+    def weights(self, value):
+        self._weights = value
+
+    @property
+    def precision(self):
+        """Type used in the sparse array"""
+        try:
+            return self._precision
+        except AttributeError:
+            return np.float32
+
+    @precision.setter
+    def precision(self, value):
+        self._precision = value
+
+    def tonp(self, X):
+        """Sparse representation to sparce matrix
+
+        :param X: Sparse representation of matrix
+        :type X: list
+        :rtype: csr_matrix
+        """
+        from scipy.sparse import csr_matrix
+
+        if not isinstance(X, list):
+            return X
+        assert self.num_terms is not None
+        data = []
+        row = []
+        col = []
+        for r, x in enumerate(X):
+            col.extend([i for i, _ in x])
+            data.extend([v for _, v in x])
+            _ = [r] * len(x)
+            row.extend(_)
+        return csr_matrix((data, (row, col)),
+                          shape=(len(X), self.num_terms),
+                          dtype=self.precision)
+
 
 class TM(TextModel):
     """TextModel where the vocabulary is obtained with SeqTM"""
@@ -220,64 +290,6 @@ class TM(TextModel):
         voc = self.voc_size_exponent
         return f'seqtm_{lang}_{voc}'
 
-    @property
-    def names(self):
-        """Vector space components"""
-
-        try:
-            return self._names
-        except AttributeError:
-            _names = [None] * len(self.id2token)
-            for k, v in self.id2token.items():
-                _names[k] = v
-            self.names = np.array(_names)
-            return self._names
-
-    @names.setter
-    def names(self, value):
-        self._names = value
-
-    @property
-    def weights(self):
-        """Vector space weights"""
-
-        try:
-            return self._weights
-        except AttributeError:
-            w = [None] * len(self.token_weight)
-            for k, v in self.token_weight.items():
-                w[k] = v
-            self.weights = np.array(w)
-            return self._weights
-
-    @weights.setter
-    def weights(self, value):
-        self._weights = value
-
-
-    def tonp(self, X):
-        """Sparse representation to sparce matrix
-
-        :param X: Sparse representation of matrix
-        :type X: list
-        :rtype: csr_matrix
-        """
-        from scipy.sparse import csr_matrix
-
-        if not isinstance(X, list):
-            return X
-        assert self.num_terms is not None
-        data = []
-        row = []
-        col = []
-        for r, x in enumerate(X):
-            col.extend([i for i, _ in x])
-            data.extend([v for _, v in x])
-            _ = [r] * len(x)
-            row.extend(_)
-        return csr_matrix((data, (row, col)),
-                          shape=(len(X), self.num_terms),
-                          dtype=self.precision)
 
 
 class SeqTM(TM):
