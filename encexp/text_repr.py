@@ -72,6 +72,11 @@ class TextModel(microTCTM):
         sig = inspect.signature(self.__class__)
         params = sorted(sig.parameters.keys())
         return {k: getattr(self, k) for k in params}
+    
+    def fit(self, X, y=None):
+        """Estimate the tokens weights"""
+        super().fit(X)
+        return self
 
     def _norm_tokens(self):
         """Normalize tokens"""
