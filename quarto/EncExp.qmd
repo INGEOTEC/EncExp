@@ -26,6 +26,46 @@ pip install CompStats
 ```
 ::: 
 
+# Quick Start Guide 
+
+## Column
+
+::: {.card title="Datasets"} 
+```{python}
+#| echo: true
+
+from zipfile import ZipFile
+from microtc.utils import tweet_iterator
+from encexp.utils import Download, DialectID_URL
+X, y = [], []
+for filename in ['es-mx-sample.json.zip',
+                 'es-ar-sample.json.zip']:
+    _ = Download(f'{DialectID_URL}/{filename}',
+                 filename)
+    with ZipFile(filename, "r") as fpt:
+        fpt.extractall(path=".",
+                        pwd="ingeotec".encode("utf-8"))
+    _ = list(tweet_iterator(filename.replace('.zip', '')))
+    X.extend(_)
+    y.extend([filename[3:5]] * len(_))
+y[:10]
+```
+:::
+
+::: {.card title="BoW"} 
+```{python}
+#| echo: true
+
+from encexp import TextModel
+from sklearn.svm import LinearSVC
+from sklearn.pipeline import make_pipeline
+model = make_pipeline(TextModel(lang='es'),
+                      LinearSVC()).fit(X, y)
+```
+:::
+
+Hola
+
 # Corpus 
 
 ## Column 

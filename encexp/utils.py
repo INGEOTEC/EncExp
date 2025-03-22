@@ -38,10 +38,15 @@ class Download(object):
     >>> d = Download("http://github.com", "t.html")
     """
 
-    def __init__(self, url, output='t.tmp') -> None:
+    def __init__(self, url,
+                 output='t.tmp',
+                 use_tqdm: bool=True) -> None:
         self._url = url
         self._output = output
-        self._use_tqdm = USE_TQDM
+        if not USE_TQDM or not use_tqdm:
+            self._use_tqdm = False
+        else:
+            self._use_tqdm = True
         try:
             request.urlretrieve(url, output, reporthook=self.progress)
         except HTTPError as exc:
