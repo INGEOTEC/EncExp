@@ -13,12 +13,11 @@
 # limitations under the License.
 from os.path import isfile
 import os
-import json
 import numpy as np
 from numpy.testing import assert_almost_equal
-from microtc.utils import Counter, tweet_iterator
-from encexp.utils import Download, DialectID_URL, compute_b4msa_vocabulary
-from encexp.utils import compute_seqtm_vocabulary, unit_length
+from microtc.utils import tweet_iterator
+from encexp.utils import Download, DialectID_URL
+from encexp.utils import unit_length
 from encexp.utils import set_to_zero, transform_from_tokens
 
 
@@ -61,20 +60,6 @@ def samples(filename='es-mx-sample.json.zip'):
                        pwd="ingeotec".encode("utf-8"))
 
 
-def test_compute_b4msa_vocabulary():
-    """Compute vocabulary"""
-
-    samples()
-    data = compute_b4msa_vocabulary('es-mx-sample.json')
-    _ = data['counter']
-    counter = Counter(_["dict"], _["update_calls"])
-    assert counter.most_common()[0] == ('q:e~', 1849)
-    data = compute_b4msa_vocabulary('es-mx-sample.json', 10)
-    _ = data['counter']
-    counter = Counter(_["dict"], _["update_calls"])
-    assert counter.update_calls == 10
-
-
 def test_uniform_sample():
     """Test uniform sample"""
 
@@ -83,23 +68,6 @@ def test_uniform_sample():
 
     data = uniform_sample(10, np.array([20, 5, 4, 7]))
     assert data.sum() == 10
-
-
-def test_compute_seqtm_vocabulary_prefix_suffix():
-    """Test encode method"""
-    from encexp.text_repr import SeqTM
-
-    samples()
-    data = compute_b4msa_vocabulary('es-mx-sample.json')
-    voc = compute_seqtm_vocabulary(SeqTM, data,
-                                   'es-mx-sample.json',
-                                   voc_size_exponent=10,
-                                   prefix_suffix=True)
-    for k in voc['counter']['dict']:
-        if k[:2] != 'q:':
-            continue
-        if len(k) < 6:
-            assert k[3] == '~' or k[-1] == '~'
 
 
 def test_unit_length():
@@ -143,7 +111,3 @@ def test_transform_from_tokens():
     W = transform_from_tokens(enc)(data)
     W2 = enc.transform(D)
     assert_almost_equal(W, W2)
-
-
-    
-    

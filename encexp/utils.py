@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import argparse
-from itertools import count
+import gzip
+import json
+import os
 from urllib import request
 from urllib.error import HTTPError
 try:
@@ -20,13 +21,8 @@ try:
     from tqdm import tqdm
 except ImportError:
     USE_TQDM = False
-from microtc.utils import tweet_iterator, Counter
 from microtc import emoticons
-from b4msa import TextModel
 import numpy as np
-import gzip
-import json
-import os
 import encexp
 
 
@@ -42,10 +38,15 @@ class Download(object):
     >>> d = Download("http://github.com", "t.html")
     """
 
-    def __init__(self, url, output='t.tmp') -> None:
+    def __init__(self, url,
+                 output='t.tmp',
+                 use_tqdm: bool=True) -> None:
         self._url = url
         self._output = output
-        self._use_tqdm = USE_TQDM
+        if not USE_TQDM or not use_tqdm:
+            self._use_tqdm = False
+        else:
+            self._use_tqdm = True
         try:
             request.urlretrieve(url, output, reporthook=self.progress)
         except HTTPError as exc:
@@ -124,97 +125,6 @@ def progress_bar(data, total=np.inf,
     return tqdm(data, total=total, **kwargs)
 
 
-def compute_b4msa_vocabulary(filename, limit=None, lang='es',
-                             **kwargs):
-    """Compute the vocabulary"""
-
-    params = b4msa_params(lang=lang)
-    params.update(kwargs)
-    tokenize = replace_tokens(TextModel(**params)).tokenize
-    if limit is None:
-        limit = np.inf
-    counter = Counter()
-    if limit == np.inf:
-        loop = count()
-    else:
-        loop = range(limit)
-    for tweet, _ in progress_bar(zip(tweet_iterator(filename),
-                                        loop), total=limit,
-                                        desc=filename):
-        counter.update(set(tokenize(tweet)))
-    _ = dict(update_calls=counter.update_calls,
-             dict=dict(counter.most_common()))
-    data = dict(counter=_, params=params)
-    return data
-
-
-def compute_seqtm_vocabulary(instance, vocabulary,
-                             filename, limit=None,
-                             voc_size_exponent=13,
-                             prefix_suffix=False):
-    """Compute SeqTM"""
-
-    def current_lost_words():
-        words = [w for w, _ in base_voc.most_common() if w[:2] != 'q:']
-        current = words[:2**voc_size_exponent]
-        lost =  words[2**voc_size_exponent:]
-        return current, lost
-
-    def tokenizer(length, current):
-        length += 2
-        cnt = Counter()
-        for k, v in base_voc.items():
-            if k[:2] != 'q:' or len(k) != length:
-                continue
-            if prefix_suffix and length < 6 and k[3] != '~' and k[-1] != '~':
-                continue
-            cnt[k] = v
-        for token in current:
-            freq = base_voc[token]
-            if freq == 0:
-                continue
-            cnt[token] = freq
-        cnt.update_calls = base_voc.update_calls
-        _ = dict(params=vocabulary['params'], counter=cnt)
-        return instance(vocabulary=_).tokenize
-
-    def optimize_vocabulary():
-        words = [token for token in base_voc if token[:2] != 'q:']
-        current, _ = current_lost_words()
-        lengths = sorted([length
-                          for length in vocabulary['params']['token_list']
-                          if length > 0], reverse=True)
-        for length in progress_bar(lengths, desc='qgrams'):
-            tokenize = tokenizer(length, current)
-            cnt = Counter()
-            vacia = set(['~'])
-            for word in words:
-                tokens = set(tokenize(word)) - vacia
-                _ = {token: base_voc[word] for token in tokens}
-                cnt.update(_)
-            current = [k for k, v in cnt.most_common(n=2**voc_size_exponent)]
-        return cnt.most_common(n=2**voc_size_exponent)
-
-    limit = np.inf if limit is None else limit
-    loop = count() if limit == np.inf else range(limit)
-    base_voc = Counter(vocabulary['counter']["dict"],
-                       vocabulary['counter']["update_calls"])
-    voc = optimize_vocabulary()
-    cnt = Counter(dict(voc),
-                  update_calls=base_voc.update_calls)
-    _ = dict(params=vocabulary['params'], counter=cnt)
-    tokenize = instance(vocabulary=_).tokenize
-    counter = Counter()
-    for tweet, _ in progress_bar(zip(tweet_iterator(filename),
-                                        loop), total=limit,
-                                        desc=filename):
-        counter.update(set(tokenize(tweet)))
-    _ = dict(update_calls=counter.update_calls,
-             dict=dict(counter.most_common()[:2**voc_size_exponent]))
-    data = dict(counter=_, params=vocabulary['params'])
-    return data
-
-
 def uniform_sample(N, avail_data):
     """Uniform sample from the available data"""
     remaining = avail_data.copy()
@@ -262,22 +172,6 @@ def set_to_zero(data, percentage: float=0.95):
         values = a_n
     data[data < values] = 0
     return data
-
-
-def replace_tokens(tm):
-    """Replace tokens on TextModel"""
-    tm.norm_tokens = emoticons.read_emojis()
-    _ = {f'~{jaja}~': '~ja~' for jaja in ['jaja', 'jajaj', 'jajaja', 'jajajaj',
-                                          'jajajaja', 'jajajajaj', 'jajajajaja',
-                                          'jajajajajaja', 'jajajajajajaja',
-                                          'jajajajajajajaja', 'ajaj', 'ajaja',
-                                          'ajajajaj', 'aja', 'jaa', 'jaj', 'jajja']}
-    tm.norm_tokens.update(_)
-    _ = {f'~{haha}~': '~ha~' for haha in ['haha', 'hahaha', 'hahahaha']}
-    tm.norm_tokens.update(_)
-    _ = {x: True for x in tm.norm_tokens}
-    tm.norm_head = emoticons.create_data_structure(_)
-    return tm
 
 
 def transform_from_tokens(enc):
