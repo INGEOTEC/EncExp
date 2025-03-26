@@ -494,3 +494,28 @@ def test_TextModel_get_params():
     tm = TextModel(token_list=[-1, 1])
     kwargs = tm.get_params()
     assert kwargs['token_list'] == [-1, 1]
+
+
+def test_TextModel_identifier():
+    """test TextModel identifier"""
+    import hashlib
+
+    tm = TextModel(lang='zh')
+    diff = tm.identifier
+    cdn = ' '.join([f'{k}={v}'
+                        for k, v in [('lang', 'zh')]])
+    _ = hashlib.md5(bytes(cdn, encoding='utf-8')).hexdigest()
+    assert f'TextModel_{_}' == diff
+    tm = TextModel(lang='es')
+    diff = tm.identifier
+    cdn = ' '.join([f'{k}={v}'
+                        for k, v in [('lang', 'es')]])
+    _ = hashlib.md5(bytes(cdn, encoding='utf-8')).hexdigest()
+    assert f'TextModel_{_}' == diff
+    tm = TextModel(lang='es', del_diac=False)
+    diff = tm.identifier
+    cdn = ' '.join([f'{k}={v}'
+                        for k, v in [('del_diac', False), ('lang', 'es')]])
+    _ = hashlib.md5(bytes(cdn, encoding='utf-8')).hexdigest()
+    assert f'TextModel_{_}' == diff
+

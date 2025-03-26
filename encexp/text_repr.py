@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
+import inspect
 from typing import Union
 from collections import OrderedDict
 import re
@@ -43,7 +44,8 @@ class TextModel(microTCTM):
                  norm_emojis: bool=True, token_list: list=None,
                  token_min_filter: Union[int, float]=0,
                  token_max_filter: Union[int, float]=int(2**17),
-                 weighting: str='tfidf', norm_punc: bool=True):
+                 weighting: str='microtc.weighting.TFIDF',
+                 norm_punc: bool=True):
         if token_list is None:
             if lang in ['ja', 'zh']:
                 token_list = [1, 2, 3]
@@ -68,10 +70,34 @@ class TextModel(microTCTM):
 
     def get_params(self):
         """TextModel parameters"""
-        import inspect
         sig = inspect.signature(self.__class__)
         params = sorted(sig.parameters.keys())
         return {k: getattr(self, k) for k in params}
+    
+    @property
+    def identifier(self):
+        """Identifier - parameters md5"""
+        import hashlib
+        sig = inspect.signature(self.__class__)
+        diff = []
+        for k, v in sig.parameters.items():
+            value = getattr(self, k)
+            if value == v.default:
+                continue
+            if k == 'token_list':
+                if self.lang == 'ja' or self.lang == 'zh':
+                    tk_lst = [1, 2, 3]
+                else:
+                    tk_lst = [-2, -1, 2, 3, 4]
+                if tk_lst == value:
+                    continue
+            diff.append([k, value])
+        diff.sort(key=lambda x: x[0])
+        cdn = ' '.join([f'{k}={v}'
+                        for k, v in diff])
+        _ = hashlib.md5(bytes(cdn,
+                              encoding='utf-8')).hexdigest()
+        return f'{self.__class__.__name__}_{_}'
 
     def fit(self, X, y=None):
         """Estimate the tokens weights"""
@@ -146,16 +172,6 @@ class TextModel(microTCTM):
         if len(inner) > 0 :
             output.extend(self.compute_q_grams_words(['~'.join(inner)]))
         return output
-
-    @property
-    def identifier(self):
-        """Identifier - parameters md5"""
-        import hashlib
-        cdn = ' '.join([f'{k}={v}'
-                        for k, v in self.get_params().items()])
-        _ = hashlib.md5(bytes(cdn,
-                              encoding='utf-8')).hexdigest()
-        return f'{self.__class__.__name__}_{_}'
 
     @property
     def names(self):
