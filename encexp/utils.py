@@ -64,9 +64,13 @@ class Download(object):
         try:
             return self._tqdm
         except AttributeError:
-            self._tqdm = tqdm(total=self._nblocks,
-                              leave=False, desc=self._output)
+            self.tqdm = tqdm(total=self._nblocks,
+                             leave=False, desc=self._output)
         return self._tqdm
+    
+    @tqdm.setter
+    def tqdm(self, value):
+        self._tqdm = value
 
     def close(self):
         """Close tqdm if used"""
@@ -83,34 +87,6 @@ class Download(object):
 
         self._nblocks = total // block_size
         self.update()
-
-
-def b4msa_params(lang='es'):
-    """B4MSA default parameters"""
-
-    from microtc.params import OPTION_DELETE, OPTION_NONE
-    tm_kwargs=dict(num_option=OPTION_NONE,
-                   usr_option=OPTION_DELETE,
-                   url_option=OPTION_DELETE,
-                   emo_option=OPTION_NONE,
-                   hashtag_option=OPTION_NONE,
-                   ent_option=OPTION_NONE,
-                   lc=True,
-                   del_dup=False,
-                   del_punc=True,
-                   del_diac=True,
-                   select_ent=False,
-                   select_suff=False,
-                   select_conn=False,
-                   max_dimension=False,
-                   unit_vector=True,
-                   q_grams_words=True,
-                   norm_emojis=True)
-    if lang == 'ja' or lang == 'zh':
-        tm_kwargs['token_list'] = [1, 2, 3]
-    else:
-        tm_kwargs['token_list'] = [-1, 2, 3, 4, 5, 6, 7, 8]
-    return tm_kwargs
 
 
 def progress_bar(data, total=np.inf,

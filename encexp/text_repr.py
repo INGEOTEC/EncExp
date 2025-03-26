@@ -36,19 +36,19 @@ class TextModel(microTCTM):
                  num_option: str=OPTION_NONE, usr_option: str=OPTION_GROUP,
                  url_option: str=OPTION_GROUP, emo_option: str=OPTION_NONE,
                  hashtag_option: str=OPTION_NONE, ent_option: str=OPTION_NONE,
-                 lc: bool=True, del_dup: bool=False, del_punc: bool=True,
+                 lc: bool=True, del_dup: bool=False, del_punc: bool=False,
                  del_diac: bool=True, select_ent: bool=False, select_suff: bool=False,
-                 select_conn: bool=False, max_dimension: bool=False,
+                 select_conn: bool=False, max_dimension: bool=True,
                  unit_vector: bool=True, q_grams_words: bool=True,
                  norm_emojis: bool=True, token_list: list=None,
                  token_min_filter: Union[int, float]=0,
-                 token_max_filter: Union[int, float]=1,
-                 weighting: str='tfidf', norm_punc: bool=False):
+                 token_max_filter: Union[int, float]=int(2**17),
+                 weighting: str='tfidf', norm_punc: bool=True):
         if token_list is None:
             if lang in ['ja', 'zh']:
                 token_list = [1, 2, 3]
             else:
-                token_list = [-1, 2, 3, 4, 5, 6, 7, 8]
+                token_list = [-2, -1, 2, 3, 4]
         super().__init__(text=text, num_option=num_option, usr_option=usr_option,
                          url_option=url_option, emo_option=emo_option,
                          hashtag_option=hashtag_option, ent_option=ent_option,
@@ -72,7 +72,7 @@ class TextModel(microTCTM):
         sig = inspect.signature(self.__class__)
         params = sorted(sig.parameters.keys())
         return {k: getattr(self, k) for k in params}
-    
+
     def fit(self, X, y=None):
         """Estimate the tokens weights"""
         super().fit(X)
@@ -81,22 +81,22 @@ class TextModel(microTCTM):
     def _norm_tokens(self):
         """Normalize tokens"""
         _ = ['_htag', '_ent', '_num', '_url', '_usr']
-        self.norm_tokens = {k: f'~u:{k}~' for k in _}
+        self.norm_tokens = {k: f'~e:{k}~' for k in _}
         if self.norm_emojis:
-            _ = {k:f'~u:{v.replace("~", "")}~'
+            _ = {k:f'~e:{v.replace("~", "")}~'
                  for k, v in emoticons.read_emojis().items()}
             self.norm_tokens.update(_)
         if self.norm_punc:
-            _ = {k: f'~u:{k}~' for k in SKIP_SYMBOLS if k != '~'}
+            _ = {k: f'~e:{k}~' for k in SKIP_SYMBOLS if k != '~'}
             self.norm_tokens.update(_)
 
-        # _ = {f'~{jaja}~': '~u:ja~' for jaja in ['jaja', 'jajaj', 'jajaja', 'jajajaj',
+        # _ = {f'~{jaja}~': '~e:ja~' for jaja in ['jaja', 'jajaj', 'jajaja', 'jajajaj',
         #                                         'jajajaja', 'jajajajaj', 'jajajajaja',
         #                                         'jajajajajaja', 'jajajajajajaja',
         #                                         'jajajajajajajaja', 'ajaj', 'ajaja',
         #                                         'ajajajaj', 'aja', 'jaa', 'jaj', 'jajja']}
         # tm.norm_tokens.update(_)
-        # _ = {f'~{haha}~': '~u:ha~' for haha in ['haha', 'hahaha', 'hahahaha']}
+        # _ = {f'~{haha}~': '~e:ha~' for haha in ['haha', 'hahaha', 'hahahaha']}
         # tm.norm_tokens.update(_)
         _ = {x: True for x in self.norm_tokens}
         self.norm_head = emoticons.create_data_structure(_)
@@ -121,7 +121,7 @@ class TextModel(microTCTM):
     def compute_q_grams_words(self, textlist):
         """q-grams only on words"""
         output = []
-        textlist = ['~' + x + '~' for x in textlist if x[:2] != 'u:']
+        textlist = ['~' + x + '~' for x in textlist if x[:2] != 'e:']
         for qsize in self.q_grams:
             _ = qsize - 1
             extra = [x for x in textlist if len(x) >= _]
@@ -137,7 +137,7 @@ class TextModel(microTCTM):
         output = []
         inner = []
         for word in self.get_word_list(text):
-            if word[:2] == 'u:':
+            if word[:2] == 'e:':
                 if len(inner) > 0:
                     output.extend(self.compute_q_grams_words(['~'.join(inner)]))
                     inner = []
@@ -156,7 +156,7 @@ class TextModel(microTCTM):
         _ = hashlib.md5(bytes(cdn,
                               encoding='utf-8')).hexdigest()
         return f'{self.__class__.__name__}_{_}'
-    
+
     @property
     def names(self):
         """Vector space components"""
