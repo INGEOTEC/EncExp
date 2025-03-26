@@ -19,31 +19,40 @@ from itertools import count
 import numpy as np
 from microtc.utils import tweet_iterator, Counter
 from encexp.text_repr import SeqTM, TextModel
-from encexp.utils import b4msa_params, progress_bar
+from encexp.utils import progress_bar
 import encexp
+
+
+def compute_vocabulary(iterator, **kwargs):
+    """Compute the vocabulary"""
+    tm = TextModel(**kwargs)
+    tokenize = tm.tokenize
+    counter = Counter()
+    for tweet in iterator:
+        counter.update(set(tokenize(tweet)))
+    _ = dict(update_calls=counter.update_calls,
+             dict=dict(counter.most_common()))
+    return dict(counter=_, params=tm.get_params())
 
 
 def compute_b4msa_vocabulary(filename: str, limit: int=None,
                              **kwargs):
     """Compute the vocabulary"""
 
-    tm = TextModel(**kwargs)
-    tokenize = tm.tokenize
     if limit is None:
         limit = np.inf
-    counter = Counter()
     if limit == np.inf:
         loop = count()
     else:
         loop = range(limit)
-    for tweet, _ in progress_bar(zip(tweet_iterator(filename),
-                                        loop), total=limit,
-                                        desc=filename):
-        counter.update(set(tokenize(tweet)))
-    _ = dict(update_calls=counter.update_calls,
-             dict=dict(counter.most_common()))
-    data = dict(counter=_, params=tm.get_params())
-    return data
+
+    def iterator():
+        for tweet, _ in progress_bar(zip(tweet_iterator(filename),
+                                         loop),
+                                     total=limit,
+                                     desc=filename):
+            yield tweet
+    return compute_vocabulary(iterator(), **kwargs)
 
 
 def compute_seqtm_vocabulary(instance, vocabulary,

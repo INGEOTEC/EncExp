@@ -14,15 +14,15 @@ execute:
 
 ## Column 
 
-::: {.card title='Introduction'}  
+::: {.card title='Introduction' .flow}  
 EncExp is a set of tools to create and use explainable embeddings.
 :::
 
-::: {.card title='Installing using pip'} 
+::: {.card title='Installing using pip' .flow} 
 A more general approach to installing `EncExp` is through the use of the command pip, as illustrated in the following instruction.
 
 ```{sh} 
-pip install CompStats
+pip install EncExp
 ```
 ::: 
 
@@ -72,18 +72,18 @@ bow = make_pipeline(TextModel(lang='es'),
 ```
 :::
 
+## Column 
+
 ::: {.card title="BoW (Punc.)" .flow}
 ```{python}
 #| echo: true
 
 bow_punc = make_pipeline(TextModel(lang='es',
-                         del_punc=False,
-                         norm_punc=True),
+                         del_punc=True,
+                         norm_punc=False),
                          LinearSVC()).fit(Xtrain, ytrain)
 ```
 :::
-
-## Column 
 
 ::: {.card title="Performance" .flow}
 ```{python}

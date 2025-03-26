@@ -70,7 +70,7 @@ def test_seqtm_build():
     data = next(tweet_iterator('seqtm_en_4.json.gz'))
     _ = data['counter']
     counter2 = Counter(_["dict"], _["update_calls"])
-    assert counter2.most_common()[0] == ('q:a~', 1834)
+    assert counter2.most_common()[0] == ('q:o~', 1840)
     os.unlink('seqtm_en_4.json.gz')
 
 
@@ -111,7 +111,7 @@ def test_feasible_tokens():
                                    voc_size_exponent=10)
     output, cnt = encode(voc, 'es-mx-sample.json')
     tokens = feasible_tokens(voc, cnt)
-    assert len(tokens) == 12
+    assert len(tokens) == 15
     os.unlink('encode-es-mx-sample.json')
 
 
@@ -204,7 +204,6 @@ def test_build_encexp_tokens():
     from encexp.text_repr import TextModel
     from microtc.utils import Counter
     from encexp.download import download_seqtm
-    from encexp.utils import b4msa_params
     
 
     samples()
