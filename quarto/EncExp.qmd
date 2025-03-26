@@ -30,7 +30,7 @@ pip install CompStats
 
 ## Column
 
-::: {.card title="Datasets"} 
+::: {.card title="Datasets" .flow} 
 ```{python}
 #| echo: true
 
@@ -48,23 +48,53 @@ for filename in ['es-mx-sample.json.zip',
     _ = list(tweet_iterator(filename.replace('.zip', '')))
     X.extend(_)
     y.extend([filename[3:5]] * len(_))
-y[:10]
 ```
 :::
 
-::: {.card title="BoW"} 
+::: {.card title="Training and Validation sets" .flow}
+```{python}
+#| echo: true
+
+from sklearn.model_selection import train_test_split
+Xtrain, Xval, ytrain, yval = train_test_split(X, y)
+```
+:::
+
+::: {.card title="BoW" .flow} 
 ```{python}
 #| echo: true
 
 from encexp import TextModel
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
-model = make_pipeline(TextModel(lang='es'),
-                      LinearSVC()).fit(X, y)
+bow = make_pipeline(TextModel(lang='es'),
+                    LinearSVC()).fit(Xtrain, ytrain)
 ```
 :::
 
-Hola
+::: {.card title="BoW (Punc.)" .flow}
+```{python}
+#| echo: true
+
+bow_punc = make_pipeline(TextModel(lang='es',
+                         del_punc=False,
+                         norm_punc=True),
+                         LinearSVC()).fit(Xtrain, ytrain)
+```
+:::
+
+## Column 
+
+::: {.card title="Performance" .flow}
+```{python}
+#| echo: true
+from CompStats.metrics import recall_score
+score = recall_score(yval, bow.predict(Xval),
+                     name='BoW', average='macro')
+_ = score(bow_punc.predict(Xval), name='BoW (Punc.)')                     
+score.plot()
+```
+:::
 
 # Corpus 
 

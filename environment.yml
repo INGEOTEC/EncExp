@@ -9,6 +9,7 @@ dependencies:
   - tqdm
   - yaml
   - jupyter
+  - CompStats
   - pip:
     - pandas
     - seaborn
