@@ -79,8 +79,8 @@ bow = make_pipeline(TextModel(lang='es'),
 #| echo: true
 
 bow_punc = make_pipeline(TextModel(lang='es',
-                         del_punc=True,
-                         norm_punc=False),
+                                   del_punc=True,
+                                   norm_punc=False),
                          LinearSVC()).fit(Xtrain, ytrain)
 ```
 :::
@@ -91,7 +91,7 @@ bow_punc = make_pipeline(TextModel(lang='es',
 from CompStats.metrics import recall_score
 score = recall_score(yval, bow.predict(Xval),
                      name='BoW', average='macro')
-_ = score(bow_punc.predict(Xval), name='BoW (Punc.)')                     
+_ = score(bow_punc.predict(Xval), name='BoW (Punc.)')
 score.plot()
 ```
 :::
