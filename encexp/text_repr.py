@@ -26,7 +26,7 @@ from microtc.textmodel import SKIP_SYMBOLS
 from microtc.weighting import TFIDF
 import numpy as np
 from numpy.linalg import norm
-from encexp.download import download_seqtm, download_encexp
+from encexp.download import download_seqtm, download_encexp, download_TextModel
 from encexp.utils import progress_bar
 
 
@@ -45,7 +45,7 @@ class TextModel(microTCTM):
                  token_min_filter: Union[int, float]=0,
                  token_max_filter: Union[int, float]=int(2**17),
                  weighting: str='microtc.weighting.TFIDF',
-                 norm_punc: bool=True):
+                 norm_punc: bool=True, pretrained=True):
         if token_list is None:
             if lang in ['ja', 'zh']:
                 token_list = [1, 2, 3]
@@ -67,6 +67,15 @@ class TextModel(microTCTM):
         assert norm_punc | del_punc
         self.norm_punc = norm_punc
         self._norm_tokens()
+        self.pretrained = pretrained
+        if pretrained:
+            counter = download_TextModel(self.identifier)['counter']
+            counter = Counter(counter["dict"],
+                              counter["update_calls"])
+            tfidf = TFIDF()
+            tfidf.N = counter.update_calls
+            tfidf.word2id, tfidf.wordWeight = tfidf.counter2weight(counter)
+            self.model = tfidf
 
     def get_params(self):
         """TextModel parameters"""
@@ -101,6 +110,8 @@ class TextModel(microTCTM):
 
     def fit(self, X, y=None):
         """Estimate the tokens weights"""
+        if self.pretrained:
+            return self
         super().fit(X)
         return self
 

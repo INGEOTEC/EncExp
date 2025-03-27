@@ -67,7 +67,7 @@ Xtrain, Xval, ytrain, yval = train_test_split(X, y)
 from encexp import TextModel
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
-bow = make_pipeline(TextModel(lang='es'),
+bow = make_pipeline(TextModel(lang='es', pretrained=False),
                     LinearSVC()).fit(Xtrain, ytrain)
 ```
 :::
@@ -78,7 +78,7 @@ bow = make_pipeline(TextModel(lang='es'),
 ```{python}
 #| echo: true
 
-bow_punc = make_pipeline(TextModel(lang='es',
+bow_punc = make_pipeline(TextModel(lang='es', pretrained=False,
                                    del_punc=True,
                                    norm_punc=False),
                          LinearSVC()).fit(Xtrain, ytrain)

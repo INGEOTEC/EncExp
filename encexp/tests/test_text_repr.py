@@ -29,6 +29,7 @@ def test_tm():
     _ = tm['buenos dias mxeico']
     assert len(_) == 13
 
+
 def test_seqtm():
     """Test SeqTM"""
     
@@ -456,33 +457,33 @@ def test_pipeline_encexp():
 
 def test_TextModel():
     """Test TextModel"""
-    tm = TextModel(lang='ja')
+    tm = TextModel(lang='ja', pretrained=False)
     assert tm.token_list == [1, 2, 3]
-    tm = TextModel(lang=None)
-    assert tm.token_list == [-1, 2, 3, 4, 5, 6, 7, 8]
-    tm = TextModel(token_list=[2, 1])
+    tm = TextModel(lang=None, pretrained=False)
+    assert tm.token_list == [-2, -1, 2, 3, 4]
+    tm = TextModel(token_list=[2, 1], pretrained=False)
     assert tm.token_list == [2, 1]
 
 
 def test_TextModel_normalize():
     """Test TextModel token normalization"""
 
-    tm = TextModel()
+    tm = TextModel(pretrained=False)
     txt = tm.text_transformations('e s💁🏿 🤣🤣na')
-    assert txt == '~e~s~u:💁~u:🤣~u:🤣~na~'
-    tm = TextModel(norm_punc=True, del_punc=False)
+    assert txt == '~e~s~e:💁~e:🤣~e:🤣~na~'
+    tm = TextModel(norm_punc=True, del_punc=False, pretrained=False)
     txt = tm.text_transformations('es💁🏿.🤣,🤣 XXX')
-    assert txt == '~es~u:💁~u:.~u:🤣~u:,~u:🤣~xxx~'
+    assert txt == '~es~e:💁~e:.~e:🤣~e:,~e:🤣~xxx~'
 
 
 def test_TextModel_tokenize():
     """Test TextModel tokenize"""
-    tm = TextModel(token_list=[-1, 1])
+    tm = TextModel(token_list=[-1, 1], pretrained=False)
     tokens = tm.tokenize('hola💁🏿 🤣dios')
-    assert tokens == ['hola', 'u:💁', 'u:🤣', 'dios', 'q:~', 'q:h',
+    assert tokens == ['hola', 'e:💁', 'e:🤣', 'dios', 'q:~', 'q:h',
                       'q:o', 'q:l', 'q:a', 'q:~', 'q:~', 'q:d', 
                       'q:i', 'q:o', 'q:s', 'q:~']
-    tm = TextModel(token_list=[7], q_grams_words=False)
+    tm = TextModel(token_list=[7], q_grams_words=False, pretrained=False)
     tokens = tm.tokenize('buenos💁🏿dia colegas _url _usr')
     assert tokens == ['q:~buenos', 'q:buenos~', 'q:~dia~co',
                       'q:dia~col', 'q:ia~cole', 'q:a~coleg',
@@ -491,7 +492,7 @@ def test_TextModel_tokenize():
 
 def test_TextModel_get_params():
     """Test TextModel get_params"""
-    tm = TextModel(token_list=[-1, 1])
+    tm = TextModel(token_list=[-1, 1], pretrained=False)
     kwargs = tm.get_params()
     assert kwargs['token_list'] == [-1, 1]
 
@@ -500,22 +501,21 @@ def test_TextModel_identifier():
     """test TextModel identifier"""
     import hashlib
 
-    tm = TextModel(lang='zh')
+    tm = TextModel(lang='zh', pretrained=False)
     diff = tm.identifier
     cdn = ' '.join([f'{k}={v}'
-                        for k, v in [('lang', 'zh')]])
+                    for k, v in [('lang', 'zh'), ('pretrained', False)]])
     _ = hashlib.md5(bytes(cdn, encoding='utf-8')).hexdigest()
     assert f'TextModel_{_}' == diff
-    tm = TextModel(lang='es')
+    tm = TextModel(lang='es', pretrained=False)
     diff = tm.identifier
     cdn = ' '.join([f'{k}={v}'
-                        for k, v in [('lang', 'es')]])
-    _ = hashlib.md5(bytes(cdn, encoding='utf-8')).hexdigest()
-    assert f'TextModel_{_}' == diff
-    tm = TextModel(lang='es', del_diac=False)
-    diff = tm.identifier
-    cdn = ' '.join([f'{k}={v}'
-                        for k, v in [('del_diac', False), ('lang', 'es')]])
+                    for k, v in [('lang', 'es'), ('pretrained', False)]])
     _ = hashlib.md5(bytes(cdn, encoding='utf-8')).hexdigest()
     assert f'TextModel_{_}' == diff
 
+
+def test_TextModel_pretrained():
+    """test TextModel pretrained"""
+    tm = TextModel(lang='ca')
+    assert len(tm.names) == 2**17
