@@ -23,8 +23,9 @@ from encexp.utils import progress_bar
 import encexp
 
 
-def compute_vocabulary(tokenize, iterator):
+def compute_vocabulary(tm, iterator):
     """Compute the vocabulary"""
+    tokenize = tm.tokenize
     counter = Counter()
     for tweet in iterator:
         counter.update(set(tokenize(tweet)))
@@ -52,8 +53,7 @@ def compute_b4msa_vocabulary(filename: str,
                                      desc=filename):
             yield tweet
     tm = TextModel(**kwargs)
-    tokenize = tm.tokenize
-    return compute_vocabulary(tokenize, iterator())
+    return compute_vocabulary(tm, iterator())
 
 
 def compute_seqtm_vocabulary(instance, vocabulary,
