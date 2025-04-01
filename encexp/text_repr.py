@@ -70,12 +70,19 @@ class TextModel(microTCTM):
         self.pretrained = pretrained
         if pretrained:
             counter = download_TextModel(self.identifier)['counter']
+            self.set_vocabulary(counter)
+
+    def set_vocabulary(self, counter: Counter):
+        """Set vocabulary"""
+
+        if not isinstance(counter, Counter):
             counter = Counter(counter["dict"],
                               counter["update_calls"])
-            tfidf = TFIDF()
-            tfidf.N = counter.update_calls
-            tfidf.word2id, tfidf.wordWeight = tfidf.counter2weight(counter)
-            self.model = tfidf
+        tfidf = TFIDF()
+        tfidf.N = counter.update_calls
+        tfidf.word2id, tfidf.wordWeight = tfidf.counter2weight(counter)
+        self.model = tfidf
+
 
     def get_params(self):
         """TextModel parameters"""
@@ -324,25 +331,39 @@ class TM(TextModel):
 
 
 
-class SeqTM(TM):
+class SeqTM(TextModel):
     """TextModel where the utterance is segmented in a sequence."""
-    def _vocabulary(self, counter):
-        """Vocabulary"""
+    @property
+    def token_id(self):
+        """Token id"""
+        try:
+            return self._token_id
+        except AttributeError:
+            self.token_id = {}
+            return self._token_id
 
-        super(SeqTM, self)._vocabulary(counter)
+    @token_id.setter
+    def token_id(self, value):
+        self._token_id = value
+
+    def set_vocabulary(self, counter: Counter):
+        """Set vocabulary"""
+
+        super().set_vocabulary(counter)
         tfidf = self.model
         tokens = self.tokens
+        code = self.token_id
         for value in tfidf.word2id:
             key = value
             if value[:2] == 'q:':
                 key = value[2:]
-                if key in self._map:
+                if key in code:
                     continue
-                self._map[key] = value
+                code[key] = value
             else:
                 key = f'~{key}~'
-                self._map[key] = value
-            tokens[key] = False    
+                code[key] = value
+            tokens[key] = False
 
     def compute_tokens(self, text):
         """
@@ -354,7 +375,7 @@ class SeqTM(TM):
         :rtype: set
         """
 
-        get = self._map.get
+        get = self.token_id.get
         lst = self.find_token(text)
         _ = [text[a:b] for a, b in lst]
         return [[get(x, x) for x in _]]
@@ -366,9 +387,9 @@ class SeqTM(TM):
         try:
             return self._tokens
         except AttributeError:
-            self._tokens = OrderedDict()
+            self.tokens = OrderedDict()
         return self._tokens
-    
+
     @tokens.setter
     def tokens(self, value):
         self._tokens = value

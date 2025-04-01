@@ -517,5 +517,19 @@ def test_TextModel_identifier():
 
 def test_TextModel_pretrained():
     """test TextModel pretrained"""
-    tm = TextModel(lang='ca')
+    tm = TextModel(lang='es')
     assert len(tm.names) == 2**17
+
+
+def test_SeqTM_TM():
+    """test SeqTM based on TextModel"""
+    from encexp.download import download_TextModel
+
+    seq = SeqTM(lang='es', pretrained=False)
+    tm = TextModel(lang='es')
+    voc = download_TextModel(tm.identifier)['counter']
+    voc['dict'] = {k: v for k, v in voc['dict'].items()
+                   if k[:2] == 'q:' or '~' not in k[1:-1]}
+    seq.set_vocabulary(voc)
+    _ = seq.tokenize('buenos dias.?, . 😂tengan')
+    assert _ == ['buenos', 'dias', 'e:.', 'e:?', 'e:,', 'e:.', 'e:😂', 'tengan']
