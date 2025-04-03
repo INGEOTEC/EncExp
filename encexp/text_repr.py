@@ -26,7 +26,7 @@ from microtc.textmodel import SKIP_SYMBOLS
 from microtc.weighting import TFIDF
 import numpy as np
 from numpy.linalg import norm
-from encexp.download import download_seqtm, download_encexp, download_TextModel
+from encexp.download import download_encexp, download_TextModel
 from encexp.utils import progress_bar
 
 
@@ -65,6 +65,8 @@ class TextModel(microTCTM):
         self.lang = lang
         self.norm_emojis = norm_emojis
         assert norm_punc | del_punc
+        if norm_punc:
+            assert norm_emojis
         self.norm_punc = norm_punc
         self._norm_tokens()
         self.pretrained = pretrained
@@ -82,14 +84,14 @@ class TextModel(microTCTM):
         tfidf.N = counter.update_calls
         tfidf.word2id, tfidf.wordWeight = tfidf.counter2weight(counter)
         self.model = tfidf
+        self.pretrained = True
 
-
-    def get_params(self):
+    def get_params(self, deep=False):
         """TextModel parameters"""
         sig = inspect.signature(self.__class__)
         params = sorted(sig.parameters.keys())
         return {k: getattr(self, k) for k in params}
-    
+
     @property
     def identifier(self):
         """Identifier - parameters md5"""
@@ -133,15 +135,6 @@ class TextModel(microTCTM):
         if self.norm_punc:
             _ = {k: f'~e:{k}~' for k in SKIP_SYMBOLS if k != '~'}
             self.norm_tokens.update(_)
-
-        # _ = {f'~{jaja}~': '~e:ja~' for jaja in ['jaja', 'jajaj', 'jajaja', 'jajajaj',
-        #                                         'jajajaja', 'jajajajaj', 'jajajajaja',
-        #                                         'jajajajajaja', 'jajajajajajaja',
-        #                                         'jajajajajajajaja', 'ajaj', 'ajaja',
-        #                                         'ajajajaj', 'aja', 'jaa', 'jaj', 'jajja']}
-        # tm.norm_tokens.update(_)
-        # _ = {f'~{haha}~': '~e:ha~' for haha in ['haha', 'hahaha', 'hahahaha']}
-        # tm.norm_tokens.update(_)
         _ = {x: True for x in self.norm_tokens}
         self.norm_head = emoticons.create_data_structure(_)
 
@@ -260,75 +253,6 @@ class TextModel(microTCTM):
         return csr_matrix((data, (row, col)),
                           shape=(len(X), self.num_terms),
                           dtype=self.precision)
-
-
-class TM(TextModel):
-    """TextModel where the vocabulary is obtained with SeqTM"""
-
-    def __init__(self, lang='es',
-                 voc_size_exponent: int=13,
-                 vocabulary=None,
-                 prefix_suffix: bool=True,
-                 voc_source: str='mix',
-                 precision=np.float32):
-        if vocabulary is None:
-            vocabulary = download_seqtm(lang, voc_source=voc_source,
-                                        voc_size_exponent=voc_size_exponent,
-                                        prefix=self.__class__.__name__.lower(),
-                                        prefix_suffix=prefix_suffix)
-        self._map = {}
-        params = vocabulary['params']
-        counter = vocabulary['counter']
-        if not isinstance(counter, Counter):
-            counter = Counter(counter["dict"],
-                              counter["update_calls"])
-        super().__init__(**params)
-        self.language = lang
-        self.voc_size_exponent = voc_size_exponent
-        self._vocabulary(counter)
-        self.prefix_suffix = prefix_suffix
-        self.precision = precision
-
-    def fit(self, X, y):
-        """fit"""
-        return self
-
-    def _vocabulary(self, counter):
-        """Vocabulary"""
-
-        tfidf = TFIDF()
-        tfidf.N = counter.update_calls
-        tfidf.word2id, tfidf.wordWeight = tfidf.counter2weight(counter)
-        self.model = tfidf
-
-    @property
-    def language(self):
-        """Language of the pre-trained text representations"""
-
-        return self._language
-
-    @language.setter
-    def language(self, value):
-        self._language = value
-
-    @property
-    def voc_size_exponent(self):
-        """Vocabulary size :math:`2^v`; where :math:`v` is :py:attr:`voc_size_exponent` """
-
-        return self._voc_size_exponent
-
-    @voc_size_exponent.setter
-    def voc_size_exponent(self, value):
-        self._voc_size_exponent = value
-
-    @property
-    def identifier(self):
-        """Function id"""
-
-        lang = self.language
-        voc = self.voc_size_exponent
-        return f'seqtm_{lang}_{voc}'
-
 
 
 class SeqTM(TextModel):

@@ -19,62 +19,92 @@ from microtc.utils import tweet_iterator
 from encexp.tests.test_utils import samples
 from encexp.build_voc import compute_b4msa_vocabulary, compute_seqtm_vocabulary
 from encexp.build_encexp import build_encexp
-from encexp.text_repr import SeqTM, EncExp, TM, EncExpT, TextModel
+from encexp.text_repr import SeqTM, EncExp, EncExpT, TextModel
 from sklearn.base import clone
 
 
-def test_tm():
-    """Test TM"""
-    tm = TM(voc_source='mix')
-    _ = tm['buenos dias mxeico']
-    assert len(_) == 13
+def test_TextModel():
+    """Test TextModel"""
+    tm = TextModel(lang='ja', pretrained=False)
+    assert tm.token_list == [1, 2, 3]
+    tm = TextModel(lang=None, pretrained=False)
+    assert tm.token_list == [-2, -1, 2, 3, 4]
+    tm = TextModel(token_list=[2, 1], pretrained=False)
+    assert tm.token_list == [2, 1]
 
 
-def test_seqtm():
-    """Test SeqTM"""
+def test_TextModel_normalize():
+    """Test TextModel token normalization"""
+
+    tm = TextModel(pretrained=False)
+    txt = tm.text_transformations('e s💁🏿 🤣🤣na')
+    assert txt == '~e~s~e:💁~e:🤣~e:🤣~na~'
+    tm = TextModel(norm_punc=True, del_punc=False, pretrained=False)
+    txt = tm.text_transformations('es💁🏿.🤣,🤣 XXX')
+    assert txt == '~es~e:💁~e:.~e:🤣~e:,~e:🤣~xxx~'
+
+
+def test_TextModel_tokenize():
+    """Test TextModel tokenize"""
+    tm = TextModel(token_list=[-1, 1], pretrained=False)
+    tokens = tm.tokenize('hola💁🏿 🤣dios')
+    assert tokens == ['hola', 'e:💁', 'e:🤣', 'dios', 'q:~', 'q:h',
+                      'q:o', 'q:l', 'q:a', 'q:~', 'q:~', 'q:d', 
+                      'q:i', 'q:o', 'q:s', 'q:~']
+    tm = TextModel(token_list=[7], q_grams_words=False, pretrained=False)
+    tokens = tm.tokenize('buenos💁🏿dia colegas _url _usr')
+    assert tokens == ['q:~buenos', 'q:buenos~', 'q:~dia~co',
+                      'q:dia~col', 'q:ia~cole', 'q:a~coleg',
+                      'q:~colega', 'q:colegas', 'q:olegas~']
     
-    samples()
-    data = compute_b4msa_vocabulary('es-mx-sample.json')
-    seqtm = SeqTM(vocabulary=data)
-    _ = seqtm.tokenize('buenos dias mxeico')
-    assert _ == ['buenos', 'dias', 'q:~mx', 'q:ei', 'q:co~']
+
+def test_TextModel_get_params():
+    """Test TextModel get_params"""
+    tm = TextModel(token_list=[-1, 1], pretrained=False)
+    kwargs = tm.get_params()
+    assert kwargs['token_list'] == [-1, 1]
 
 
-def test_seqtm_vocabulary():
-    """Test SeqTM vocabulary"""
+def test_TextModel_identifier():
+    """test TextModel identifier"""
+    import hashlib
 
-    samples()
-    data = compute_b4msa_vocabulary('es-mx-sample.json')
-    voc = compute_seqtm_vocabulary(SeqTM, data,
-                                   'es-mx-sample.json',
-                                   voc_size_exponent=5)
-    assert len(voc['counter']['dict']) == 32
-    _ = voc['counter']['dict']
-    assert len([k for k in _ if k[:2] == 'q:']) == 30
-
-
-# def test_seqtm_ix_15():
-#     """Test SeqTM"""
-#     seqtm = SeqTM(lang='es', voc_size_exponent=15,
-#                   prefix_suffix=True)
-#     tokens = seqtm.tokenize('buenos dias')
-#     assert tokens == ['buenos', 'dias']
+    tm = TextModel(lang='zh', pretrained=False)
+    diff = tm.identifier
+    cdn = ' '.join([f'{k}={v}'
+                    for k, v in [('lang', 'zh'), ('pretrained', False)]])
+    _ = hashlib.md5(bytes(cdn, encoding='utf-8')).hexdigest()
+    assert f'TextModel_{_}' == diff
+    tm = TextModel(lang='es', pretrained=False)
+    diff = tm.identifier
+    cdn = ' '.join([f'{k}={v}'
+                    for k, v in [('lang', 'es'), ('pretrained', False)]])
+    _ = hashlib.md5(bytes(cdn, encoding='utf-8')).hexdigest()
+    assert f'TextModel_{_}' == diff
 
 
-def test_seqtm_identifier():
-    """Test SeqTM identifier"""
-
-    samples()
-    data = compute_b4msa_vocabulary('es-mx-sample.json')
-    seqtm = SeqTM(vocabulary=data, lang='en', voc_size_exponent=13)
-    assert seqtm.identifier == 'seqtm_en_13'
+def test_TextModel_pretrained():
+    """test TextModel pretrained"""
+    tm = TextModel(lang='es')
+    assert len(tm.names) == 2**17
 
 
-def test_seqtm_download():
-    """Test SeqTM download"""
-    seqtm = SeqTM(lang='es', voc_size_exponent=13)
-    cdn = seqtm.tokenize('buenos dias méxico')
-    assert cdn == ['buenos', 'dias', 'mexico']
+def test_SeqTM_TM():
+    """test SeqTM based on TextModel"""
+    from encexp.download import download_TextModel
+
+    seq = SeqTM(lang='es', pretrained=False)
+    tm = TextModel(lang='es')
+    voc = download_TextModel(tm.identifier)['counter']
+    voc['dict'] = {k: v for k, v in voc['dict'].items()
+                   if k[:2] == 'q:' or '~' not in k[1:-1]}
+    seq.set_vocabulary(voc)
+    _ = seq.tokenize('buenos dias.?, . 😂tengan')
+    assert _ == ['buenos', 'dias', 'e:.', 'e:?', 'e:,', 'e:.', 'e:😂', 'tengan']
+    assert seq.pretrained
+    seq = SeqTM(lang='es')
+    _ = seq.tokenize('buenos dias .?,')
+    assert _ == ['buenos~dias', 'e:.', 'e:?', 'e:,']
 
 
 def test_EncExp_filename():
@@ -114,17 +144,6 @@ def test_EncExp_transform():
     assert X.shape[0] == 1
     assert X.shape[1] == 8192
     assert X.dtype == np.float32
-
-
-# def test_EncExp_transform_float16():
-#     """Test EncExp transform (float16)"""
-
-#     encexp = EncExp(voc_source='mix', prefix_suffix=False,
-#                     precision=np.float16)
-#     X = encexp.transform(['buenos dias'])
-#     assert X.shape[0] == 1
-#     assert X.shape[1] == 8132
-#     assert X.dtype == np.float32
 
 
 def test_EncExp_prefix_suffix():
@@ -307,36 +326,6 @@ def test_EncExp_force_tokens():
     assert_almost_equal(enc.weights[0, 1:], enc2.weights[0, 1:])
 
 
-# def test_EncExp_intercept():
-#     """Test EncExp with intercept"""
-
-#     enc = EncExp(lang='es', intercept=True,
-#                  merge_IDF=False,
-#                  force_token=True)
-#     assert np.all(enc.bias != 0)
-
-
-# def test_SeqTM_text_transformations():
-#     """Test SeqTM Text Transformations"""
-#     seq = SeqTM()
-#     assert seq.tokenize('🤣🤣') == ['🤣', '🤣']
-
-
-# def test_SeqTM_jaja():
-#     """Test SeqTM jaja"""
-
-#     seq = SeqTM()
-#     seq.norm_emojis = True
-#     txt = seq.text_transformations('jajaja')
-#     assert txt == '~ja~'
-#     txt = seq.text_transformations('hola ja')
-#     assert txt == '~hola~ja~'
-#     txt = seq.text_transformations('jajaja 🤣')
-#     assert txt == '~ja~🤣~'
-#     txt = seq.text_transformations('🧑‍')
-#     assert txt == '~🧑~'
-
-
 def test_EncExp_enc_training_size():
     """Test training size of the embeddings"""
 
@@ -394,36 +383,6 @@ def test_EncExp_build_tailored():
     assert hasattr(enc2, '_estimator')
     # os.unlink(enc.tailored)
 
-# def test_pipeline_tm():
-#     """Test Pipeline"""
-#     samples()
-#     mx = list(tweet_iterator('es-mx-sample.json'))
-#     samples(filename='es-ar-sample.json.zip')
-#     ar = list(tweet_iterator('es-ar-sample.json'))
-#     y = ['mx'] * len(mx)
-#     y += ['ar'] * len(ar)
-
-#     from sklearn.pipeline import Pipeline
-#     from sklearn.svm import LinearSVC
-#     from sklearn.model_selection import GridSearchCV
-#     from sklearn.model_selection import StratifiedShuffleSplit
-
-#     pipe = Pipeline([('bow', 'passthrough'),
-#                     ('cl', LinearSVC(class_weight='balanced'))])
-#     params = {'cl__C': [0.01, 0.1, 1, 10],
-#               'bow': [SeqTM(lang='es', voc_source='mix'),
-#                       TM(lang='es', voc_source='mix')]}
-#     sss = StratifiedShuffleSplit(random_state=0,
-#                                  n_splits=1,
-#                                  test_size=0.3)
-
-#     grid = GridSearchCV(pipe,
-#                         param_grid=params,
-#                         cv=sss,
-#                         n_jobs=-1,
-#                         scoring='f1_macro').fit(mx + ar, y)
-#     assert grid.best_score_ > 0.7
-
 
 def test_pipeline_encexp():
     """Test Pipeline in EncExpT"""
@@ -453,83 +412,3 @@ def test_pipeline_encexp():
                         n_jobs=1,
                         scoring='f1_macro').fit(mx + ar, y)
     assert grid.best_score_ > 0.7
-
-
-def test_TextModel():
-    """Test TextModel"""
-    tm = TextModel(lang='ja', pretrained=False)
-    assert tm.token_list == [1, 2, 3]
-    tm = TextModel(lang=None, pretrained=False)
-    assert tm.token_list == [-2, -1, 2, 3, 4]
-    tm = TextModel(token_list=[2, 1], pretrained=False)
-    assert tm.token_list == [2, 1]
-
-
-def test_TextModel_normalize():
-    """Test TextModel token normalization"""
-
-    tm = TextModel(pretrained=False)
-    txt = tm.text_transformations('e s💁🏿 🤣🤣na')
-    assert txt == '~e~s~e:💁~e:🤣~e:🤣~na~'
-    tm = TextModel(norm_punc=True, del_punc=False, pretrained=False)
-    txt = tm.text_transformations('es💁🏿.🤣,🤣 XXX')
-    assert txt == '~es~e:💁~e:.~e:🤣~e:,~e:🤣~xxx~'
-
-
-def test_TextModel_tokenize():
-    """Test TextModel tokenize"""
-    tm = TextModel(token_list=[-1, 1], pretrained=False)
-    tokens = tm.tokenize('hola💁🏿 🤣dios')
-    assert tokens == ['hola', 'e:💁', 'e:🤣', 'dios', 'q:~', 'q:h',
-                      'q:o', 'q:l', 'q:a', 'q:~', 'q:~', 'q:d', 
-                      'q:i', 'q:o', 'q:s', 'q:~']
-    tm = TextModel(token_list=[7], q_grams_words=False, pretrained=False)
-    tokens = tm.tokenize('buenos💁🏿dia colegas _url _usr')
-    assert tokens == ['q:~buenos', 'q:buenos~', 'q:~dia~co',
-                      'q:dia~col', 'q:ia~cole', 'q:a~coleg',
-                      'q:~colega', 'q:colegas', 'q:olegas~']
-    
-
-def test_TextModel_get_params():
-    """Test TextModel get_params"""
-    tm = TextModel(token_list=[-1, 1], pretrained=False)
-    kwargs = tm.get_params()
-    assert kwargs['token_list'] == [-1, 1]
-
-
-def test_TextModel_identifier():
-    """test TextModel identifier"""
-    import hashlib
-
-    tm = TextModel(lang='zh', pretrained=False)
-    diff = tm.identifier
-    cdn = ' '.join([f'{k}={v}'
-                    for k, v in [('lang', 'zh'), ('pretrained', False)]])
-    _ = hashlib.md5(bytes(cdn, encoding='utf-8')).hexdigest()
-    assert f'TextModel_{_}' == diff
-    tm = TextModel(lang='es', pretrained=False)
-    diff = tm.identifier
-    cdn = ' '.join([f'{k}={v}'
-                    for k, v in [('lang', 'es'), ('pretrained', False)]])
-    _ = hashlib.md5(bytes(cdn, encoding='utf-8')).hexdigest()
-    assert f'TextModel_{_}' == diff
-
-
-def test_TextModel_pretrained():
-    """test TextModel pretrained"""
-    tm = TextModel(lang='es')
-    assert len(tm.names) == 2**17
-
-
-def test_SeqTM_TM():
-    """test SeqTM based on TextModel"""
-    from encexp.download import download_TextModel
-
-    seq = SeqTM(lang='es', pretrained=False)
-    tm = TextModel(lang='es')
-    voc = download_TextModel(tm.identifier)['counter']
-    voc['dict'] = {k: v for k, v in voc['dict'].items()
-                   if k[:2] == 'q:' or '~' not in k[1:-1]}
-    seq.set_vocabulary(voc)
-    _ = seq.tokenize('buenos dias.?, . 😂tengan')
-    assert _ == ['buenos', 'dias', 'e:.', 'e:?', 'e:,', 'e:.', 'e:😂', 'tengan']
