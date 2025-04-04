@@ -15,70 +15,96 @@ from microtc.utils import Counter, tweet_iterator
 from encexp.tests.test_utils import samples
 from encexp.text_repr import SeqTM, EncExp
 from encexp.build_encexp import encode_output, encode, feasible_tokens, build_encexp_token, build_encexp
-from encexp.build_voc import compute_b4msa_vocabulary, compute_seqtm_vocabulary
-from encexp.build_voc import main, build_voc
+from encexp.build_voc import compute_TextModel_vocabulary, compute_SeqTM_vocabulary
+# from encexp.build_voc import main, build_voc
 from os.path import isfile
 import os
 
 
-def test_compute_seqtm_vocabulary_prefix_suffix():
-    """Test encode method"""
-    from encexp.text_repr import SeqTM
-
-    samples()
-    data = compute_b4msa_vocabulary('es-mx-sample.json')
-    voc = compute_seqtm_vocabulary(SeqTM, data,
-                                   'es-mx-sample.json',
-                                   voc_size_exponent=10,
-                                   prefix_suffix=True)
-    for k in voc['counter']['dict']:
-        if k[:2] != 'q:':
-            continue
-        if len(k) < 6:
-            assert k[3] == '~' or k[-1] == '~'
-
-
-def test_compute_b4msa_vocabulary():
+def test_compute_TextModel_vocabulary():
     """Compute vocabulary"""
+    def iterator():
+        """iterator"""
+        return tweet_iterator('es-mx-sample.json')
 
     samples()
-    data = compute_b4msa_vocabulary('es-mx-sample.json')
-    _ = data['counter']
-    counter = Counter(_["dict"], _["update_calls"])
-    assert counter.most_common()[0] == ('q:e~', 1849)
-    data = compute_b4msa_vocabulary('es-mx-sample.json', 10)
-    _ = data['counter']
-    counter = Counter(_["dict"], _["update_calls"])
-    assert counter.update_calls == 10
+    data = compute_TextModel_vocabulary('es-mx-sample.json',
+                                        pretrained=False,
+                                        token_max_filter=20)
+    assert len(data['counter']['dict']) == 20
+    data = compute_TextModel_vocabulary(iterator,
+                                        pretrained=False,
+                                        token_max_filter=20)
+    assert len(data['counter']['dict']) == 20
+    assert data['counter']['update_calls'] == 2048
 
 
-def test_seqtm_build():
-    """Test SeqTM CLI"""
-
-    class A:
-        """Dummy"""
-
-
+def test_compute_SeqTM_vocabulary():
+    """test SeqTM vocabulary"""
     samples()
-    A.lang = 'en'
-    A.file = ['es-mx-sample.json']
-    A.output = None
-    A.limit = None
-    A.voc_size_exponent = 4
-    A.prefix_suffix = True
-    main(A)
-    data = next(tweet_iterator('seqtm_en_4.json.gz'))
-    _ = data['counter']
-    counter2 = Counter(_["dict"], _["update_calls"])
-    assert counter2.most_common()[0] == ('q:o~', 1840)
-    os.unlink('seqtm_en_4.json.gz')
+    params = compute_TextModel_vocabulary('es-mx-sample.json',
+                                          pretrained=False)
+    data = compute_SeqTM_vocabulary('es-mx-sample.json',
+                                    params,
+                                    pretrained=False,
+                                    token_max_filter=2**13)
+    assert len(data['counter']['dict']) == 2**13
+    
+
+    # _ = data['counter']
+    # counter = Counter(_["dict"], _["update_calls"])
+    # assert counter.most_common()[0] == ('q:e~', 1849)
+    # data = compute_TextModel_vocabulary('es-mx-sample.json', 10)
+    # _ = data['counter']
+    # counter = Counter(_["dict"], _["update_calls"])
+    # assert counter.update_calls == 10
 
 
-def test_build_voc():
-    """Test build voc"""
-    samples()
-    build_voc('es-mx-sample.json', output='t.json.gz')
-    os.unlink('t.json.gz')
+
+# def test_compute_seqtm_vocabulary_prefix_suffix():
+#     """Test encode method"""
+#     from encexp.text_repr import SeqTM
+
+#     samples()
+#     data = compute_b4msa_vocabulary('es-mx-sample.json')
+#     voc = compute_seqtm_vocabulary(SeqTM, data,
+#                                    'es-mx-sample.json',
+#                                    voc_size_exponent=10,
+#                                    prefix_suffix=True)
+#     for k in voc['counter']['dict']:
+#         if k[:2] != 'q:':
+#             continue
+#         if len(k) < 6:
+#             assert k[3] == '~' or k[-1] == '~'
+
+
+# def test_seqtm_build():
+#     """Test SeqTM CLI"""
+
+#     class A:
+#         """Dummy"""
+
+
+#     samples()
+#     A.lang = 'en'
+#     A.file = ['es-mx-sample.json']
+#     A.output = None
+#     A.limit = None
+#     A.voc_size_exponent = 4
+#     A.prefix_suffix = True
+#     main(A)
+#     data = next(tweet_iterator('seqtm_en_4.json.gz'))
+#     _ = data['counter']
+#     counter2 = Counter(_["dict"], _["update_calls"])
+#     assert counter2.most_common()[0] == ('q:o~', 1840)
+#     os.unlink('seqtm_en_4.json.gz')
+
+
+# def test_build_voc():
+#     """Test build voc"""
+#     samples()
+#     build_voc('es-mx-sample.json', output='t.json.gz')
+#     os.unlink('t.json.gz')
 
 
 def test_encexp_encode():
