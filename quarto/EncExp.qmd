@@ -60,38 +60,46 @@ Xtrain, Xval, ytrain, yval = train_test_split(X, y)
 ```
 :::
 
-::: {.card title="BoW" .flow} 
+::: {.card title="TextModel" .flow} 
 ```{python}
 #| echo: true
 
-from encexp import TextModel
+from encexp import TextModel, SeqTM
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
-bow = make_pipeline(TextModel(lang='es', pretrained=False),
-                    LinearSVC()).fit(Xtrain, ytrain)
+tm = make_pipeline(TextModel(lang='es'),
+                   LinearSVC()).fit(Xtrain, ytrain)
 ```
 :::
 
 ## Column 
 
-::: {.card title="BoW (Punc.)" .flow}
+::: {.card title="TextModel (Corpus)" .flow}
 ```{python}
 #| echo: true
 
-bow_punc = make_pipeline(TextModel(lang='es', pretrained=False,
-                                   del_punc=True,
-                                   norm_punc=False),
-                         LinearSVC()).fit(Xtrain, ytrain)
+corpus = make_pipeline(TextModel(lang='es', pretrained=False),
+                       LinearSVC()).fit(Xtrain, ytrain)
+```
+:::
+
+::: {.card title="SeqTM" .flow}
+```{python}
+#| echo: true
+
+seq = make_pipeline(SeqTM(lang='es'),
+                    LinearSVC()).fit(Xtrain, ytrain)
 ```
 :::
 
 ::: {.card title="Performance" .flow}
 ```{python}
 #| echo: true
-from CompStats.metrics import recall_score
-score = recall_score(yval, bow.predict(Xval),
-                     name='BoW', average='macro')
-_ = score(bow_punc.predict(Xval), name='BoW (Punc.)')
+from CompStats.metrics import macro_recall
+score = macro_recall(yval, tm.predict(Xval),
+                     name='TextModel')
+_ = score(corpus.predict(Xval), name='TextModel (Corpus)')                     
+_ = score(seq.predict(Xval), name='SeqTM')
 score.plot()
 ```
 :::
@@ -110,4 +118,61 @@ The training set and test set were created with an equivalent procedure; the onl
 The training and test set was meticulously crafted by uniformly selecting the maximum number of tweets (i.e., 10M and $2^{12}$, respectively) from each day. These selected tweets were then organized by day, and within each day, the tweets were randomly chosen, with near duplicates being removed. The subsequent step involved the elimination of tweets that were near duplicates of the previous three days.
 
 It is worth mentioning that the last step is to shuffle the training and test set to eliminate the ordering by date. 
+:::
+
+# Vocabulary 
+
+## Column 
+::: {.card title="Dataset" .flow}
+```{python}
+#| echo: true
+from encexp.build_voc import compute_TextModel_vocabulary
+from encexp.build_voc import compute_SeqTM_vocabulary
+from microtc.utils import tweet_iterator
+
+def iterator():
+    files = ['es-mx-sample.json', 'es-ar-sample.json']
+    for file in files:
+        for x in tweet_iterator(file):
+            yield x
+```
+:::
+
+::: {.card title="TextModel" .flow}
+```{python}
+#| echo: true
+params = compute_TextModel_vocabulary(iterator,
+                                      pretrained=False,
+                                      token_max_filter=2**19)
+```                                             
+:::
+
+::: {.card title="SeqTM" .flow}
+```{python}
+#| echo: true
+
+for voc in [18, 17]:
+    params = compute_SeqTM_vocabulary(iterator,
+                                      params,
+                                      pretrained=False,
+                                      token_max_filter=2**voc)
+```                                             
+:::
+
+## Column 
+
+::: {.card title="TextModel tokenizer" .flow}
+```{python}
+#| echo: true
+tm = TextModel(lang='es')
+tm.tokenize('¡buen día!')
+```
+:::
+
+::: {.card title="SeqTM tokenizer" .flow}
+```{python}
+#| echo: true
+seq = SeqTM(lang='es')
+seq.tokenize('¡buen día!')
+```
 :::

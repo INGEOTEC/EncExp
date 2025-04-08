@@ -257,6 +257,32 @@ class TextModel(microTCTM):
 
 class SeqTM(TextModel):
     """TextModel where the utterance is segmented in a sequence."""
+    def __init__(self, lang: str=None, text: str='text',
+                 num_option: str=OPTION_NONE, usr_option: str=OPTION_GROUP,
+                 url_option: str=OPTION_GROUP, emo_option: str=OPTION_NONE,
+                 hashtag_option: str=OPTION_NONE, ent_option: str=OPTION_NONE,
+                 lc: bool=True, del_dup: bool=False, del_punc: bool=False,
+                 del_diac: bool=True, select_ent: bool=False, select_suff: bool=False,
+                 select_conn: bool=False, max_dimension: bool=True,
+                 unit_vector: bool=True, q_grams_words: bool=True,
+                 norm_emojis: bool=True, token_list: list=None,
+                 token_min_filter: Union[int, float]=0,
+                 token_max_filter: Union[int, float]=int(2**14),
+                 weighting: str='microtc.weighting.TFIDF',
+                 norm_punc: bool=True, pretrained=True):
+        super().__init__(lang=lang,
+                         text=text, num_option=num_option, usr_option=usr_option,
+                         url_option=url_option, emo_option=emo_option,
+                         hashtag_option=hashtag_option, ent_option=ent_option,
+                         lc=lc, del_dup=del_dup, del_punc=del_punc, del_diac=del_diac,
+                         select_ent=select_ent, select_suff=select_suff,
+                         select_conn=select_conn, max_dimension=max_dimension,
+                         unit_vector=unit_vector, q_grams_words=q_grams_words,
+                         norm_emojis=norm_emojis, token_list=token_list,
+                         token_min_filter=token_min_filter,
+                         token_max_filter=token_max_filter, weighting=weighting,
+                         norm_punc=norm_punc, pretrained=pretrained)
+
     @property
     def token_id(self):
         """Token id"""
