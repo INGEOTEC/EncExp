@@ -141,9 +141,11 @@ def iterator():
 ::: {.card title="TextModel" .flow}
 ```{python}
 #| echo: true
-params = compute_TextModel_vocabulary(iterator,
+params = compute_TextModel_vocabulary(iterator, lang='es',
                                       pretrained=False,
                                       token_max_filter=2**19)
+tm = TextModel(lang='es', pretrained=False)
+tm.set_vocabulary(params['counter'])
 ```                                             
 :::
 
@@ -156,6 +158,8 @@ for voc in [18, 17]:
                                       params,
                                       pretrained=False,
                                       token_max_filter=2**voc)
+seq = SeqTM(lang='es', pretrained=False)
+seq.set_vocabulary(params['counter'])
 ```                                             
 :::
 
@@ -164,7 +168,6 @@ for voc in [18, 17]:
 ::: {.card title="TextModel tokenizer" .flow}
 ```{python}
 #| echo: true
-tm = TextModel(lang='es')
 tm.tokenize('¡buen día!')
 ```
 :::
@@ -172,7 +175,6 @@ tm.tokenize('¡buen día!')
 ::: {.card title="SeqTM tokenizer" .flow}
 ```{python}
 #| echo: true
-seq = SeqTM(lang='es')
 seq.tokenize('¡buen día!')
 ```
 :::
