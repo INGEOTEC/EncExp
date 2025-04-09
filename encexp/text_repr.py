@@ -413,6 +413,7 @@ class EncExpT(Identifier):
     """EncExp Transformation"""
     lang: str=None
     token_max_filter: int=int(2**14)
+    pretrained: bool=True
 
     @property
     def seqTM(self):

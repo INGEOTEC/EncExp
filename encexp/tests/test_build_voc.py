@@ -11,11 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from os.path import isfile
-import os
-from microtc.utils import Counter, tweet_iterator
+from microtc.utils import tweet_iterator
 from encexp.tests.test_utils import samples
-from encexp.text_repr import SeqTM, EncExp
 from encexp.build_voc import compute_TextModel_vocabulary, compute_SeqTM_vocabulary
 
 

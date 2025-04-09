@@ -107,7 +107,9 @@ def test_Train_parameters():
 def test_Train_store_model():
     """Test Train"""
     samples()
-    enc = EncExpT(lang='es', token_max_filter=2**13)
+    enc = EncExpT(lang='es', token_max_filter=2**13,
+                  pretrained=False)
+    enc.pretrained = True
     ds = EncExpDataset(text_model=clone(enc.seqTM))
     ds.identifier = enc.identifier
     if not isfile(ds.output_filename):

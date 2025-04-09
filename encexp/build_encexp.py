@@ -248,8 +248,9 @@ def main(args):
     lang = args.lang
     token_max_filter = 2**args.voc_size_exponent
     n_jobs = args.n_jobs
-    enc = EncExpT(lang=lang,
+    enc = EncExpT(lang=lang, pretrained=False,
                   token_max_filter=token_max_filter)
+    enc.pretrained = True
     ds = EncExpDataset(text_model=clone(enc.seqTM))
     ds.identifier = enc.identifier
     if not isfile(ds.output_filename):
