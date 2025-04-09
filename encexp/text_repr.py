@@ -301,8 +301,8 @@ class SeqTM(TextModel):
 
         super().set_vocabulary(counter)
         tfidf = self.model
-        tokens = self.tokens
-        code = self.token_id
+        tokens = OrderedDict()
+        code = {}
         for value in tfidf.word2id:
             key = value
             if value[:2] == 'q:':
@@ -314,6 +314,8 @@ class SeqTM(TextModel):
                 key = f'~{key}~'
                 code[key] = value
             tokens[key] = False
+        self.tokens = tokens
+        self.token_id = code
 
     def compute_tokens(self, text):
         """

@@ -32,7 +32,7 @@ def compute_vocabulary(tm, iterator):
         counter.update(set(tokenize(tweet)))
     _ = dict(update_calls=counter.update_calls,
              dict=dict(counter.most_common()))
-    return dict(counter=_, params=tm.get_params())
+    return dict(vocabulary=_, params=tm.get_params())
 
 
 def compute_TextModel_vocabulary(filename: Union[str, Callable],
@@ -59,11 +59,11 @@ def compute_TextModel_vocabulary(filename: Union[str, Callable],
     else:
         params = compute_vocabulary(tm, iterator())
     if tm.max_dimension:
-        cnt = Counter(params['counter']['dict'],
-                      update_calls=params['counter']['update_calls'])
+        cnt = Counter(params['vocabulary']['dict'],
+                      update_calls=params['vocabulary']['update_calls'])
         tokens = cnt.most_common(n=tm.token_max_filter)
         tokens.sort(key=lambda x: x[0])
-        params['counter']['dict'] = dict(tokens)
+        params['vocabulary']['dict'] = dict(tokens)
     return params
 
 
@@ -72,7 +72,7 @@ def compute_SeqTM_vocabulary(filename: Union[str, Callable],
                              **kwargs):
     """Compute SeqTM"""
     seq = SeqTM(**kwargs)
-    seq.set_vocabulary(params['counter'])
+    seq.set_vocabulary(params['vocabulary'])
     return compute_TextModel_vocabulary(filename, limit=limit, tm=seq)
 
 

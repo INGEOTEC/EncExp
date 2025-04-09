@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
+from dataclasses import dataclass
 from itertools import count
+from typing import Union, Iterable
 from random import randint, shuffle
 import gzip
 import json
 import os
-from os.path import isfile, basename
+from os.path import isfile, basename, join
 from sklearn.svm import LinearSVC
 from joblib import Parallel, delayed
 import numpy as np
@@ -25,6 +27,81 @@ from microtc.utils import tweet_iterator, Counter
 import encexp
 from encexp.text_repr import SeqTM
 from encexp.utils import progress_bar
+
+
+@dataclass
+class Dataset:
+    """Dataset"""
+    prefix: str=''
+    dirname: str='.'
+    text_model: SeqTM=None
+    use_tqdm: bool=True
+
+    @property
+    def output_filename(self):
+        """output filename"""
+        try:
+            return self._output_filename
+        except AttributeError:
+            _ = join(self.dirname, f'{self.prefix}{self.text_model.identifier}.tsv')
+            self.output_filename = _
+        return self._output_filename
+
+    @output_filename.setter
+    def output_filename(self, value):
+        self._output_filename = value
+
+    def process(self, iterator: Iterable=None):
+        """process data"""
+        tm = self.text_model
+        with open(self.output_filename, 'w',
+                  encoding='utf-8') as fpt:
+            for text in progress_bar(iterator, use_tqdm=self.use_tqdm):
+                label = None
+                if isinstance(text, dict):
+                    label = text.get('klass', None)
+                    text = tm.get_text(text)
+                if isinstance(text, (list, tuple)):
+                    text = " ".join([tm.text_transformations(x) for x in text])
+                else:
+                    text = tm.text_transformations(text)
+                if label is None:
+                    label = ",".join(tm.compute_tokens(text)[0])
+                if len(label) == 0:
+                    continue
+                print(f'{label}\t{text}', file=fpt)
+
+
+@dataclass
+class EncExpDataset(Dataset):
+    """EncExp Dataset"""
+    @property
+    def keywords(self):
+        """TextModel"""
+        try:
+            return self._keywords
+        except AttributeError:
+            seq = self.text_model
+            words = [str(x)  for x in seq.names
+                    if x[:2] != 'q:' and x[:2] != 'e:']
+            cnt = Counter()
+            cnt.update(words)
+            self.keywords = cnt
+        return self._keywords
+
+    @keywords.setter
+    def keywords(self, value):
+        self._keywords = value
+
+    def process(self, iterator = None):
+        self.text_model.set_vocabulary(self.keywords)
+        return super().process(iterator)
+
+
+
+
+
+
 
 
 def encode_output(fname, prefix='encode'):
