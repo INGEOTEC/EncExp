@@ -145,7 +145,7 @@ params = compute_TextModel_vocabulary(iterator, lang='es',
                                       pretrained=False,
                                       token_max_filter=2**19)
 tm = TextModel(lang='es', pretrained=False)
-tm.set_vocabulary(params['counter'])
+tm.set_vocabulary(params['vocabulary'])
 ```                                             
 :::
 
@@ -159,7 +159,7 @@ for voc in [18, 17]:
                                       pretrained=False,
                                       token_max_filter=2**voc)
 seq = SeqTM(lang='es', pretrained=False)
-seq.set_vocabulary(params['counter'])
+seq.set_vocabulary(params['vocabulary'])
 ```                                             
 :::
 

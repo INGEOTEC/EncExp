@@ -19,13 +19,14 @@ from random import randint, shuffle
 import gzip
 import json
 import os
-from os.path import isfile, basename, join
+from os.path import isfile, basename, join, isdir
+from sklearn.base import clone
 from sklearn.svm import LinearSVC
 from joblib import Parallel, delayed
 import numpy as np
 from microtc.utils import tweet_iterator, Counter
 import encexp
-from encexp.text_repr import SeqTM
+from encexp.text_repr import SeqTM, EncExpT
 from encexp.utils import progress_bar
 
 
@@ -38,12 +39,25 @@ class Dataset:
     use_tqdm: bool=True
 
     @property
+    def identifier(self):
+        """identifier"""
+        try:
+            return self._identifier
+        except AttributeError:
+            self.identifier = self.text_model.identifier
+        return self._identifier
+    
+    @identifier.setter
+    def identifier(self, value):
+        self._identifier = value
+
+    @property
     def output_filename(self):
         """output filename"""
         try:
             return self._output_filename
         except AttributeError:
-            _ = join(self.dirname, f'{self.prefix}{self.text_model.identifier}.tsv')
+            _ = join(self.dirname, f'{self.prefix}{self.identifier}.tsv')
             self.output_filename = _
         return self._output_filename
 
@@ -66,7 +80,7 @@ class Dataset:
                 else:
                     text = tm.text_transformations(text)
                 if label is None:
-                    label = ",".join(tm.compute_tokens(text)[0])
+                    label = " ".join(tm.compute_tokens(text)[0])
                 if len(label) == 0:
                     continue
                 print(f'{label}\t{text}', file=fpt)
@@ -82,8 +96,8 @@ class EncExpDataset(Dataset):
             return self._keywords
         except AttributeError:
             seq = self.text_model
-            words = [str(x)  for x in seq.names
-                    if x[:2] != 'q:' and x[:2] != 'e:']
+            words = [str(x) for x in seq.names
+                    if x[:2] != 'q:']
             cnt = Counter()
             cnt.update(words)
             self.keywords = cnt
@@ -98,206 +112,169 @@ class EncExpDataset(Dataset):
         return super().process(iterator)
 
 
+@dataclass
+class Train:
+    """Train"""
+    text_model: SeqTM=None
+    min_pos: int=512
+    max_pos: int=int(2**15)
+    filename: str=None
+    use_tqdm: bool=True
+    n_jobs: int=-1
 
-
-
-
-
-
-def encode_output(fname, prefix='encode'):
-    """Encode output filename"""
-    base = basename(fname)
-    _ = fname.split(base)
-    if isinstance(_, str):
-        output = f'{prefix}-{_}'
-    else:
-        output = f'{_[0]}{prefix}-{base}'
-    if output[-3:] == '.gz':
-        return output[:-3]
-    return output
-
-
-def update_tokens(seq, tokens=None):
-    """Update the tokens in SeqTM"""
-
-    from microtc import emoticons
-    if tokens is None:
-        return seq
-    for token in tokens:
-        key = f'~{token}~'
-        if key not in seq.tokens:
-            seq.tokens[key] = token
-            seq._map[key] = token
-    _ = emoticons.create_data_structure
-    seq.data_structure = _(seq.tokens)
-    return seq
-
-
-def encode(vocabulary:dict, fname: str, tokens: list=None,
-           limit: int=None):
-    """Encode file"""
-    limit = np.inf if limit is None else limit
-    loop = count() if limit == np.inf else range(limit)    
-    output = encode_output(fname)
-    seq = update_tokens(SeqTM(vocabulary=vocabulary),
-                        tokens=tokens)
-    tokenize = seq.tokenize
-    cnt = Counter()
-    with open(output, 'w', encoding='utf-8') as fpt:
-        for tweet, _ in progress_bar(zip(tweet_iterator(fname), loop),
-                                     total=limit,
-                                     desc=output):
-            _ = tokenize(tweet)
-            cnt.update(_)
-            print(json.dumps(_), file=fpt)
-    return output, cnt
-
-
-def feasible_tokens(vocabulary: dict, count: dict,
-                    tokens: list=None,
-                    min_pos: int=512):
-    """Feasible tokens"""
-    seq = SeqTM(vocabulary=vocabulary)
-    tokens = seq.names if tokens is None else tokens
-    output = []
-    for k, v in enumerate(tokens):
-        if count[v] < min_pos:
-            continue
-        output.append((k, v))
-    return output
-
-
-def build_encexp_token(index, vocabulary,
-                       fname, max_pos=2**13,
-                       precision=np.float16,
-                       transform=None,
-                       estimator_kwargs=None,
-                       label=None):
-    """Build token classifier"""
-    seq = SeqTM(vocabulary=vocabulary)
-    output_fname = encode_output(fname, prefix=f'{index}')
-    POS = []
-    NEG = []
-
-    if isfile(output_fname):
+    @property
+    def identifier(self):
+        """identifier"""
         try:
-            next(tweet_iterator(output_fname))
-            return output_fname
-        except Exception:
-            pass
-    for text in tweet_iterator(fname):
-        if label in text:
-            POS.append([x for x in text if x != label])
-        elif len(NEG) - len(POS) < 1024:
-            NEG.append(text)
-        else:
-            k = randint(0, len(NEG) - 1)
-            del NEG[k]
-        if len(POS) > max_pos:
-            break
-    if len(POS) == 0 or len(NEG) == 0:
-        return None
-    shuffle(NEG)
-    NEG = NEG[:len(POS)]
-    if transform is not None:
-        X = transform(POS + NEG)
-    else:
-        X = seq.tonp([seq.model[x] for x in POS + NEG])
-    y = [1] * len(POS) + [0] * len(NEG)
-    est_kwargs = dict(class_weight='balanced',
-                      fit_intercept=False,
-                      dual='auto')
-    if estimator_kwargs:
-        est_kwargs.update(estimator_kwargs)
-    m = LinearSVC(**est_kwargs).fit(X, y)
-    coef = m.coef_[0].astype(precision)
-    with open(output_fname, 'wb') as fpt:
+            return self._identifier
+        except AttributeError:
+            self.identifier = self.text_model.identifier
+        return self._identifier
+    
+    @identifier.setter
+    def identifier(self, value):
+        self._identifier = value    
+
+    @property
+    def estimator(self):
+        try:
+            return clone(self._estimator)
+        except AttributeError:
+            _ = LinearSVC(class_weight='balanced', fit_intercept=False)
+            self.estimator = _
+        return self._estimator
+
+    @estimator.setter
+    def estimator(self, value):
+        self._estimator = value
+
+    @property
+    def labels(self):
+        """Labels"""
+        if hasattr(self, '_labels'):
+            return self._labels
+        cnt = Counter()
+        with open(self.filename, encoding='utf-8') as fpt:
+            for line in fpt:
+                line = line.strip()
+                labels, text = line.split('\t')
+                labels = labels.split()
+                cnt.update(labels)
+        labels = sorted([k for k, v in cnt.items() if v >= self.min_pos])
+        self.labels = labels
+        return labels
+
+    @labels.setter
+    def labels(self, value):
+        self._labels = value
+
+    def transform(self, data: list):
+        """Transform"""
+        model = self.text_model.model
+        _ = [model[x] for x in data]
+        return self.text_model.tonp(_)
+    
+    def filter_tokens(self, tokens, label):
+        """Filter tokens on self-supervised learning"""
+        return [x for x in tokens if x != label]
+
+    def training_set(self, label):
+        """Training set"""
+        self.text_model.disable_text_transformations = True
+        tokenize = self.text_model.tokenize
+        max_pos = self.max_pos
+        POS = []
+        NEG = []
+        with open(self.filename, encoding='utf-8') as fpt:
+            for line in fpt:
+                line = line.strip()
+                labels, text = line.split('\t')
+                labels = labels.split()
+                tokens = tokenize(text)
+                if label in labels:
+                    _ = self.filter_tokens(tokens, label)
+                    POS.append(_)
+                elif len(NEG) - len(POS) < 1024:
+                    NEG.append(tokens)
+                else:
+                    k = randint(0, len(NEG) - 1)
+                    del NEG[k]
+                if len(POS) > max_pos:
+                    break
+        shuffle(NEG)
+        NEG = NEG[:len(POS)]
+        X = self.transform(POS + NEG)
+        y = [1] * len(POS) + [-1] * len(NEG)
+        return X, np.array(y)
+
+    def parameters(self, label):
+        """Parameteres"""
+        X, y = self.training_set(label)
+        m = self.estimator.fit(X, y)
+        hy = m.decision_function(X)
+        mask = (np.fabs(hy) >= 1) & (np.sign(hy) == y)
+        coef = m.coef_[0].astype(np.float16)
         output = dict(N=len(y), coef=coef.tobytes().hex(),
-                      intercept=float(m.intercept_), label=label)
-        fpt.write(bytes(json.dumps(output), encoding='utf-8'))
-    return output_fname
+                      label=label, no_sv=int(mask.sum()))
+        return output
 
-
-def build_encexp(vocabulary, fname, output,
-                 min_pos: int=512, max_pos: int=2**13,
-                 n_jobs: int = -1, precision=np.float16,
-                 estimator_kwargs: dict=None, limit: int=None,
-                 transform=None, tokens: list=None):
-    """Build EncExp"""
-    encode_fname, cnt = encode(vocabulary, fname, tokens=tokens, 
-                               limit=limit)
-    tokens = feasible_tokens(vocabulary, cnt, tokens=tokens,
-                             min_pos=min_pos)
-    fnames = Parallel(n_jobs=n_jobs)(delayed(build_encexp_token)(index,
-                                                                 vocabulary,
-                                                                 encode_fname,
-                                                                 precision=precision,
-                                                                 max_pos=max_pos,
-                                                                 estimator_kwargs=estimator_kwargs,
-                                                                 transform=transform,
-                                                                 label=label)
-                                     for index, label in progress_bar(tokens,
-                                                                  desc=output,
-                                                                  total=len(tokens)))
-    with gzip.open(output, 'wb') as fpt:
-        fpt.write(bytes(json.dumps(vocabulary) + '\n',
-                        encoding='utf-8'))
-        for fname in fnames:
-            if fname is None:
-                continue
-            data = next(tweet_iterator(fname))
-            fpt.write(bytes(json.dumps(data) + '\n',
-                            encoding='utf-8'))
-    for fname in fnames:
-        if fname is None:
-            continue        
-        os.unlink(fname)
-    os.unlink(encode_fname)
+    def store_model(self):
+        """Create and store model"""
+        def inner(fname, label):
+            if isfile(fname):
+                return
+            coef = self.parameters(label)
+            with open(fname, 'w', encoding='utf-8') as fpt:
+                print(json.dumps(coef), file=fpt)
+        if not isdir(self.identifier):
+            os.mkdir(self.identifier)
+        args = [(join(self.identifier, f'{iden}.json'), label)
+                for iden, label in enumerate(self.labels)]
+        _ = progress_bar(args, use_tqdm=self.use_tqdm)
+        Parallel(n_jobs=self.n_jobs)(delayed(inner)(fname, label)
+                                     for fname, label in _)
+        with gzip.open(f'{self.identifier}.json.gz', 'wb') as fpt:
+            for fname, _ in args:
+                data = next(tweet_iterator(fname))
+                fpt.write(bytes(json.dumps(data) + '\n',
+                          encoding='utf-8'))
+                os.unlink(fname)
+        os.rmdir(self.identifier)
 
 
 def main(args):
     """CLI"""
     filename  = args.file[0]
-    output = args.output
-    vocabulary = args.vocabulary
+    lang = args.lang
+    token_max_filter = 2**args.voc_size_exponent
     n_jobs = args.n_jobs
-    voc = next(tweet_iterator(vocabulary))
-    min_pos = args.min_pos
-    estimator_kwargs = None
-    if args.intercept:
-        estimator_kwargs = dict(fit_intercept=True)
-    build_encexp(voc, filename, output,
-                 min_pos=min_pos, limit=args.limit,
-                 n_jobs=n_jobs,
-                 estimator_kwargs=estimator_kwargs)
-
+    enc = EncExpT(lang=lang,
+                  token_max_filter=token_max_filter)
+    ds = EncExpDataset(text_model=clone(enc.seqTM))
+    ds.identifier = enc.identifier
+    if not isfile(ds.output_filename):
+        ds.process(tweet_iterator(filename))
+    train = Train(text_model=enc.seqTM,
+                  filename=ds.output_filename, n_jobs=n_jobs)
+    train.identifier = enc.identifier
+    train.store_model()
+    
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Compute EncExp',
-                                     prog='EncExp.build_encexp')
+    parser = argparse.ArgumentParser(description='EncExp')
     parser.add_argument('-v', '--version', action='version',
                         version=f'EncExp {encexp.__version__}')
-    parser.add_argument('-o', '--output',
-                        help='Output filename',
-                        dest='output', type=str)
-    parser.add_argument('--vocabulary',
-                        help='Vocabulary filename',
-                        dest='vocabulary', type=str)
-    parser.add_argument('--min-pos-examples',
-                        help='Minimum number of positive examples',
-                        dest='min_pos', type=int, default=512)
-    parser.add_argument('--limit', help='Maximum size of the dataset',
-                        dest='limit',
-                        type=int, default=None)
-    parser.add_argument('--intercept',
-                        help='Estimate the intercept',
-                        dest='intercept', action='store_true')
+    parser.add_argument('--lang', help='Language (ar | ca | de | en | es | fr | hi | in | it | ko | nl | pl | pt | ru | tl | tr )', type=str, default=None)
+    parser.add_argument('--voc_size_exponent',
+                        help='Vocabulary size express as log2',
+                        dest='voc_size_exponent',
+                        type=int, default=13)
     parser.add_argument('--n-jobs',
                         help='Number of jobs',
-                        dest='n_jobs', type=int, default=-1)    
+                        dest='n_jobs', type=int,
+                        default=-1)
     parser.add_argument('file',
                         help='Input filename',
                         nargs=1, type=str)
     args = parser.parse_args()
     main(args)
-
