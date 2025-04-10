@@ -14,9 +14,11 @@
 from dataclasses import dataclass
 from abc import ABC
 import inspect
-from typing import Union
+from typing import Union, Iterable
 from collections import OrderedDict
 import re
+from os.path import isfile
+import os
 from sklearn.model_selection import StratifiedKFold
 from sklearn.base import clone
 from sklearn.linear_model import SGDClassifier
@@ -32,6 +34,7 @@ from encexp.utils import progress_bar
 
 
 class Identifier(ABC):
+    """Identifier"""
     def get_params(self, deep=False):
         """TextModel parameters"""
         sig = inspect.signature(self.__class__)
@@ -429,6 +432,43 @@ class EncExpT(Identifier):
     @seqTM.setter
     def seqTM(self, value):
         self._seqTM = value
+
+    def tailored(self, D: Iterable=None,
+                 filename: str=None,
+                 tsv_filename: str=None,
+                 min_pos: int=32,
+                 n_jobs: int=-1):
+        """Load/Create tailored encexp representation"""
+        from tempfile import mkstemp
+        from encexp.build_encexp import EncExpDataset, Train
+        if filename is not None and isfile(filename):
+            return self
+        if filename is not None:
+            filename = filename.split('.json.gz')[0]
+        ds = EncExpDataset(text_model=clone(self.seqTM))
+        if tsv_filename is None:
+            _, path = mkstemp()
+        else:
+            path = tsv_filename
+        ds.output_filename = path
+        ds.process(D)
+        train = Train(text_model=self.seqTM,
+                      filename=ds.output_filename,
+                      min_pos=min_pos,
+                      n_jobs=n_jobs)
+        if filename is None:
+            train.identifier = self.identifier
+        else:
+            train.identifier = filename
+        if filename is None:
+            args = train.create_model()
+        else:
+            train.store_model()
+        if tsv_filename is None:
+            os.unlink(path)
+        return self
+
+
 
 # @dataclass
 # class EncExpT:

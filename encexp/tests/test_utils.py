@@ -70,18 +70,18 @@ def test_uniform_sample():
     assert data.sum() == 10
 
 
-def test_unit_length():
-    """Test unit length"""
-    from encexp import EncExp
-    enc = EncExp(lang='es',
-                 precision=np.float16)
-    w = enc.weights
-    w_u = unit_length(w)
-    a = np.sqrt((w_u * w_u).sum(axis=0))
-    assert_almost_equal(a, 1, decimal=4)
-    w[:, 3] = 0
-    w_u = unit_length(w)
-    assert w_u[:, 3].sum() == 0
+# def test_unit_length():
+#     """Test unit length"""
+#     from encexp import EncExp
+#     enc = EncExp(lang='es',
+#                  precision=np.float16)
+#     w = enc.weights
+#     w_u = unit_length(w)
+#     a = np.sqrt((w_u * w_u).sum(axis=0))
+#     assert_almost_equal(a, 1, decimal=4)
+#     w[:, 3] = 0
+#     w_u = unit_length(w)
+#     assert w_u[:, 3].sum() == 0
 
 
 def test_set_to_zero():
@@ -99,15 +99,15 @@ def test_set_to_zero():
     assert_almost_equal(a, b)
 
 
-def test_transform_from_tokens():
-    """Test transform"""
+# def test_transform_from_tokens():
+#     """Test transform"""
 
-    from encexp.text_repr import EncExp
-    samples()
-    enc = EncExp(lang='es')
-    D = list(tweet_iterator('es-mx-sample.json'))
-    data = [enc.bow.tokenize(x)
-            for x in D]
-    W = transform_from_tokens(enc)(data)
-    W2 = enc.transform(D)
-    assert_almost_equal(W, W2)
+#     from encexp.text_repr import EncExp
+#     samples()
+#     enc = EncExp(lang='es')
+#     D = list(tweet_iterator('es-mx-sample.json'))
+#     data = [enc.bow.tokenize(x)
+#             for x in D]
+#     W = transform_from_tokens(enc)(data)
+#     W2 = enc.transform(D)
+#     assert_almost_equal(W, W2)

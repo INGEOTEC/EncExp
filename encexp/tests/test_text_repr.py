@@ -91,24 +91,33 @@ def test_SeqTM_TM():
     """test SeqTM based on TextModel"""
     from encexp.download import download_TextModel
 
-    seq = SeqTM(lang='es', pretrained=False)
+    seq = SeqTM(lang='es', token_max_filter=2**13,
+                pretrained=False)
     tm = TextModel(lang='es')
-    voc = download_TextModel(tm.identifier)['counter']
+    voc = download_TextModel(tm.identifier)['vocabulary']
     voc['dict'] = {k: v for k, v in voc['dict'].items()
                    if k[:2] == 'q:' or '~' not in k[1:-1]}
     seq.set_vocabulary(voc)
     _ = seq.tokenize('buenos dias.?, . 😂tengan')
     assert _ == ['buenos', 'dias', 'e:.', 'e:?', 'e:,', 'e:.', 'e:😂', 'tengan']
     assert seq.pretrained
-    seq = SeqTM(lang='es')
+    seq = SeqTM(lang='es', token_max_filter=2**13)
     _ = seq.tokenize('buenos dias .?,')
-    assert _ == ['buenos~dias', 'e:.', 'e:?', 'e:,']
+    assert _ == ['buenos~dias', 'e:.~e:?', 'e:,']
 
 
 def test_EncExpT_identifier():
     """Test EncExpT identifier"""
     enc = EncExpT(lang='es')
     assert enc.identifier == 'EncExpT_c69aaba0f1b0783f273f85de6f599132'
+
+
+def test_EncExpT_tailored():
+    """Test EncExpT tailored"""
+    samples()
+    D = tweet_iterator('es-mx-sample.json')
+    enc = EncExpT(lang='es')
+    enc.tailored(D, filename='tailored')
 
 
 # def test_EncExp_filename():

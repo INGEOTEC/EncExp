@@ -46,7 +46,7 @@ class Dataset:
         except AttributeError:
             self.identifier = self.text_model.identifier
         return self._identifier
-    
+
     @identifier.setter
     def identifier(self, value):
         self._identifier = value
@@ -95,9 +95,10 @@ class EncExpDataset(Dataset):
         try:
             return self._keywords
         except AttributeError:
-            seq = self.text_model
+            seq = SeqTM(lang=self.text_model.lang,
+                        token_max_filter=2**13)
             words = [str(x) for x in seq.names
-                    if x[:2] != 'q:']
+                     if x[:2] != 'q:']
             cnt = Counter()
             cnt.update(words)
             self.keywords = cnt
@@ -217,9 +218,9 @@ class Train:
         output = dict(N=len(y), coef=coef.tobytes().hex(),
                       label=label, no_sv=int(mask.sum()))
         return output
-
-    def store_model(self):
-        """Create and store model"""
+    
+    def create_model(self):
+        """Create model"""
         def inner(fname, label):
             if isfile(fname):
                 return
@@ -233,6 +234,11 @@ class Train:
         _ = progress_bar(args, use_tqdm=self.use_tqdm)
         Parallel(n_jobs=self.n_jobs)(delayed(inner)(fname, label)
                                      for fname, label in _)
+        return args
+
+    def store_model(self):
+        """Create and store model"""
+        args = self.create_model()
         with gzip.open(f'{self.identifier}.json.gz', 'wb') as fpt:
             for fname, _ in args:
                 data = next(tweet_iterator(fname))
