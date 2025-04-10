@@ -105,7 +105,7 @@ class TextModel(Identifier, microTCTM):
         self._norm_tokens()
         self.pretrained = pretrained
         if pretrained:
-            counter = download_TextModel(self.identifier)['counter']
+            counter = download_TextModel(self.identifier)['vocabulary']
             self.set_vocabulary(counter)
 
     def set_vocabulary(self, counter: Counter):
