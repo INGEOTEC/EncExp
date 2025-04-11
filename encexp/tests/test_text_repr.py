@@ -120,6 +120,8 @@ def test_EncExpT_tailored():
     enc.tailored(D, filename='tailored.json.gz')
     assert enc.weights.shape[0] == 2**14
     assert enc.weights.shape[1] == 93
+    W = enc.encode('buenos dias')
+    assert  W.shape == (1, 93)
 
 
 # def test_EncExp_filename():

@@ -19,6 +19,8 @@ from collections import OrderedDict
 import re
 from os.path import isfile
 import os
+import numpy as np
+from numpy.linalg import norm
 from sklearn.model_selection import StratifiedKFold
 from sklearn.base import clone
 from sklearn.linear_model import SGDClassifier
@@ -27,9 +29,7 @@ from microtc.utils import Counter
 from microtc import emoticons, TextModel as microTCTM
 from microtc.textmodel import SKIP_SYMBOLS
 from microtc.weighting import TFIDF
-import numpy as np
-from numpy.linalg import norm
-from encexp.download import download_encexp, download_TextModel
+from encexp.download import download_TextModel
 from encexp.utils import progress_bar
 
 
@@ -65,6 +65,18 @@ class Identifier(ABC):
         _ = hashlib.md5(bytes(cdn,
                               encoding='utf-8')).hexdigest()
         return f'{self.__class__.__name__}_{_}'
+
+    @property
+    def precision(self):
+        """precision"""
+        try:
+            return self._precision
+        except AttributeError:
+            return np.float32
+        
+    @precision.setter
+    def precision(self, value):
+        self._precision = value    
 
 
 class TextModel(Identifier, microTCTM):
@@ -217,24 +229,12 @@ class TextModel(Identifier, microTCTM):
             w = [None] * len(self.token_weight)
             for k, v in self.token_weight.items():
                 w[k] = v
-            self.weights = np.array(w)
+            self.weights = np.array(w, dtype=self.precision)
             return self._weights
 
     @weights.setter
     def weights(self, value):
         self._weights = value
-
-    @property
-    def precision(self):
-        """Type used in the sparse array"""
-        try:
-            return self._precision
-        except AttributeError:
-            return np.float32
-
-    @precision.setter
-    def precision(self, value):
-        self._precision = value
 
     def tonp(self, X):
         """Sparse representation to sparce matrix
@@ -508,24 +508,11 @@ class EncExpT(Identifier):
             except KeyError:
                 continue
         W = self.weights
+        tfidf = self.seqTM.weights
         if len(seq) == 0:
             return np.ones((1, W.shape[0]), dtype=W.dtype)
-        return W[seq]
-    
-    @property
-    def precision(self):
-        """precision"""
-        try:
-            return self._precision
-        except AttributeError:
-            return np.float32
-        
-    @precision.setter
-    def precision(self, value):
-        self._precision = value
-
-
-
+        _ = tfidf[seq]
+        return W[seq] * np.c_[_ / norm(_)]
 
 # @dataclass
 # class EncExpT:
