@@ -461,7 +461,8 @@ class EncExpT(Identifier):
         else:
             path = tsv_filename
         ds.output_filename = path
-        ds.process(D)
+        if tsv_filename is None or not isfile(tsv_filename):
+            ds.process(D)
         train = Train(text_model=self.seqTM,
                       filename=ds.output_filename,
                       use_tqdm=self.use_tqdm,
