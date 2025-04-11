@@ -452,7 +452,7 @@ class EncExpT(Identifier):
         if filename is not None:
             filename = filename.split('.json.gz')[0]
         if filename is not None and isfile(f'{filename}.json.gz'):
-            self.set_weights(tweet_iterator(filename))
+            self.set_weights(tweet_iterator(f'{filename}.json.gz'))
             return self
         ds = EncExpDataset(text_model=clone(self.seqTM),
                            use_tqdm=self.use_tqdm)
