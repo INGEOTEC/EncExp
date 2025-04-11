@@ -451,7 +451,7 @@ class EncExpT(Identifier):
         assert not self.pretrained
         if filename is not None:
             filename = filename.split('.json.gz')[0]
-        if filename is not None and isfile(filename):
+        if filename is not None and isfile(f'{filename}.json.gz'):
             self.set_weights(tweet_iterator(filename))
             return self
         ds = EncExpDataset(text_model=clone(self.seqTM),
