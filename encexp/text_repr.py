@@ -417,6 +417,7 @@ class EncExpT(Identifier):
     lang: str=None
     token_max_filter: int=int(2**14)
     pretrained: bool=True
+    use_tqdm: bool=True
 
     @property
     def seqTM(self):
@@ -513,6 +514,13 @@ class EncExpT(Identifier):
             return np.ones((1, W.shape[0]), dtype=W.dtype)
         _ = tfidf[seq]
         return W[seq] * np.c_[_ / norm(_)]
+
+    def transform(self, texts: Iterable):
+        """Transform"""
+        _ = [self.encode(text).sum(axis=0) 
+             for text in progress_bar(texts, desc='Transform',
+                                      use_tqdm=self.use_tqdm)]
+        return np.vstack(_)
 
 # @dataclass
 # class EncExpT:

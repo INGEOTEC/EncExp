@@ -117,11 +117,14 @@ def test_EncExpT_tailored():
     samples()
     D = list(tweet_iterator('es-mx-sample.json'))
     enc = EncExpT(lang='es', pretrained=False)
-    enc.tailored(D, filename='tailored.json.gz')
+    enc.tailored(D, tsv_filename='tailored.tsv',
+                 filename='tailored.json.gz')
     assert enc.weights.shape[0] == 2**14
     assert enc.weights.shape[1] == 93
     W = enc.encode('buenos dias')
     assert  W.shape == (1, 93)
+    X = enc.transform(D)
+    assert X.shape == (2048, 93)
 
 
 # def test_EncExp_filename():
