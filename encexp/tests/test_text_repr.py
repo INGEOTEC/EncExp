@@ -115,9 +115,11 @@ def test_EncExpT_identifier():
 def test_EncExpT_tailored():
     """Test EncExpT tailored"""
     samples()
-    D = tweet_iterator('es-mx-sample.json')
-    enc = EncExpT(lang='es')
-    enc.tailored(D, filename='tailored')
+    D = list(tweet_iterator('es-mx-sample.json'))
+    enc = EncExpT(lang='es', pretrained=False)
+    enc.tailored(D, filename='tailored.json.gz')
+    assert enc.weights.shape[0] == 2**14
+    assert enc.weights.shape[1] == 93
 
 
 # def test_EncExp_filename():

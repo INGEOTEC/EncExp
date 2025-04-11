@@ -440,8 +440,15 @@ class EncExpT(Identifier):
                  n_jobs: int=-1):
         """Load/Create tailored encexp representation"""
         from tempfile import mkstemp
+        from microtc.utils import tweet_iterator
         from encexp.build_encexp import EncExpDataset, Train
+        def weights(args):
+            for fname, _ in args:
+                data = next(tweet_iterator(fname))
+                yield data
+
         if filename is not None and isfile(filename):
+            self.set_weights(tweet_iterator(filename))            
             return self
         if filename is not None:
             filename = filename.split('.json.gz')[0]
@@ -462,11 +469,61 @@ class EncExpT(Identifier):
             train.identifier = filename
         if filename is None:
             args = train.create_model()
+            self.set_weights(weights(args))
         else:
             train.store_model()
+            self.set_weights(tweet_iterator(f'{train.identifier}.json.gz'))
         if tsv_filename is None:
             os.unlink(path)
         return self
+    
+    @property
+    def weights(self):
+        """Weights"""
+        return self._weights
+    
+    @weights.setter
+    def weights(self, value):
+        self._weights = value
+
+    def set_weights(self, data: Iterable):
+        """Set weights"""
+        weights = []
+        for coef in data:
+            _ = np.frombuffer(bytearray.fromhex(coef['coef']),
+                              dtype=np.float16)
+            weights.append(_)
+        if not self.pretrained:
+            _ = np.column_stack(weights)
+            self.weights = np.asanyarray(_, dtype=self.precision)
+
+    def encode(self, text):
+        """Encode utterace into a matrix"""
+
+        token2id = self.seqTM.token2id
+        seq = []
+        for token in self.seqTM.tokenize(text):
+            try:
+                seq.append(token2id[token])
+            except KeyError:
+                continue
+        W = self.weights
+        if len(seq) == 0:
+            return np.ones((1, W.shape[0]), dtype=W.dtype)
+        return W[seq]
+    
+    @property
+    def precision(self):
+        """precision"""
+        try:
+            return self._precision
+        except AttributeError:
+            return np.float32
+        
+    @precision.setter
+    def precision(self, value):
+        self._precision = value
+
 
 
 

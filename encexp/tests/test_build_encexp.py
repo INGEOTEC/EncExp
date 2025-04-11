@@ -16,7 +16,7 @@ from microtc.utils import tweet_iterator, Counter
 from encexp.tests.test_utils import samples
 from encexp.text_repr import SeqTM, EncExpT
 from encexp.build_encexp import Dataset, EncExpDataset, Train, main
-from os.path import isfile
+from os.path import isfile, join
 import os
 
 
@@ -24,7 +24,7 @@ def test_Dataset_output_filename():
     """Test Dataset"""
     seq = SeqTM(lang='es')
     ds = Dataset(text_model=seq)
-    assert ds.output_filename == f'./{seq.identifier}.tsv'
+    assert ds.output_filename == join('.', f'{seq.identifier}.tsv')
 
 
 def test_Dataset_process():
