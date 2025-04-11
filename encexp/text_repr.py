@@ -452,9 +452,10 @@ class EncExpT(Identifier):
         if filename is not None:
             filename = filename.split('.json.gz')[0]
         if filename is not None and isfile(filename):
-            self.set_weights(tweet_iterator(filename))            
+            self.set_weights(tweet_iterator(filename))
             return self
-        ds = EncExpDataset(text_model=clone(self.seqTM))
+        ds = EncExpDataset(text_model=clone(self.seqTM),
+                           use_tqdm=self.use_tqdm)
         if tsv_filename is None:
             _, path = mkstemp()
         else:
@@ -463,6 +464,7 @@ class EncExpT(Identifier):
         ds.process(D)
         train = Train(text_model=self.seqTM,
                       filename=ds.output_filename,
+                      use_tqdm=self.use_tqdm,
                       min_pos=min_pos,
                       n_jobs=n_jobs)
         if filename is None:
@@ -511,7 +513,7 @@ class EncExpT(Identifier):
     def names(self):
         """Component names"""
         return self._names
-    
+
     @names.setter
     def names(self, value):
         self._names = value
