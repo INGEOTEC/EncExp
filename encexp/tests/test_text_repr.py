@@ -127,6 +127,16 @@ def test_EncExpT_tailored():
     assert X.shape == (2048, 93)
 
 
+def test_EncExpT_pretrained():
+    """Test EncExpT pretrained"""
+    enc = EncExpT(lang='es', token_max_filter=2**13)
+    X = enc.transform(['buenos dias'])
+    assert X.shape == (1, 4986)
+    assert len(enc.names) == 4986
+
+
+
+
 # def test_EncExp_filename():
 #     """Test EncExp"""
 #     if not isfile('encexp-es-mx.json.gz'):

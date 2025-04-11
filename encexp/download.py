@@ -20,18 +20,22 @@ import os
 import encexp
 
 
-def download_TextModel(identifier):
+def download_TextModel(identifier: str, first: bool=True):
     """Download TextModel"""
     if not isdir(MODELS):
         os.mkdir(MODELS)
     output = join(MODELS, f'{identifier}.json.gz')
     if isfile(output):
         try:
-            return next(tweet_iterator(output))
-        except Exception as exp:
+            if first:
+                return next(tweet_iterator(output))
+            return tweet_iterator(output)
+        except Exception:
             os.unlink(output)
     Download(EncExp_URL + f'/{identifier}.json.gz', output)
-    return next(tweet_iterator(output))
+    if first:
+        return next(tweet_iterator(output))
+    return tweet_iterator(output)
 
 
 def download_seqtm(lang, voc_size_exponent: int=13,

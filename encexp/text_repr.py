@@ -448,11 +448,12 @@ class EncExpT(Identifier):
                 data = next(tweet_iterator(fname))
                 yield data
 
+        assert not self.pretrained
+        if filename is not None:
+            filename = filename.split('.json.gz')[0]
         if filename is not None and isfile(filename):
             self.set_weights(tweet_iterator(filename))            
             return self
-        if filename is not None:
-            filename = filename.split('.json.gz')[0]
         ds = EncExpDataset(text_model=clone(self.seqTM))
         if tsv_filename is None:
             _, path = mkstemp()
@@ -477,12 +478,18 @@ class EncExpT(Identifier):
         if tsv_filename is None:
             os.unlink(path)
         return self
-    
+
     @property
     def weights(self):
         """Weights"""
+        try:
+            return self._weights
+        except AttributeError:
+            if self.pretrained:
+                self.set_weights(download_TextModel(self.identifier,
+                                                    first=False))
         return self._weights
-    
+
     @weights.setter
     def weights(self, value):
         self._weights = value
@@ -490,13 +497,24 @@ class EncExpT(Identifier):
     def set_weights(self, data: Iterable):
         """Set weights"""
         weights = []
+        names = []
         for coef in data:
             _ = np.frombuffer(bytearray.fromhex(coef['coef']),
                               dtype=np.float16)
             weights.append(_)
-        if not self.pretrained:
-            _ = np.column_stack(weights)
-            self.weights = np.asanyarray(_, dtype=self.precision)
+            names.append(coef['label'])
+        _ = np.column_stack(weights)
+        self.weights = np.asanyarray(_, dtype=self.precision)
+        self.names = np.array(names)
+
+    @property
+    def names(self):
+        """Component names"""
+        return self._names
+    
+    @names.setter
+    def names(self, value):
+        self._names = value
 
     def encode(self, text):
         """Encode utterace into a matrix"""
@@ -521,6 +539,10 @@ class EncExpT(Identifier):
              for text in progress_bar(texts, desc='Transform',
                                       use_tqdm=self.use_tqdm)]
         return np.vstack(_)
+
+    def fit(self, X, y):
+        """fit"""
+        return self
 
 # @dataclass
 # class EncExpT:
