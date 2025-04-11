@@ -99,7 +99,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         
       </div>
     </div>
-<div id="dashboard-collapse" class="navbar-collapse collapse"><ul class="navbar-nav navbar-nav-scroll me-auto" role="tablist"><li class="nav-item" role="presentation"><a id="tab-introduction" class="nav-link active" data-bs-toggle="tab" role="tab" data-bs-target="#introduction" data-scrolling="false" href="#introduction" aria-controls="introduction" aria-selected="true"><span class="nav-link-text">Introduction</span></a></li><li class="nav-item" role="presentation"><a id="tab-quick-start-guide" class="nav-link" data-bs-toggle="tab" role="tab" data-bs-target="#quick-start-guide" data-scrolling="false" href="#quick-start-guide" aria-controls="quick-start-guide" aria-selected="false"><span class="nav-link-text">Quick Start Guide</span></a></li><li class="nav-item" role="presentation"><a id="tab-corpus" class="nav-link" data-bs-toggle="tab" role="tab" data-bs-target="#corpus" data-scrolling="false" href="#corpus" aria-controls="corpus" aria-selected="false"><span class="nav-link-text">Corpus</span></a></li><li class="nav-item" role="presentation"><a id="tab-vocabulary" class="nav-link" data-bs-toggle="tab" role="tab" data-bs-target="#vocabulary" data-scrolling="false" href="#vocabulary" aria-controls="vocabulary" aria-selected="false"><span class="nav-link-text">Vocabulary</span></a></li></ul><div class="quarto-dashboard-links"><a class="quarto-dashboard-link" href="https://github.com/INGEOTEC/EncExp/" title="GitHub"><i class="bi bi-github"></i></a></div></div></div>
+<div id="dashboard-collapse" class="navbar-collapse collapse"><ul class="navbar-nav navbar-nav-scroll me-auto" role="tablist"><li class="nav-item" role="presentation"><a id="tab-introduction" class="nav-link active" data-bs-toggle="tab" role="tab" data-bs-target="#introduction" data-scrolling="false" href="#introduction" aria-controls="introduction" aria-selected="true"><span class="nav-link-text">Introduction</span></a></li><li class="nav-item" role="presentation"><a id="tab-quick-start-guide" class="nav-link" data-bs-toggle="tab" role="tab" data-bs-target="#quick-start-guide" data-scrolling="false" href="#quick-start-guide" aria-controls="quick-start-guide" aria-selected="false"><span class="nav-link-text">Quick Start Guide</span></a></li><li class="nav-item" role="presentation"><a id="tab-corpus" class="nav-link" data-bs-toggle="tab" role="tab" data-bs-target="#corpus" data-scrolling="false" href="#corpus" aria-controls="corpus" aria-selected="false"><span class="nav-link-text">Corpus</span></a></li><li class="nav-item" role="presentation"><a id="tab-vocabulary" class="nav-link" data-bs-toggle="tab" role="tab" data-bs-target="#vocabulary" data-scrolling="false" href="#vocabulary" aria-controls="vocabulary" aria-selected="false"><span class="nav-link-text">Vocabulary</span></a></li><li class="nav-item" role="presentation"><a id="tab-encexp-components" class="nav-link" data-bs-toggle="tab" role="tab" data-bs-target="#encexp-components" data-scrolling="false" href="#encexp-components" aria-controls="encexp-components" aria-selected="false"><span class="nav-link-text">EncExp Components</span></a></li></ul><div class="quarto-dashboard-links"><a class="quarto-dashboard-link" href="https://github.com/INGEOTEC/EncExp/" title="GitHub"><i class="bi bi-github"></i></a></div></div></div>
 </nav>
 </header>
 <div class="page-layout-custom quarto-dashboard-content bslib-gap-spacing html-fill-container bslib-page-fill quarto-dashboard-pages">  
@@ -147,7 +147,7 @@ grid-auto-rows: minmax(0, 1fr);">
 <div class="card-header"><div class="card-title"><span style="display: inline">
 Datasets
 </span></div></div>
-<div id="e036c5e1" class="cell card-body html-fill-item html-fill-container" data-execution_count="1">
+<div id="57acc763" class="cell card-body html-fill-item html-fill-container" data-execution_count="1">
 <div class="sourceCode cell-code html-fill-item html-fill-container" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> zipfile <span class="im">import</span> ZipFile</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> microtc.utils <span class="im">import</span> tweet_iterator</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> encexp.utils <span class="im">import</span> Download, DialectID_URL</span>
@@ -173,7 +173,7 @@ Datasets
 <div class="card-header"><div class="card-title"><span style="display: inline">
 Training and Validation sets
 </span></div></div>
-<div id="dc1125b3" class="cell card-body html-fill-item html-fill-container" data-execution_count="2">
+<div id="2eecb99c" class="cell card-body html-fill-item html-fill-container" data-execution_count="2">
 <div class="sourceCode cell-code html-fill-item html-fill-container" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>Xtrain, Xval, ytrain, yval <span class="op">=</span> train_test_split(X, y)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -187,8 +187,8 @@ Training and Validation sets
 <div class="card-header"><div class="card-title"><span style="display: inline">
 TextModel
 </span></div></div>
-<div id="fbc75cfb" class="cell card-body html-fill-item html-fill-container" data-execution_count="3">
-<div class="sourceCode cell-code html-fill-item html-fill-container" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> encexp <span class="im">import</span> TextModel, SeqTM</span>
+<div id="ae7ae1bf" class="cell card-body html-fill-item html-fill-container" data-execution_count="3">
+<div class="sourceCode cell-code html-fill-item html-fill-container" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> encexp <span class="im">import</span> TextModel, SeqTM, EncExpT</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.svm <span class="im">import</span> LinearSVC</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.pipeline <span class="im">import</span> make_pipeline</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>tm <span class="op">=</span> make_pipeline(TextModel(lang<span class="op">=</span><span class="st">'es'</span>),</span>
@@ -200,12 +200,12 @@ TextModel
         <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" style="height:1em;width:1em;" aria-hidden="true" role="img"><path d="M20 5C20 4.4 19.6 4 19 4H13C12.4 4 12 3.6 12 3C12 2.4 12.4 2 13 2H21C21.6 2 22 2.4 22 3V11C22 11.6 21.6 12 21 12C20.4 12 20 11.6 20 11V5ZM4 19C4 19.6 4.4 20 5 20H11C11.6 20 12 20.4 12 21C12 21.6 11.6 22 11 22H3C2.4 22 2 21.6 2 21V13C2 12.4 2.4 12 3 12C3.6 12 4 12.4 4 13V19Z"></path></svg>
     </span>
 </bslib-tooltip><script data-bslib-card-init="">bslib.Card.initializeAllCards();</script></div>
-</div><div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-rows: minmax(3em, max-content) minmax(3em, max-content) minmax(3em, max-content); grid-auto-columns: minmax(0, 1fr);">
+</div><div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-rows: minmax(3em, max-content) minmax(3em, max-content) minmax(3em, max-content) minmax(3em, max-content); grid-auto-columns: minmax(0, 1fr);">
 <div class="card flow bslib-card html-fill-container" data-fill="false" data-title="TextModel (Corpus)" data-bslib-card-init="" data-require-bs-caller="card()" data-full-screen="false">
 <div class="card-header"><div class="card-title"><span style="display: inline">
 TextModel (Corpus)
 </span></div></div>
-<div id="92fa3ff9" class="cell card-body html-fill-item html-fill-container" data-execution_count="4">
+<div id="fd0fd8e8" class="cell card-body html-fill-item html-fill-container" data-execution_count="4">
 <div class="sourceCode cell-code html-fill-item html-fill-container" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>corpus <span class="op">=</span> make_pipeline(TextModel(lang<span class="op">=</span><span class="st">'es'</span>, pretrained<span class="op">=</span><span class="va">False</span>),</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                       LinearSVC()).fit(Xtrain, ytrain)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -219,9 +219,24 @@ TextModel (Corpus)
 <div class="card-header"><div class="card-title"><span style="display: inline">
 SeqTM
 </span></div></div>
-<div id="6f17813b" class="cell card-body html-fill-item html-fill-container" data-execution_count="5">
+<div id="8305abdc" class="cell card-body html-fill-item html-fill-container" data-execution_count="5">
 <div class="sourceCode cell-code html-fill-item html-fill-container" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>seq <span class="op">=</span> make_pipeline(SeqTM(lang<span class="op">=</span><span class="st">'es'</span>),</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>                    LinearSVC()).fit(Xtrain, ytrain)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<bslib-tooltip placement="auto" bsoptions="[]" data-require-bs-version="5" data-require-bs-caller="tooltip()">
+    <template>Expand</template>
+    <span class="bslib-full-screen-enter badge rounded-pill">
+        <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" style="height:1em;width:1em;" aria-hidden="true" role="img"><path d="M20 5C20 4.4 19.6 4 19 4H13C12.4 4 12 3.6 12 3C12 2.4 12.4 2 13 2H21C21.6 2 22 2.4 22 3V11C22 11.6 21.6 12 21 12C20.4 12 20 11.6 20 11V5ZM4 19C4 19.6 4.4 20 5 20H11C11.6 20 12 20.4 12 21C12 21.6 11.6 22 11 22H3C2.4 22 2 21.6 2 21V13C2 12.4 2.4 12 3 12C3.6 12 4 12.4 4 13V19Z"></path></svg>
+    </span>
+</bslib-tooltip><script data-bslib-card-init="">bslib.Card.initializeAllCards();</script></div>
+<div class="card flow bslib-card html-fill-container" data-fill="false" data-title="EncExp" data-bslib-card-init="" data-require-bs-caller="card()" data-full-screen="false">
+<div class="card-header"><div class="card-title"><span style="display: inline">
+EncExp
+</span></div></div>
+<div id="cb23caff" class="cell card-body html-fill-item html-fill-container" data-execution_count="6">
+<div class="sourceCode cell-code html-fill-item html-fill-container" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>enc <span class="op">=</span> make_pipeline(EncExpT(lang<span class="op">=</span><span class="st">'es'</span>,</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>                            token_max_filter<span class="op">=</span><span class="dv">2</span><span class="op">**</span><span class="dv">13</span>),</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>                    LinearSVC()).fit(Xtrain, ytrain)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <bslib-tooltip placement="auto" bsoptions="[]" data-require-bs-version="5" data-require-bs-caller="tooltip()">
     <template>Expand</template>
@@ -233,15 +248,16 @@ SeqTM
 <div class="card-header"><div class="card-title"><span style="display: inline">
 Performance
 </span></div></div>
-<div id="f141cd4a" class="cell card-body html-fill-item html-fill-container" data-execution_count="6">
-<div class="sourceCode cell-code html-fill-item html-fill-container" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> CompStats.metrics <span class="im">import</span> macro_recall</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>score <span class="op">=</span> macro_recall(yval, tm.predict(Xval),</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>                     name<span class="op">=</span><span class="st">'TextModel'</span>)</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>_ <span class="op">=</span> score(corpus.predict(Xval), name<span class="op">=</span><span class="st">'TextModel (Corpus)'</span>)                     </span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>_ <span class="op">=</span> score(seq.predict(Xval), name<span class="op">=</span><span class="st">'SeqTM'</span>)</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>score.plot()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="d02068c8" class="cell card-body html-fill-item html-fill-container" data-execution_count="7">
+<div class="sourceCode cell-code html-fill-item html-fill-container" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> CompStats.metrics <span class="im">import</span> macro_recall</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>score <span class="op">=</span> macro_recall(yval, tm.predict(Xval),</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>                     name<span class="op">=</span><span class="st">'TextModel'</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>_ <span class="op">=</span> score(corpus.predict(Xval), name<span class="op">=</span><span class="st">'TextModel (Corpus)'</span>)                     </span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>_ <span class="op">=</span> score(seq.predict(Xval), name<span class="op">=</span><span class="st">'SeqTM'</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>_ <span class="op">=</span> score(enc.predict(Xval), name<span class="op">=</span><span class="st">'EncExp'</span>)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>score.plot()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display html-fill-item html-fill-container">
-<img src="EncExp_files/figure-html/cell-7-output-1.png" class="img-fluid quarto-dashboard-img-contain">
+<img src="EncExp_files/figure-html/cell-8-output-1.png" class="img-fluid quarto-dashboard-img-contain">
 </div>
 </div>
 <bslib-tooltip placement="auto" bsoptions="[]" data-require-bs-version="5" data-require-bs-caller="tooltip()">
@@ -283,16 +299,16 @@ grid-auto-rows: minmax(0, 1fr);">
 <div class="card-header"><div class="card-title"><span style="display: inline">
 Dataset
 </span></div></div>
-<div id="abafb1ef" class="cell card-body html-fill-item html-fill-container" data-execution_count="7">
-<div class="sourceCode cell-code html-fill-item html-fill-container" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> encexp.build_voc <span class="im">import</span> compute_TextModel_vocabulary</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> encexp.build_voc <span class="im">import</span> compute_SeqTM_vocabulary</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> microtc.utils <span class="im">import</span> tweet_iterator</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> iterator():</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    files <span class="op">=</span> [<span class="st">'es-mx-sample.json'</span>, <span class="st">'es-ar-sample.json'</span>]</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="bu">file</span> <span class="kw">in</span> files:</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> x <span class="kw">in</span> tweet_iterator(<span class="bu">file</span>):</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>            <span class="cf">yield</span> x</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="4776838e" class="cell card-body html-fill-item html-fill-container" data-execution_count="8">
+<div class="sourceCode cell-code html-fill-item html-fill-container" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> encexp.build_voc <span class="im">import</span> compute_TextModel_vocabulary</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> encexp.build_voc <span class="im">import</span> compute_SeqTM_vocabulary</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> microtc.utils <span class="im">import</span> tweet_iterator</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> iterator():</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    files <span class="op">=</span> [<span class="st">'es-mx-sample.json'</span>, <span class="st">'es-ar-sample.json'</span>]</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="bu">file</span> <span class="kw">in</span> files:</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> x <span class="kw">in</span> tweet_iterator(<span class="bu">file</span>):</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>            <span class="cf">yield</span> x</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <bslib-tooltip placement="auto" bsoptions="[]" data-require-bs-version="5" data-require-bs-caller="tooltip()">
     <template>Expand</template>
@@ -304,12 +320,12 @@ Dataset
 <div class="card-header"><div class="card-title"><span style="display: inline">
 TextModel
 </span></div></div>
-<div id="a94781d1" class="cell card-body html-fill-item html-fill-container" data-execution_count="8">
-<div class="sourceCode cell-code html-fill-item html-fill-container" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>params <span class="op">=</span> compute_TextModel_vocabulary(iterator, lang<span class="op">=</span><span class="st">'es'</span>,</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>                                      pretrained<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>                                      token_max_filter<span class="op">=</span><span class="dv">2</span><span class="op">**</span><span class="dv">19</span>)</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>tm <span class="op">=</span> TextModel(lang<span class="op">=</span><span class="st">'es'</span>, pretrained<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>tm.set_vocabulary(params[<span class="st">'counter'</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="6241c479" class="cell card-body html-fill-item html-fill-container" data-execution_count="9">
+<div class="sourceCode cell-code html-fill-item html-fill-container" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>params <span class="op">=</span> compute_TextModel_vocabulary(iterator, lang<span class="op">=</span><span class="st">'es'</span>,</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>                                      pretrained<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>                                      token_max_filter<span class="op">=</span><span class="dv">2</span><span class="op">**</span><span class="dv">19</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>tm <span class="op">=</span> TextModel(lang<span class="op">=</span><span class="st">'es'</span>, pretrained<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>tm.set_vocabulary(params[<span class="st">'vocabulary'</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <bslib-tooltip placement="auto" bsoptions="[]" data-require-bs-version="5" data-require-bs-caller="tooltip()">
     <template>Expand</template>
@@ -321,14 +337,14 @@ TextModel
 <div class="card-header"><div class="card-title"><span style="display: inline">
 SeqTM
 </span></div></div>
-<div id="dd691a92" class="cell card-body html-fill-item html-fill-container" data-execution_count="9">
-<div class="sourceCode cell-code html-fill-item html-fill-container" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> voc <span class="kw">in</span> [<span class="dv">18</span>, <span class="dv">17</span>]:</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    params <span class="op">=</span> compute_SeqTM_vocabulary(iterator,</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>                                      params,</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>                                      pretrained<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>                                      token_max_filter<span class="op">=</span><span class="dv">2</span><span class="op">**</span>voc)</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>seq <span class="op">=</span> SeqTM(lang<span class="op">=</span><span class="st">'es'</span>, pretrained<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>seq.set_vocabulary(params[<span class="st">'counter'</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="064c0327" class="cell card-body html-fill-item html-fill-container" data-execution_count="10">
+<div class="sourceCode cell-code html-fill-item html-fill-container" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> voc <span class="kw">in</span> [<span class="dv">18</span>, <span class="dv">17</span>]:</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    params <span class="op">=</span> compute_SeqTM_vocabulary(iterator,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                                      params,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                                      pretrained<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>                                      token_max_filter<span class="op">=</span><span class="dv">2</span><span class="op">**</span>voc)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>seq <span class="op">=</span> SeqTM(lang<span class="op">=</span><span class="st">'es'</span>, pretrained<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>seq.set_vocabulary(params[<span class="st">'vocabulary'</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <bslib-tooltip placement="auto" bsoptions="[]" data-require-bs-version="5" data-require-bs-caller="tooltip()">
     <template>Expand</template>
@@ -341,9 +357,9 @@ SeqTM
 <div class="card-header"><div class="card-title"><span style="display: inline">
 TextModel tokenizer
 </span></div></div>
-<div id="2fcd7fc8" class="cell card-body html-fill-item html-fill-container" data-execution_count="10">
-<div class="sourceCode cell-code html-fill-item html-fill-container" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>tm.tokenize(<span class="st">'¡buen día!'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display html-fill-item html-fill-container" data-execution_count="10">
+<div id="1372ddc5" class="cell card-body html-fill-item html-fill-container" data-execution_count="11">
+<div class="sourceCode cell-code html-fill-item html-fill-container" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>tm.tokenize(<span class="st">'¡buen día!'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display html-fill-item html-fill-container" data-execution_count="27">
 <pre><code>['e:¡~buen',
  'buen~dia',
  'dia~e:!',
@@ -384,10 +400,54 @@ TextModel tokenizer
 <div class="card-header"><div class="card-title"><span style="display: inline">
 SeqTM tokenizer
 </span></div></div>
-<div id="5b5dd5da" class="cell card-body html-fill-item html-fill-container" data-execution_count="11">
-<div class="sourceCode cell-code html-fill-item html-fill-container" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>seq.tokenize(<span class="st">'¡buen día!'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display html-fill-item html-fill-container" data-execution_count="11">
+<div id="f996cbd0" class="cell card-body html-fill-item html-fill-container" data-execution_count="12">
+<div class="sourceCode cell-code html-fill-item html-fill-container" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>seq.tokenize(<span class="st">'¡buen día!'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display html-fill-item html-fill-container" data-execution_count="28">
 <pre><code>['e:¡~buen', 'dia~e:!']</code></pre>
+</div>
+</div>
+<bslib-tooltip placement="auto" bsoptions="[]" data-require-bs-version="5" data-require-bs-caller="tooltip()">
+    <template>Expand</template>
+    <span class="bslib-full-screen-enter badge rounded-pill">
+        <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" style="height:1em;width:1em;" aria-hidden="true" role="img"><path d="M20 5C20 4.4 19.6 4 19 4H13C12.4 4 12 3.6 12 3C12 2.4 12.4 2 13 2H21C21.6 2 22 2.4 22 3V11C22 11.6 21.6 12 21 12C20.4 12 20 11.6 20 11V5ZM4 19C4 19.6 4.4 20 5 20H11C11.6 20 12 20.4 12 21C12 21.6 11.6 22 11 22H3C2.4 22 2 21.6 2 21V13C2 12.4 2.4 12 3 12C3.6 12 4 12.4 4 13V19Z"></path></svg>
+    </span>
+</bslib-tooltip><script data-bslib-card-init="">bslib.Card.initializeAllCards();</script></div>
+</div>
+</div>
+</div><div id="encexp-components" class="dashboard-page tab-pane grid-skip html-fill-item html-fill-container" data-orientation="columns" aria-labelledby="tab-encexp-components">
+<div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-columns: minmax(3em, 1fr);
+grid-auto-rows: minmax(0, 1fr);">
+<div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-rows: minmax(3em, max-content) minmax(3em, max-content); grid-auto-columns: minmax(0, 1fr);">
+<div class="card flow bslib-card html-fill-container" data-fill="false" data-title="Components" data-bslib-card-init="" data-require-bs-caller="card()" data-full-screen="false">
+<div class="card-header"><div class="card-title"><span style="display: inline">
+Components
+</span></div></div>
+<div id="1e5bb5cb" class="cell card-body html-fill-item html-fill-container" data-execution_count="13">
+<div class="sourceCode cell-code html-fill-item html-fill-container" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> encexp.download <span class="im">import</span> download_TextModel</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>max_error <span class="op">=</span> []</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> data <span class="kw">in</span> download_TextModel(enc[<span class="dv">0</span>].identifier, first<span class="op">=</span><span class="va">False</span>):</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  max_error.append((data[<span class="st">'N'</span>] <span class="op">-</span> data[<span class="st">'no_sv'</span>]) <span class="op">/</span> data[<span class="st">'N'</span>])</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>max_error <span class="op">=</span> np.array(max_error)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<bslib-tooltip placement="auto" bsoptions="[]" data-require-bs-version="5" data-require-bs-caller="tooltip()">
+    <template>Expand</template>
+    <span class="bslib-full-screen-enter badge rounded-pill">
+        <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" style="height:1em;width:1em;" aria-hidden="true" role="img"><path d="M20 5C20 4.4 19.6 4 19 4H13C12.4 4 12 3.6 12 3C12 2.4 12.4 2 13 2H21C21.6 2 22 2.4 22 3V11C22 11.6 21.6 12 21 12C20.4 12 20 11.6 20 11V5ZM4 19C4 19.6 4.4 20 5 20H11C11.6 20 12 20.4 12 21C12 21.6 11.6 22 11 22H3C2.4 22 2 21.6 2 21V13C2 12.4 2.4 12 3 12C3.6 12 4 12.4 4 13V19Z"></path></svg>
+    </span>
+</bslib-tooltip><script data-bslib-card-init="">bslib.Card.initializeAllCards();</script></div>
+<div class="card flow bslib-card html-fill-container" data-fill="false" data-title="Wordcloud ratio of support-vector numbers" data-bslib-card-init="" data-require-bs-caller="card()" data-full-screen="false">
+<div class="card-header"><div class="card-title"><span style="display: inline">
+Wordcloud ratio of support-vector numbers
+</span></div></div>
+<div id="1f9fd3e5" class="cell card-body html-fill-item html-fill-container" data-execution_count="15">
+<div class="cell-output cell-output-display html-fill-item html-fill-container">
+<img src="EncExp_files/figure-html/cell-16-output-1.png" class="img-fluid quarto-dashboard-img-contain">
+</div>
+</div>
+<div id="17812885" class="cell card-body html-fill-item html-fill-container" data-execution_count="16">
+<div class="cell-output cell-output-display html-fill-item html-fill-container">
+<img src="EncExp_files/figure-html/cell-17-output-1.png" class="img-fluid quarto-dashboard-img-contain">
 </div>
 </div>
 <bslib-tooltip placement="auto" bsoptions="[]" data-require-bs-version="5" data-require-bs-caller="tooltip()">
