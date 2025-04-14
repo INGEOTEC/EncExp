@@ -19,7 +19,7 @@ from random import randint, shuffle
 import gzip
 import json
 import os
-from os.path import isfile, basename, join, isdir
+from os.path import isfile, join, isdir
 from sklearn.base import clone
 from sklearn.svm import LinearSVC
 from joblib import Parallel, delayed

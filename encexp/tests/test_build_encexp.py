@@ -13,7 +13,8 @@
 # limitations under the License.
 from sklearn.base import clone
 from microtc.utils import tweet_iterator, Counter
-from encexp.tests.test_utils import samples
+# from encexp.tests.test_utils import samples
+from encexp.utils import load_dataset
 from encexp.text_repr import SeqTM, EncExpT
 from encexp.build_encexp import Dataset, EncExpDataset, Train, main
 from os.path import isfile, join
@@ -29,8 +30,9 @@ def test_Dataset_output_filename():
 
 def test_Dataset_process():
     """Test Dataset process"""
-    samples()
-    iter = list(tweet_iterator('es-mx-sample.json'))
+    
+    dataset = load_dataset('mx')
+    iter = list(tweet_iterator(dataset))
     for x in iter:
         x['klass'] = 'mx'
     seq = SeqTM(lang='es', token_max_filter=2**13)
@@ -39,7 +41,7 @@ def test_Dataset_process():
     data = open(ds.output_filename, encoding='utf-8').readlines()
     assert data[0][:2] == 'mx'
 
-    iter = list(tweet_iterator('es-mx-sample.json'))
+    iter = list(tweet_iterator(dataset))
     seq = SeqTM(lang='es', token_max_filter=2**13)
     words = [str(x)  for x in seq.names
              if x[:2] != 'q:' and x[:2] != 'e:']
@@ -55,9 +57,11 @@ def test_Dataset_process():
 
 def test_EncExpDataset():
     """Test EncExpDataset"""
+    
+    dataset = load_dataset('mx')
     seq = SeqTM(lang='es', token_max_filter=2**13)
     ds = EncExpDataset(text_model=seq)
-    iter = list(tweet_iterator('es-mx-sample.json'))
+    iter = list(tweet_iterator(dataset))
     ds.process(iter)
     data = open(ds.output_filename, encoding='utf-8').readlines()
     assert len(data) <= len(iter)
@@ -66,23 +70,32 @@ def test_EncExpDataset():
 
 def test_Train_labels():
     """Test labels"""
-    samples()
+    
+    dataset = load_dataset('mx')
     seq = SeqTM(lang='es', token_max_filter=2**13)
     ds = EncExpDataset(text_model=clone(seq))
     if not isfile(ds.output_filename):
-        ds.process(tweet_iterator('es-mx-sample.json'))
+        ds.process(tweet_iterator(dataset))
     train = Train(text_model=seq, min_pos=32,
                   filename=ds.output_filename)
     assert len(train.labels) == 93
+    X, y = load_dataset(['mx', 'ar'], return_X_y=True)
+    D = [dict(text=text, klass=label) for text, label in zip(X, y)]
+    ds = EncExpDataset(text_model=clone(seq))
+    ds.process(D)
+    train = Train(text_model=seq, min_pos=32,
+                  filename=ds.output_filename)
+    assert len(train.labels) == 2
 
 
 def test_Train_training_set():
     """Test Train"""
-    samples()
+    
+    dataset = load_dataset('mx')
     seq = SeqTM(lang='es', token_max_filter=2**13)
     ds = EncExpDataset(text_model=clone(seq))
     if not isfile(ds.output_filename):
-        ds.process(tweet_iterator('es-mx-sample.json'))
+        ds.process(tweet_iterator(dataset))
     train = Train(text_model=seq, min_pos=32,
                   filename=ds.output_filename)
     labels = train.labels
@@ -92,11 +105,12 @@ def test_Train_training_set():
 
 def test_Train_parameters():
     """Test Train"""
-    samples()
+    
+    dataset = load_dataset('mx')
     seq = SeqTM(lang='es', token_max_filter=2**13)
     ds = EncExpDataset(text_model=clone(seq))
     if not isfile(ds.output_filename):
-        ds.process(tweet_iterator('es-mx-sample.json'))
+        ds.process(tweet_iterator(dataset))
     train = Train(text_model=seq, min_pos=32,
                   filename=ds.output_filename)
     labels = train.labels
@@ -106,14 +120,15 @@ def test_Train_parameters():
 
 def test_Train_store_model():
     """Test Train"""
-    samples()
+    
+    dataset = load_dataset('mx')
     enc = EncExpT(lang='es', token_max_filter=2**13,
                   pretrained=False)
     enc.pretrained = True
     ds = EncExpDataset(text_model=clone(enc.seqTM))
     ds.identifier = enc.identifier
     if not isfile(ds.output_filename):
-        ds.process(tweet_iterator('es-mx-sample.json'))
+        ds.process(tweet_iterator(dataset))
     train = Train(text_model=enc.seqTM, min_pos=32,
                   filename=ds.output_filename)
     train.identifier = enc.identifier
@@ -127,9 +142,9 @@ def test_seqtm_build():
     class A:
         """Dummy"""
 
-    samples()
+    dataset = load_dataset('mx')
     A.lang = 'es'
-    A.file = ['es-mx-sample.json']
+    A.file = [dataset]
     A.voc_size_exponent = 13
     A.n_jobs = -1
     main(A)

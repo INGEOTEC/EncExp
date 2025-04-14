@@ -46,18 +46,18 @@ def test_download_use_tqdm():
     os.unlink("t.html")
 
 
-def samples(filename='es-mx-sample.json.zip'):
-    """Download MX sample"""
+# def samples(filename='es-mx-sample.json.zip'):
+#     """Download MX sample"""
 
-    from zipfile import ZipFile
+#     from zipfile import ZipFile
 
-    if isfile(filename):
-        return
-    Download(f'{DialectID_URL}/{filename}',
-             filename)
-    with ZipFile(filename, "r") as fpt:
-        fpt.extractall(path=".",
-                       pwd="ingeotec".encode("utf-8"))
+#     if isfile(filename):
+#         return
+#     Download(f'{DialectID_URL}/{filename}',
+#              filename)
+#     with ZipFile(filename, "r") as fpt:
+#         fpt.extractall(path=".",
+#                        pwd="ingeotec".encode("utf-8"))
 
 
 def test_uniform_sample():

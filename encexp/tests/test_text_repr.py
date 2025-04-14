@@ -16,7 +16,8 @@ import numpy as np
 from numpy.testing import assert_almost_equal
 import os
 from microtc.utils import tweet_iterator
-from encexp.tests.test_utils import samples
+# from encexp.tests.test_utils import samples
+from encexp.utils import load_dataset
 from encexp.text_repr import TextModel, SeqTM, EncExpT
 from sklearn.base import clone
 
@@ -110,12 +111,16 @@ def test_EncExpT_identifier():
     """Test EncExpT identifier"""
     enc = EncExpT(lang='es')
     assert enc.identifier == 'EncExpT_c69aaba0f1b0783f273f85de6f599132'
+    enc = EncExpT(lang='es', use_tqdm=False,
+                  pretrained=False,
+                  token_max_filter=2**14)
+    assert enc.identifier == 'EncExpT_c69aaba0f1b0783f273f85de6f599132'
 
 
 def test_EncExpT_tailored():
     """Test EncExpT tailored"""
-    samples()
-    D = list(tweet_iterator('es-mx-sample.json'))
+    dataset = load_dataset('mx')
+    D = list(tweet_iterator(dataset))
     enc = EncExpT(lang='es', pretrained=False)
     enc.tailored(D, tsv_filename='tailored.tsv',
                  filename='tailored.json.gz')

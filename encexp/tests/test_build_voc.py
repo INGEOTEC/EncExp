@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from microtc.utils import tweet_iterator
-from encexp.tests.test_utils import samples
+# from encexp.tests.test_utils import samples
+from encexp.utils import load_dataset
 from encexp.build_voc import compute_TextModel_vocabulary, compute_SeqTM_vocabulary
 
 
@@ -20,10 +21,10 @@ def test_compute_TextModel_vocabulary():
     """Compute vocabulary"""
     def iterator():
         """iterator"""
-        return tweet_iterator('es-mx-sample.json')
+        return tweet_iterator(dataset)
 
-    samples()
-    data = compute_TextModel_vocabulary('es-mx-sample.json',
+    dataset = load_dataset('mx')
+    data = compute_TextModel_vocabulary(dataset,
                                         pretrained=False,
                                         token_max_filter=20)
     assert len(data['vocabulary']['dict']) == 20
@@ -36,10 +37,10 @@ def test_compute_TextModel_vocabulary():
 
 def test_compute_SeqTM_vocabulary():
     """test SeqTM vocabulary"""
-    samples()
-    params = compute_TextModel_vocabulary('es-mx-sample.json',
+    dataset = load_dataset('mx')
+    params = compute_TextModel_vocabulary(dataset,
                                           pretrained=False)
-    data = compute_SeqTM_vocabulary('es-mx-sample.json',
+    data = compute_SeqTM_vocabulary(dataset,
                                     params,
                                     pretrained=False,
                                     token_max_filter=2**13)

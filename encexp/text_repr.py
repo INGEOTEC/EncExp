@@ -40,6 +40,10 @@ class Identifier(ABC):
         sig = inspect.signature(self.__class__)
         params = sorted(sig.parameters.keys())
         return {k: getattr(self, k) for k in params}
+    
+    def identifier_filter(self, key, value):
+        """Test default parameters"""
+        return False
 
     @property
     def identifier(self):
@@ -49,15 +53,10 @@ class Identifier(ABC):
         diff = []
         for k, v in sig.parameters.items():
             value = getattr(self, k)
+            if self.identifier_filter(k, value):
+                continue
             if value == v.default:
                 continue
-            if k == 'token_list':
-                if self.lang in ('ja', 'zh'):
-                    tk_lst = [1, 2, 3]
-                else:
-                    tk_lst = [-2, -1, 2, 3, 4]
-                if tk_lst == value:
-                    continue
             diff.append([k, value])
         diff.sort(key=lambda x: x[0])
         cdn = ' '.join([f'{k}={v}'
@@ -73,10 +72,10 @@ class Identifier(ABC):
             return self._precision
         except AttributeError:
             return np.float32
-        
+
     @precision.setter
     def precision(self, value):
-        self._precision = value    
+        self._precision = value
 
 
 class TextModel(Identifier, microTCTM):
@@ -122,6 +121,17 @@ class TextModel(Identifier, microTCTM):
         if pretrained:
             counter = download_TextModel(self.identifier)['vocabulary']
             self.set_vocabulary(counter)
+
+    def identifier_filter(self, key, value):
+        """Test default parameters"""
+        if key == 'token_list':
+            if self.lang in ('ja', 'zh'):
+                tk_lst = [1, 2, 3]
+            else:
+                tk_lst = [-2, -1, 2, 3, 4]
+            if tk_lst == value:
+                return True
+        return False
 
     def set_vocabulary(self, counter: Counter):
         """Set vocabulary"""
@@ -429,6 +439,14 @@ class EncExpT(Identifier):
                       token_max_filter=self.token_max_filter)
             self.seqTM = _
         return self._seqTM
+    
+    def identifier_filter(self, key, value):
+        """Test default parameters"""
+        if key == 'use_tqdm':
+            return True
+        if key == 'pretrained':
+            return True
+        return False
 
     @seqTM.setter
     def seqTM(self, value):
@@ -532,7 +550,7 @@ class EncExpT(Identifier):
         W = self.weights
         tfidf = self.seqTM.weights
         if len(seq) == 0:
-            return np.ones((1, W.shape[0]), dtype=W.dtype)
+            return np.ones((1, W.shape[1]), dtype=W.dtype)
         _ = tfidf[seq]
         return W[seq] * np.c_[_ / norm(_)]
 

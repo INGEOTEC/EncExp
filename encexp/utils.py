@@ -11,9 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import gzip
-import json
-import os
+from os.path import isfile, join, dirname
+from zipfile import ZipFile
+from typing import Union
 from urllib import request
 from urllib.error import HTTPError
 try:
@@ -21,15 +21,14 @@ try:
     from tqdm import tqdm
 except ImportError:
     USE_TQDM = False
-from microtc import emoticons
 import numpy as np
-import encexp
+from microtc.utils import tweet_iterator
 
 
 DialectID_URL = 'https://github.com/INGEOTEC/dialectid/releases/download/data'
 EncExp_URL = 'https://github.com/INGEOTEC/EncExp/releases/download/data'
-MODELS = os.path.join(os.path.dirname(__file__),
-                      'models')
+MODELS = join(dirname(__file__),
+              'models')
 
 class Download(object):
     """Download
@@ -175,3 +174,30 @@ def transform_from_tokens(enc):
         return X / np.c_[_norm]
 
     return inner
+
+
+def load_dataset(country: Union[str, list],
+                 return_X_y:bool=False):
+    """Country identification dataset"""
+    if isinstance(country, str):
+        country = [country]
+    for cntr in country:
+        url = f'{DialectID_URL}/es-{cntr}-sample.json.zip'
+        filename=join(MODELS, f'es-{cntr}-sample.json.zip')
+        if isfile(filename):
+            continue
+        Download(url, filename)
+        with ZipFile(filename, "r") as fpt:
+            fpt.extractall(path=MODELS,
+                            pwd="ingeotec".encode("utf-8"))
+    if len(country) == 1 and return_X_y is False:
+        return join(MODELS, f'es-{country[0]}-sample.json')
+    assert return_X_y
+    X = []
+    y = []
+    for cntr in country:
+        _ = join(MODELS, f'es-{cntr}-sample.json')
+        _ = list(tweet_iterator(_))
+        X.extend(_)
+        y.extend([cntr] * len(_))
+    return X, y
