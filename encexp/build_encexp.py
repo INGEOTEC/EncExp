@@ -13,8 +13,7 @@
 # limitations under the License.
 import argparse
 from dataclasses import dataclass
-from itertools import count
-from typing import Union, Iterable
+from typing import Iterable
 from random import randint, shuffle
 import gzip
 import json
@@ -28,6 +27,7 @@ from microtc.utils import tweet_iterator, Counter
 import encexp
 from encexp.text_repr import SeqTM, EncExpT
 from encexp.utils import progress_bar
+from encexp.download import download_TextModel
 
 
 @dataclass
@@ -95,10 +95,7 @@ class EncExpDataset(Dataset):
         try:
             return self._keywords
         except AttributeError:
-            seq = SeqTM(lang=self.text_model.lang,
-                        token_max_filter=2**13)
-            words = [str(x) for x in seq.names
-                     if x[:2] != 'q:']
+            words = download_TextModel('keywords')[self.text_model.lang]
             cnt = Counter()
             cnt.update(words)
             self.keywords = cnt
@@ -285,3 +282,27 @@ if __name__ == '__main__':
                         nargs=1, type=str)
     args = parser.parse_args()
     main(args)
+
+
+# from encexp import SeqTM
+# import json
+
+# D = {}
+# for lang in ['es', 'en', 'ar', 'it', 'ca', 'de', 
+#              'fr', 'hi', 'in', 'ja', 'ko', 'nl',
+#              'pl', 'pt', 'ru']:
+#     seq = SeqTM(lang=lang,
+#                 token_max_filter=2**13)
+#     words = [str(x) for x in seq.names
+#              if x[:2] != 'q:']
+#     qgrams = [str(x) for x in seq.names
+#               if x[:2] == 'q:' and x[2] != '~' and x[-1] != '~']
+#     qgrams.sort(key=lambda x: len(x), reverse=True)
+#     cnt = 4986 - len(words)
+#     if cnt > 0:
+#         words.extend(qgrams[:cnt])
+#     words = sorted(words)
+#     D[lang] = words
+
+# with open('keywords.json', 'w', encoding='utf-8') as fpt:
+#     print(json.dumps(D), file=fpt)
