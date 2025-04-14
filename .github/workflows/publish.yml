@@ -33,11 +33,12 @@ jobs:
         run: |
           conda install --yes -c numpy scipy scikit-learn pandas jupyter compstats
           python -m pip install -U git+https://github.com/INGEOTEC/CompStats@develop
+          python -m pip install wordcloud
       - name: Render and Publish
         run: |
           git config --global user.email "mgraffg@ieee.org"
           git config --global user.name "mgraffg"
           cd quarto
-          quarto publish gh-pages EncExp.qmd --no-browser         
+          QUARTO_CHROMIUM_HEADLESS_MODE=new quarto publish gh-pages EncExp.qmd --no-browser         
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

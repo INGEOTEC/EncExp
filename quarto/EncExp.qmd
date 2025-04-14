@@ -7,7 +7,7 @@ format:
     nav-buttons: [github]
     theme: cosmo
 execute:
-  freeze: auto    
+  freeze: auto
 ---
 
 # Introduction
@@ -30,24 +30,28 @@ pip install EncExp
 
 ## Column
 
+::: {.card title="Imports" .flow} 
+```{python}
+#| echo: true
+#| code-fold: true
+
+from zipfile import ZipFile
+from sklearn.model_selection import train_test_split
+from sklearn.svm import LinearSVC
+from sklearn.pipeline import make_pipeline
+from CompStats.metrics import macro_recall
+from microtc.utils import tweet_iterator
+from encexp import TextModel, SeqTM, EncExpT
+from encexp.utils import load_dataset
+```
+:::
+
+
 ::: {.card title="Datasets" .flow} 
 ```{python}
 #| echo: true
 
-from zipfile import ZipFile
-from microtc.utils import tweet_iterator
-from encexp.utils import Download, DialectID_URL
-X, y = [], []
-for filename in ['es-mx-sample.json.zip',
-                 'es-ar-sample.json.zip']:
-    _ = Download(f'{DialectID_URL}/{filename}',
-                 filename)
-    with ZipFile(filename, "r") as fpt:
-        fpt.extractall(path=".",
-                        pwd="ingeotec".encode("utf-8"))
-    _ = list(tweet_iterator(filename.replace('.zip', '')))
-    X.extend(_)
-    y.extend([filename[3:5]] * len(_))
+X, y = load_dataset(['es', 'ar'], return_X_y=True)
 ```
 :::
 
@@ -55,7 +59,6 @@ for filename in ['es-mx-sample.json.zip',
 ```{python}
 #| echo: true
 
-from sklearn.model_selection import train_test_split
 Xtrain, Xval, ytrain, yval = train_test_split(X, y)
 ```
 :::
@@ -64,15 +67,10 @@ Xtrain, Xval, ytrain, yval = train_test_split(X, y)
 ```{python}
 #| echo: true
 
-from encexp import TextModel, SeqTM
-from sklearn.svm import LinearSVC
-from sklearn.pipeline import make_pipeline
 tm = make_pipeline(TextModel(lang='es'),
                    LinearSVC()).fit(Xtrain, ytrain)
 ```
 :::
-
-## Column 
 
 ::: {.card title="TextModel (Corpus)" .flow}
 ```{python}
@@ -83,6 +81,8 @@ corpus = make_pipeline(TextModel(lang='es', pretrained=False),
 ```
 :::
 
+## Column 
+
 ::: {.card title="SeqTM" .flow}
 ```{python}
 #| echo: true
@@ -92,14 +92,25 @@ seq = make_pipeline(SeqTM(lang='es'),
 ```
 :::
 
+::: {.card title="EncExp" .flow}
+```{python}
+#| echo: true
+
+enc = make_pipeline(EncExpT(lang='es'),
+                    LinearSVC()).fit(Xtrain, ytrain)
+```
+:::
+
 ::: {.card title="Performance" .flow}
 ```{python}
 #| echo: true
-from CompStats.metrics import macro_recall
+#| code-fold: true
+
 score = macro_recall(yval, tm.predict(Xval),
                      name='TextModel')
 _ = score(corpus.predict(Xval), name='TextModel (Corpus)')                     
 _ = score(seq.predict(Xval), name='SeqTM')
+_ = score(enc.predict(Xval), name='EncExp')
 score.plot()
 ```
 :::
@@ -178,3 +189,63 @@ tm.tokenize('¡buen día!')
 seq.tokenize('¡buen día!')
 ```
 :::
+
+# EncExp Components
+
+## Column
+
+::: {.card title="Components" .flow}
+```{python}
+#| echo: true
+#| code-fold: true
+from encexp.download import download_TextModel
+import numpy as np
+max_error = []
+for data in download_TextModel(enc[0].identifier, first=False):
+  max_error.append((data['N'] - data['no_sv']) / data['N'])
+max_error = np.array(max_error)
+```
+:::
+
+
+```{python}
+#| echo: false
+from os.path import isfile
+filename = 'emoji_text.ttf.zip'
+if not isfile(filename):
+    _ = 'https://github.com/INGEOTEC/talks/releases/download/Talks/emoji_text.ttf.zip'
+    Download(_, filename)
+    with ZipFile(filename, "r") as fpt:
+        fpt.extractall(path=".",
+                       pwd="ingeotec".encode("utf-8"))
+```
+
+::: {.card title="Ratio of support-vector numbers" .flow}
+```{python}
+#| echo: false
+from encexp.download import download_TextModel
+import numpy as np
+from wordcloud import WordCloud
+from matplotlib import pylab as plt
+
+words = {k.replace('e:', ''): v for k, v in zip(enc[0].names, max_error)}
+word_cloud = WordCloud(font_path='./emoji_text.ttf',
+                       background_color='white').generate_from_frequencies(words)
+plt.imshow(word_cloud, interpolation='bilinear')
+plt.tick_params(left=False, right=False, labelleft=False,
+                   labelbottom=False, bottom=False)
+```
+
+```{python}
+#| echo: false
+
+words = {k.replace('e:', ''): 1 - v for k, v in zip(enc[0].names, max_error)}
+word_cloud = WordCloud(font_path='./emoji_text.ttf',
+                       background_color='white').generate_from_frequencies(words)
+plt.imshow(word_cloud, interpolation='bilinear')
+plt.tick_params(left=False, right=False, labelleft=False,
+                   labelbottom=False, bottom=False)
+```
+:::
+
+
