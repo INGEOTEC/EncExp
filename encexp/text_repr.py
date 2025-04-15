@@ -21,9 +21,7 @@ from os.path import isfile
 import os
 import numpy as np
 from numpy.linalg import norm
-from sklearn.model_selection import StratifiedKFold
 from sklearn.base import clone
-from sklearn.linear_model import SGDClassifier
 from microtc.params import OPTION_NONE, OPTION_GROUP
 from microtc.utils import Counter
 from microtc import emoticons, TextModel as microTCTM
@@ -428,6 +426,7 @@ class EncExpT(Identifier):
     token_max_filter: int=int(2**14)
     pretrained: bool=True
     use_tqdm: bool=True
+    fit_intercept: bool=False
 
     @property
     def seqTM(self):
@@ -485,7 +484,8 @@ class EncExpT(Identifier):
                       filename=ds.output_filename,
                       use_tqdm=self.use_tqdm,
                       min_pos=min_pos,
-                      n_jobs=n_jobs)
+                      n_jobs=n_jobs,
+                      fit_intercept=self.fit_intercept)
         if filename is None:
             train.identifier = self.identifier
         else:
@@ -519,14 +519,31 @@ class EncExpT(Identifier):
         """Set weights"""
         weights = []
         names = []
+        intercept = []
         for coef in data:
             _ = np.frombuffer(bytearray.fromhex(coef['coef']),
                               dtype=np.float16)
             weights.append(_)
             names.append(coef['label'])
+            if self.fit_intercept:
+                _ = np.frombuffer(bytearray.fromhex(coef['intercept']),
+                                  dtype=np.float16)
+                intercept.append(_[0])
         _ = np.column_stack(weights)
         self.weights = np.asanyarray(_, dtype=self.precision)
         self.names = np.array(names)
+        if self.fit_intercept:
+            self.intercept = np.asanyarray(intercept,
+                                           dtype=self.precision)
+
+    @property
+    def intercept(self):
+        """Intercept"""
+        return self._intercept
+
+    @intercept.setter
+    def intercept(self, value):
+        self._intercept = value
 
     @property
     def names(self):
@@ -559,7 +576,10 @@ class EncExpT(Identifier):
         _ = [self.encode(text).sum(axis=0) 
              for text in progress_bar(texts, desc='Transform',
                                       use_tqdm=self.use_tqdm)]
-        return np.vstack(_)
+        X = np.vstack(_)
+        if self.fit_intercept:
+            return X + self.intercept
+        return X
 
     def fit(self, X, y):
         """fit"""

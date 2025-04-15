@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from os.path import isfile, join, dirname
+from os.path import isfile, join, dirname, isdir
+import os
 from zipfile import ZipFile
 from typing import Union
 from urllib import request
@@ -179,6 +180,8 @@ def transform_from_tokens(enc):
 def load_dataset(country: Union[str, list],
                  return_X_y:bool=False):
     """Country identification dataset"""
+    if not isdir(MODELS):
+        os.mkdir(MODELS)    
     if isinstance(country, str):
         country = [country]
     for cntr in country:

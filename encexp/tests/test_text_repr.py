@@ -140,6 +140,22 @@ def test_EncExpT_pretrained():
     assert len(enc.names) == 4986
 
 
+def test_EncExpT_tailored_intercept():
+    """Test EncExpT tailored"""
+    dataset = load_dataset('mx')
+    D = list(tweet_iterator(dataset))
+    enc = EncExpT(lang='es', fit_intercept=True,
+                  pretrained=False)
+    enc.tailored(D, tsv_filename='tailored.tsv',
+                 filename='tailored.json.gz')
+    assert enc.weights.shape[0] == 2**14
+    assert enc.weights.shape[1] == 93
+    assert enc.intercept.shape[0] == 93
+    X = enc.transform(['buenos dias'])
+    assert X.shape[1] == 93
+    enc.fit_intercept = False
+    assert np.fabs(X - enc.transform(['buenos dias'])).sum() != 0
+
 
 
 # def test_EncExp_filename():
