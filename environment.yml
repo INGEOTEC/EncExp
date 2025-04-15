@@ -10,6 +10,7 @@ dependencies:
   - yaml
   - jupyter
   - CompStats
+  - microtc
   - pip:
     - pandas
     - seaborn

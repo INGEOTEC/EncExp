@@ -147,7 +147,7 @@ def test_EncExpT_tailored_intercept():
     enc = EncExpT(lang='es', fit_intercept=True,
                   pretrained=False)
     enc.tailored(D, tsv_filename='tailored.tsv',
-                 filename='tailored.json.gz')
+                 filename='tailored_intercept.json.gz')
     assert enc.weights.shape[0] == 2**14
     assert enc.weights.shape[1] == 93
     assert enc.intercept.shape[0] == 93
