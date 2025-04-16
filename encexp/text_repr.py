@@ -568,7 +568,11 @@ class EncExpT(Identifier):
         tfidf = self.seqTM.weights
         if len(seq) == 0:
             return np.ones((1, W.shape[1]), dtype=W.dtype)
-        _ = tfidf[seq]
+        cnt = Counter(seq)
+        seq = np.array(list(cnt.keys()))
+        tf = np.array([cnt[k] for k in seq])
+        tf = tf / tf.sum()
+        _ = tfidf[seq] * tf
         return W[seq] * np.c_[_ / norm(_)]
 
     def transform(self, texts: Iterable):

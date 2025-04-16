@@ -155,6 +155,11 @@ def test_EncExpT_tailored_intercept():
     assert X.shape[1] == 93
     enc.fit_intercept = False
     assert np.fabs(X - enc.transform(['buenos dias'])).sum() != 0
+    enc.fit_intercept = True
+    X = enc.transform(D)
+    X2 = enc.seqTM.transform(D) @ enc.weights
+    X2 += enc.intercept
+    assert_almost_equal(X, X2, decimal=5)
 
 
 
