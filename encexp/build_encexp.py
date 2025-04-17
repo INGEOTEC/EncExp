@@ -287,14 +287,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     main(args)
 
-
+    
+# from EvoMSA.utils import MODEL_LANG
 # from encexp import SeqTM
 # import json
 
 # D = {}
-# for lang in ['es', 'en', 'ar', 'it', 'ca', 'de', 
-#              'fr', 'hi', 'in', 'ja', 'ko', 'nl',
-#              'pl', 'pt', 'ru']:
+# for lang in MODEL_LANG:
 #     seq = SeqTM(lang=lang,
 #                 token_max_filter=2**13)
 #     words = [str(x) for x in seq.names
