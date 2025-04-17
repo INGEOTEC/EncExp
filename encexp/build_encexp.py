@@ -118,7 +118,7 @@ class Train:
     max_pos: int=int(2**15)
     filename: str=None
     use_tqdm: bool=True
-    fit_intercept: bool=False
+    with_intercept: bool=False
     n_jobs: int=-1
 
     @property
@@ -140,7 +140,7 @@ class Train:
             return clone(self._estimator)
         except AttributeError:
             _ = LinearSVC(class_weight='balanced',
-                          fit_intercept=self.fit_intercept)
+                          with_intercept=self.with_intercept)
             self.estimator = _
         return self._estimator
 
@@ -216,7 +216,7 @@ class Train:
         coef = m.coef_[0].astype(np.float16)
         output = dict(N=len(y), coef=coef.tobytes().hex(),
                       label=label, no_sv=int(mask.sum()))
-        if self.fit_intercept:
+        if self.with_intercept:
             output['intercept'] = m.intercept_.astype(np.float16).tobytes().hex()
         return output
     

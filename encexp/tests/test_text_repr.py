@@ -144,7 +144,7 @@ def test_EncExpT_tailored_intercept():
     """Test EncExpT tailored"""
     dataset = load_dataset('mx')
     D = list(tweet_iterator(dataset))
-    enc = EncExpT(lang='es', fit_intercept=True,
+    enc = EncExpT(lang='es', with_intercept=True,
                   pretrained=False)
     enc.tailored(D, tsv_filename='tailored.tsv',
                  filename='tailored_intercept.json.gz')
@@ -153,9 +153,9 @@ def test_EncExpT_tailored_intercept():
     assert enc.intercept.shape[0] == 93
     X = enc.transform(['buenos dias'])
     assert X.shape[1] == 93
-    enc.fit_intercept = False
+    enc.with_intercept = False
     assert np.fabs(X - enc.transform(['buenos dias'])).sum() != 0
-    enc.fit_intercept = True
+    enc.with_intercept = True
     X = enc.transform(D)
     X2 = enc.seqTM.transform(D) @ enc.weights
     X2 += enc.intercept

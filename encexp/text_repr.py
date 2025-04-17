@@ -426,7 +426,7 @@ class EncExpT(Identifier):
     token_max_filter: int=int(2**14)
     pretrained: bool=True
     use_tqdm: bool=True
-    fit_intercept: bool=False
+    with_intercept: bool=False
 
     @property
     def seqTM(self):
@@ -485,7 +485,7 @@ class EncExpT(Identifier):
                       use_tqdm=self.use_tqdm,
                       min_pos=min_pos,
                       n_jobs=n_jobs,
-                      fit_intercept=self.fit_intercept)
+                      with_intercept=self.with_intercept)
         if filename is None:
             train.identifier = self.identifier
         else:
@@ -525,14 +525,14 @@ class EncExpT(Identifier):
                               dtype=np.float16)
             weights.append(_)
             names.append(coef['label'])
-            if self.fit_intercept:
+            if self.with_intercept:
                 _ = np.frombuffer(bytearray.fromhex(coef['intercept']),
                                   dtype=np.float16)
                 intercept.append(_[0])
         _ = np.column_stack(weights)
         self.weights = np.asanyarray(_, dtype=self.precision)
         self.names = np.array(names)
-        if self.fit_intercept:
+        if self.with_intercept:
             self.intercept = np.asanyarray(intercept,
                                            dtype=self.precision)
 
@@ -581,7 +581,7 @@ class EncExpT(Identifier):
              for text in progress_bar(texts, desc='Transform',
                                       use_tqdm=self.use_tqdm)]
         X = np.vstack(_)
-        if self.fit_intercept:
+        if self.with_intercept:
             return X + self.intercept
         return X
 
