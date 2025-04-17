@@ -140,7 +140,7 @@ class Train:
             return clone(self._estimator)
         except AttributeError:
             _ = LinearSVC(class_weight='balanced',
-                          with_intercept=self.with_intercept)
+                          fit_intercept=self.with_intercept)
             self.estimator = _
         return self._estimator
 
