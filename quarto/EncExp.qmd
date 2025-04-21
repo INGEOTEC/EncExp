@@ -30,38 +30,33 @@ pip install EncExp
 
 ## Column
 
-::: {.card title="Imports" .flow} 
+::: {.card title="Datasets and libraries" .flow} 
 ```{python}
 #| echo: true
 #| code-fold: true
 
+from os.path import isfile
 from zipfile import ZipFile
+import numpy as np
+from wordcloud import WordCloud
+from matplotlib import pylab as plt
+from sklearn.preprocessing import Normalizer
 from sklearn.model_selection import train_test_split
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
 from CompStats.metrics import macro_recall
 from microtc.utils import tweet_iterator
 from encexp import TextModel, SeqTM, EncExpT
-from encexp.utils import load_dataset
-```
-:::
+from encexp.build_voc import compute_TextModel_vocabulary
+from encexp.build_voc import compute_SeqTM_vocabulary
+from encexp.utils import load_dataset, Download
+from encexp.download import download_TextModel
 
-
-::: {.card title="Datasets" .flow} 
-```{python}
-#| echo: true
-
-X, y = load_dataset(['es', 'ar'], return_X_y=True)
-```
-:::
-
-::: {.card title="Training and Validation sets" .flow}
-```{python}
-#| echo: true
-
+X, y = load_dataset(['mx', 'ar'], return_X_y=True)
 Xtrain, Xval, ytrain, yval = train_test_split(X, y)
 ```
 :::
+
 
 ::: {.card title="TextModel" .flow} 
 ```{python}
@@ -81,8 +76,6 @@ corpus = make_pipeline(TextModel(lang='es', pretrained=False),
 ```
 :::
 
-## Column 
-
 ::: {.card title="SeqTM" .flow}
 ```{python}
 #| echo: true
@@ -92,11 +85,14 @@ seq = make_pipeline(SeqTM(lang='es'),
 ```
 :::
 
+## Column 
+
 ::: {.card title="EncExp" .flow}
 ```{python}
 #| echo: true
 
 enc = make_pipeline(EncExpT(lang='es'),
+                    Normalizer(),
                     LinearSVC()).fit(Xtrain, ytrain)
 ```
 :::
@@ -134,25 +130,12 @@ It is worth mentioning that the last step is to shuffle the training and test se
 # Vocabulary 
 
 ## Column 
-::: {.card title="Dataset" .flow}
-```{python}
-#| echo: true
-from encexp.build_voc import compute_TextModel_vocabulary
-from encexp.build_voc import compute_SeqTM_vocabulary
-from microtc.utils import tweet_iterator
-
-def iterator():
-    files = ['es-mx-sample.json', 'es-ar-sample.json']
-    for file in files:
-        for x in tweet_iterator(file):
-            yield x
-```
-:::
 
 ::: {.card title="TextModel" .flow}
 ```{python}
 #| echo: true
-params = compute_TextModel_vocabulary(iterator, lang='es',
+params = compute_TextModel_vocabulary(lambda : X,
+                                      lang='es',
                                       pretrained=False,
                                       token_max_filter=2**19)
 tm = TextModel(lang='es', pretrained=False)
@@ -165,7 +148,7 @@ tm.set_vocabulary(params['vocabulary'])
 #| echo: true
 
 for voc in [18, 17]:
-    params = compute_SeqTM_vocabulary(iterator,
+    params = compute_SeqTM_vocabulary(lambda : X,
                                       params,
                                       pretrained=False,
                                       token_max_filter=2**voc)
@@ -198,8 +181,7 @@ seq.tokenize('¡buen día!')
 ```{python}
 #| echo: true
 #| code-fold: true
-from encexp.download import download_TextModel
-import numpy as np
+
 max_error = []
 for data in download_TextModel(enc[0].identifier, first=False):
   max_error.append((data['N'] - data['no_sv']) / data['N'])
@@ -210,7 +192,7 @@ max_error = np.array(max_error)
 
 ```{python}
 #| echo: false
-from os.path import isfile
+
 filename = 'emoji_text.ttf.zip'
 if not isfile(filename):
     _ = 'https://github.com/INGEOTEC/talks/releases/download/Talks/emoji_text.ttf.zip'
@@ -223,10 +205,6 @@ if not isfile(filename):
 ::: {.card title="Ratio of support-vector numbers" .flow}
 ```{python}
 #| echo: false
-from encexp.download import download_TextModel
-import numpy as np
-from wordcloud import WordCloud
-from matplotlib import pylab as plt
 
 words = {k.replace('e:', ''): v for k, v in zip(enc[0].names, max_error)}
 word_cloud = WordCloud(font_path='./emoji_text.ttf',
