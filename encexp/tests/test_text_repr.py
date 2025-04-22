@@ -160,7 +160,9 @@ def test_EncExpT_tailored_intercept():
     X2 = enc.seqTM.transform(D) @ enc.weights
     X2 += enc.intercept
     assert_almost_equal(X, X2, decimal=5)
-
+    enc.merge_encode = False
+    X = enc.transform(D)
+    assert_almost_equal(X, X2, decimal=5)
 
 
 # def test_EncExp_filename():

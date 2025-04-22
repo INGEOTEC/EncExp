@@ -427,6 +427,7 @@ class EncExpT(Identifier):
     pretrained: bool=True
     use_tqdm: bool=True
     with_intercept: bool=False
+    merge_encode: bool=True
 
     @property
     def seqTM(self):
@@ -444,6 +445,8 @@ class EncExpT(Identifier):
         if key == 'use_tqdm':
             return True
         if key == 'pretrained':
+            return True
+        if key == 'merge_encode':
             return True
         return False
 
@@ -574,12 +577,17 @@ class EncExpT(Identifier):
         tfidf = self.seqTM.weights
         if len(seq) == 0:
             return np.ones((1, W.shape[1]), dtype=W.dtype)
-        cnt = Counter(seq)
-        seq = np.array(list(cnt.keys()))
-        tf = np.array([cnt[k] for k in seq])
-        tf = tf / tf.sum()
-        _ = tfidf[seq] * tf
-        return W[seq] * np.c_[_ / norm(_)]
+        index, tf_ = np.unique(seq, return_counts=True)
+        # cnt = Counter(seq)
+        # seq = np.array(list(cnt.keys()))
+        # tf = np.array([cnt[k] for k in seq])
+        tf = tf_ / tf_.sum()
+        _ = tfidf[index] * tf
+        if self.merge_encode:
+            return W[index] * np.c_[_ / norm(_)]
+        tfidf = {k: v for k, v in zip(index, _ / (norm(_) * tf_))}
+        return W[seq] * np.c_[[tfidf[i] for i in seq]]
+        
 
     def transform(self, texts: Iterable):
         """Transform"""
