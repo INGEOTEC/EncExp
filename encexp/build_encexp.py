@@ -70,7 +70,9 @@ class Dataset:
         tm = self.text_model
         with open(self.output_filename, 'w',
                   encoding='utf-8') as fpt:
-            for text in progress_bar(iterator, use_tqdm=self.use_tqdm):
+            for text in progress_bar(iterator,
+                                     use_tqdm=self.use_tqdm,
+                                     desc=f'{self.output_filename}'):
                 label = None
                 if isinstance(text, dict):
                     label = text.get('klass', None)
