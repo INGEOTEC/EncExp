@@ -588,7 +588,6 @@ class EncExpT(Identifier):
         tfidf = {k: v for k, v in zip(index, _ / (norm(_) * tf_))}
         return W[seq] * np.c_[[tfidf[i] for i in seq]]
         
-
     def transform(self, texts: Iterable):
         """Transform"""
         _ = [self.encode(text).sum(axis=0) 
