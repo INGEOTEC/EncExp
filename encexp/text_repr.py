@@ -455,7 +455,10 @@ class EncExpT(Identifier):
                  filename: str=None,
                  tsv_filename: str=None,
                  min_pos: int=32,
-                 n_jobs: int=-1):
+                 max_pos: int=int(2**15),
+                 n_jobs: int=-1,
+                 ds: object=None,
+                 train: object=None):
         """Load/Create tailored encexp representation"""
         from tempfile import mkstemp
         from microtc.utils import tweet_iterator
@@ -471,8 +474,9 @@ class EncExpT(Identifier):
         if filename is not None and isfile(f'{filename}.json.gz'):
             self.set_weights(tweet_iterator(f'{filename}.json.gz'))
             return self
-        ds = EncExpDataset(text_model=clone(self.seqTM),
-                           use_tqdm=self.use_tqdm)
+        if ds is None:
+            ds = EncExpDataset(text_model=clone(self.seqTM),
+                            use_tqdm=self.use_tqdm)
         if tsv_filename is None:
             _, path = mkstemp()
         else:
@@ -480,12 +484,14 @@ class EncExpT(Identifier):
         ds.output_filename = path
         if tsv_filename is None or not isfile(tsv_filename):
             ds.process(D)
-        train = Train(text_model=self.seqTM,
-                      filename=ds.output_filename,
-                      use_tqdm=self.use_tqdm,
-                      min_pos=min_pos,
-                      n_jobs=n_jobs,
-                      with_intercept=self.with_intercept)
+        if train is None:
+            train = Train(text_model=self.seqTM,
+                        filename=ds.output_filename,
+                        use_tqdm=self.use_tqdm,
+                        min_pos=min_pos,
+                        max_pos=max_pos,
+                        n_jobs=n_jobs,
+                        with_intercept=self.with_intercept)
         if filename is None:
             train.identifier = self.identifier
         else:
