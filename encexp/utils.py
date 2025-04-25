@@ -24,6 +24,9 @@ except ImportError:
     USE_TQDM = False
 import numpy as np
 from microtc.utils import tweet_iterator
+MODEL_LANG = ['ar', 'ca', 'de', 'en', 'es', 'fr',
+              'hi', 'in', 'it', 'ja', 'ko', 'nl',
+              'pl', 'pt', 'ru', 'tl', 'tr', 'zh']
 
 
 DialectID_URL = 'https://github.com/INGEOTEC/dialectid/releases/download/data'
