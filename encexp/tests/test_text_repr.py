@@ -136,8 +136,8 @@ def test_EncExpT_pretrained():
     """Test EncExpT pretrained"""
     enc = EncExpT(lang='es', token_max_filter=2**13)
     X = enc.transform(['buenos dias'])
-    assert X.shape == (1, 4986)
-    assert len(enc.names) == 4986
+    assert X.shape == (1, 4985)
+    assert len(enc.names) == 4985
 
 
 def test_EncExpT_tailored_intercept():
