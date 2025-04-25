@@ -466,20 +466,27 @@ class EncExpT(Identifier):
         from tempfile import mkstemp
         from microtc.utils import tweet_iterator
         from encexp.build_encexp import EncExpDataset, Train
+
         def weights(args):
             for fname, _ in args:
                 data = next(tweet_iterator(fname))
                 yield data
 
-        assert not self.pretrained
+        def set_weights(data):
+            if self.pretrained:
+                return self.add(data)
+            self.set_weights(data)
+
+        if self.pretrained:
+            _ = self.weights
         if filename is not None:
             filename = filename.split('.json.gz')[0]
         if filename is not None and isfile(f'{filename}.json.gz'):
-            self.set_weights(tweet_iterator(f'{filename}.json.gz'))
+            set_weights(tweet_iterator(f'{filename}.json.gz'))
             return self
         if ds is None:
             ds = EncExpDataset(text_model=clone(self.seqTM),
-                            use_tqdm=self.use_tqdm)
+                               use_tqdm=self.use_tqdm)
         if tsv_filename is None:
             _, path = mkstemp()
         else:
@@ -489,22 +496,22 @@ class EncExpT(Identifier):
             ds.process(D)
         if train is None:
             train = Train(text_model=self.seqTM,
-                        filename=ds.output_filename,
-                        use_tqdm=self.use_tqdm,
-                        min_pos=min_pos,
-                        max_pos=max_pos,
-                        n_jobs=n_jobs,
-                        with_intercept=self.with_intercept)
+                          filename=ds.output_filename,
+                          use_tqdm=self.use_tqdm,
+                          min_pos=min_pos,
+                          max_pos=max_pos,
+                          n_jobs=n_jobs,
+                          with_intercept=self.with_intercept)
         if filename is None:
             train.identifier = self.identifier
         else:
             train.identifier = filename
         if filename is None:
             args = train.create_model()
-            self.set_weights(weights(args))
+            set_weights(weights(args))
         else:
             train.store_model()
-            self.set_weights(tweet_iterator(f'{train.identifier}.json.gz'))
+            set_weights(tweet_iterator(f'{train.identifier}.json.gz'))
         if tsv_filename is None:
             os.unlink(path)
         return self
@@ -515,17 +522,17 @@ class EncExpT(Identifier):
         try:
             return self._weights
         except AttributeError:
-            if self.pretrained:
-                self.set_weights(download_TextModel(self.identifier,
-                                                    first=False))
+            assert self.pretrained
+            self.set_weights(download_TextModel(self.identifier,
+                                                first=False))
         return self._weights
 
     @weights.setter
     def weights(self, value):
         self._weights = value
 
-    def set_weights(self, data: Iterable):
-        """Set weights"""
+    def _names_weights_intercept(self, data: Iterable):
+        """Get names, weights and intercept from data"""
         weights = []
         names = []
         intercept = []
@@ -538,12 +545,36 @@ class EncExpT(Identifier):
                 _ = np.frombuffer(bytearray.fromhex(coef['intercept']),
                                   dtype=np.float16)
                 intercept.append(_[0])
-        _ = np.column_stack(weights)
-        self.weights = np.asanyarray(_, dtype=self.precision)
-        self.names = np.array(names)
         if self.with_intercept:
-            self.intercept = np.asanyarray(intercept,
-                                           dtype=self.precision)
+            intercept = np.asanyarray(intercept,
+                                      dtype=self.precision)
+        _ = np.column_stack(weights)
+        return np.array(names), np.asanyarray(_, dtype=self.precision), intercept
+
+    def set_weights(self, data: Iterable):
+        """Set weights"""
+        self.names, self.weights, intercept = self._names_weights_intercept(data)
+        if self.with_intercept:
+            self.intercept = intercept
+            
+    def add(self, data: Iterable):
+        """Add weights"""
+        names, weights, _ = self._names_weights_intercept(data)
+        assert isinstance(_, list)
+        self_name_w = dict(zip(self.names, self.weights.T))
+        name_w = dict(zip(names, weights.T))
+        names = sorted(set(self.names).union(set(names)))
+        zeros = np.zeros(self.weights.shape[0])
+        weights = []
+        for name in names:
+            frst = 1 if name in self_name_w else 0
+            scnd = 1 if name in name_w else 0
+            frst = frst / (frst + scnd)
+            v1 = self_name_w.get(name, zeros)
+            v2 = name_w.get(name, zeros)
+            weights.append(frst * v1 + (1 - frst) * v2)
+        self.weights = np.column_stack(weights)
+        self.names = names
 
     @property
     def intercept(self):

@@ -165,6 +165,15 @@ def test_EncExpT_tailored_intercept():
     assert_almost_equal(X, X2, decimal=5)
 
 
+def test_EncExpT_tailored_intercept():
+    """Test EncExpT tailored"""
+    dataset = load_dataset('mx')
+    D = list(tweet_iterator(dataset))
+    enc = EncExpT(lang='es', token_max_filter=2**13)
+    enc.tailored(D)
+
+
+
 # def test_EncExp_filename():
 #     """Test EncExp"""
 #     if not isfile('encexp-es-mx.json.gz'):
