@@ -247,7 +247,12 @@ class Train:
                 data = next(tweet_iterator(fname))
                 fpt.write(bytes(json.dumps(data) + '\n',
                           encoding='utf-8'))
-                os.unlink(fname)
+        self.delete_tmps(args)
+
+    def delete_tmps(self, args):
+        """Delete the auxiliary files"""
+        for fname, _ in args:
+            os.unlink(fname)
         os.rmdir(self.identifier)
 
 

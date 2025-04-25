@@ -509,6 +509,7 @@ class EncExpT(Identifier):
         if filename is None:
             args = train.create_model()
             set_weights(weights(args))
+            train.delete_tmps(args)
         else:
             train.store_model()
             set_weights(tweet_iterator(f'{train.identifier}.json.gz'))
