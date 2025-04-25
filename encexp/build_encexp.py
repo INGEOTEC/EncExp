@@ -203,6 +203,8 @@ class Train:
                     del NEG[k]
                 if len(POS) > max_pos:
                     break
+        if len(NEG) == 0 or len(POS) == 0:
+            return None
         shuffle(NEG)
         NEG = NEG[:len(POS)]
         X = self.transform(POS + NEG)
@@ -211,7 +213,10 @@ class Train:
 
     def parameters(self, label):
         """Parameteres"""
-        X, y = self.training_set(label)
+        _ = self.training_set(label)
+        if _ is None:
+            return None
+        X, y = _
         m = self.estimator.fit(X, y)
         hy = m.decision_function(X)
         mask = (np.fabs(hy) >= 1) & (np.sign(hy) == y)
@@ -226,18 +231,21 @@ class Train:
         """Create model"""
         def inner(fname, label):
             if isfile(fname):
-                return
+                return (fname, label)
             coef = self.parameters(label)
+            if coef is None:
+                return None
             with open(fname, 'w', encoding='utf-8') as fpt:
                 print(json.dumps(coef), file=fpt)
+            return (fname, label)
         if not isdir(self.identifier):
             os.mkdir(self.identifier)
         args = [(join(self.identifier, f'{iden}.json'), label)
                 for iden, label in enumerate(self.labels)]
         _ = progress_bar(args, use_tqdm=self.use_tqdm)
-        Parallel(n_jobs=self.n_jobs)(delayed(inner)(fname, label)
-                                     for fname, label in _)
-        return args
+        args = Parallel(n_jobs=self.n_jobs)(delayed(inner)(fname, label)
+                                            for fname, label in _)
+        return [x for x in args if x is not None]
 
     def store_model(self):
         """Create and store model"""

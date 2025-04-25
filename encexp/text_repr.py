@@ -454,6 +454,123 @@ class EncExpT(Identifier):
     def seqTM(self, value):
         self._seqTM = value
 
+    @property
+    def weights(self):
+        """Weights"""
+        try:
+            return self._weights
+        except AttributeError:
+            assert self.pretrained
+            self.set_weights(download_TextModel(self.identifier,
+                                                first=False))
+        return self._weights
+
+    @weights.setter
+    def weights(self, value):
+        self._weights = value
+
+    def _names_weights_intercept(self, data: Iterable):
+        """Get names, weights and intercept from data"""
+        weights = []
+        names = []
+        intercept = []
+        for coef in data:
+            _ = np.frombuffer(bytearray.fromhex(coef['coef']),
+                              dtype=np.float16)
+            weights.append(_)
+            names.append(coef['label'])
+            if self.with_intercept:
+                _ = np.frombuffer(bytearray.fromhex(coef['intercept']),
+                                  dtype=np.float16)
+                intercept.append(_[0])
+        if self.with_intercept:
+            intercept = np.asanyarray(intercept,
+                                      dtype=self.precision)
+        _ = np.column_stack(weights)
+        return np.array(names), np.asanyarray(_, dtype=self.precision), intercept
+
+    def set_weights(self, data: Iterable):
+        """Set weights"""
+        self.names, self.weights, intercept = self._names_weights_intercept(data)
+        if self.with_intercept:
+            self.intercept = intercept
+            
+    @property
+    def intercept(self):
+        """Intercept"""
+        return self._intercept
+
+    @intercept.setter
+    def intercept(self, value):
+        self._intercept = value
+
+    @property
+    def names(self):
+        """Component names"""
+        return self._names
+
+    @names.setter
+    def names(self, value):
+        self._names = value
+
+    def encode(self, text):
+        """Encode utterace into a matrix"""
+
+        token2id = self.seqTM.token2id
+        seq = []
+        for token in self.seqTM.tokenize(text):
+            try:
+                seq.append(token2id[token])
+            except KeyError:
+                continue
+        W = self.weights
+        tfidf = self.seqTM.weights
+        if len(seq) == 0:
+            return np.ones((1, W.shape[1]), dtype=W.dtype)
+        index, tf_ = np.unique(seq, return_counts=True)
+        # cnt = Counter(seq)
+        # seq = np.array(list(cnt.keys()))
+        # tf = np.array([cnt[k] for k in seq])
+        tf = tf_ / tf_.sum()
+        _ = tfidf[index] * tf
+        if self.merge_encode:
+            return W[index] * np.c_[_ / norm(_)]
+        tfidf = {k: v for k, v in zip(index, _ / (norm(_) * tf_))}
+        return W[seq] * np.c_[[tfidf[i] for i in seq]]
+        
+    def transform(self, texts: Iterable):
+        """Transform"""
+        _ = [self.encode(text).sum(axis=0) 
+             for text in progress_bar(texts, desc='Transform',
+                                      use_tqdm=self.use_tqdm)]
+        X = np.vstack(_)
+        if self.with_intercept:
+            return X + self.intercept
+        return X
+
+    def fit(self, X, y):
+        """fit"""
+        return self
+
+    def add(self, data: Iterable):
+        """Add weights"""
+        names, weights, _ = self._names_weights_intercept(data)
+        assert isinstance(_, list)
+        self_name_w = dict(zip(self.names, self.weights.T))
+        name_w = dict(zip(names, weights.T))
+        names = sorted(set(self.names).union(set(names)))
+        zeros = np.zeros(self.weights.shape[0])
+        weights = []
+        for name in names:
+            frst = 1 if name in self_name_w else 0
+            scnd = 1 if name in name_w else 0
+            frst = frst / (frst + scnd)
+            v1 = self_name_w.get(name, zeros)
+            v2 = name_w.get(name, zeros)
+            weights.append(frst * v1 + (1 - frst) * v2)
+        self.weights = np.column_stack(weights)
+        self.names = names
+    
     def tailored(self, D: Iterable=None,
                  filename: str=None,
                  tsv_filename: str=None,
@@ -520,122 +637,6 @@ class EncExpT(Identifier):
                 pass
         return self
 
-    @property
-    def weights(self):
-        """Weights"""
-        try:
-            return self._weights
-        except AttributeError:
-            assert self.pretrained
-            self.set_weights(download_TextModel(self.identifier,
-                                                first=False))
-        return self._weights
-
-    @weights.setter
-    def weights(self, value):
-        self._weights = value
-
-    def _names_weights_intercept(self, data: Iterable):
-        """Get names, weights and intercept from data"""
-        weights = []
-        names = []
-        intercept = []
-        for coef in data:
-            _ = np.frombuffer(bytearray.fromhex(coef['coef']),
-                              dtype=np.float16)
-            weights.append(_)
-            names.append(coef['label'])
-            if self.with_intercept:
-                _ = np.frombuffer(bytearray.fromhex(coef['intercept']),
-                                  dtype=np.float16)
-                intercept.append(_[0])
-        if self.with_intercept:
-            intercept = np.asanyarray(intercept,
-                                      dtype=self.precision)
-        _ = np.column_stack(weights)
-        return np.array(names), np.asanyarray(_, dtype=self.precision), intercept
-
-    def set_weights(self, data: Iterable):
-        """Set weights"""
-        self.names, self.weights, intercept = self._names_weights_intercept(data)
-        if self.with_intercept:
-            self.intercept = intercept
-            
-    def add(self, data: Iterable):
-        """Add weights"""
-        names, weights, _ = self._names_weights_intercept(data)
-        assert isinstance(_, list)
-        self_name_w = dict(zip(self.names, self.weights.T))
-        name_w = dict(zip(names, weights.T))
-        names = sorted(set(self.names).union(set(names)))
-        zeros = np.zeros(self.weights.shape[0])
-        weights = []
-        for name in names:
-            frst = 1 if name in self_name_w else 0
-            scnd = 1 if name in name_w else 0
-            frst = frst / (frst + scnd)
-            v1 = self_name_w.get(name, zeros)
-            v2 = name_w.get(name, zeros)
-            weights.append(frst * v1 + (1 - frst) * v2)
-        self.weights = np.column_stack(weights)
-        self.names = names
-
-    @property
-    def intercept(self):
-        """Intercept"""
-        return self._intercept
-
-    @intercept.setter
-    def intercept(self, value):
-        self._intercept = value
-
-    @property
-    def names(self):
-        """Component names"""
-        return self._names
-
-    @names.setter
-    def names(self, value):
-        self._names = value
-
-    def encode(self, text):
-        """Encode utterace into a matrix"""
-
-        token2id = self.seqTM.token2id
-        seq = []
-        for token in self.seqTM.tokenize(text):
-            try:
-                seq.append(token2id[token])
-            except KeyError:
-                continue
-        W = self.weights
-        tfidf = self.seqTM.weights
-        if len(seq) == 0:
-            return np.ones((1, W.shape[1]), dtype=W.dtype)
-        index, tf_ = np.unique(seq, return_counts=True)
-        # cnt = Counter(seq)
-        # seq = np.array(list(cnt.keys()))
-        # tf = np.array([cnt[k] for k in seq])
-        tf = tf_ / tf_.sum()
-        _ = tfidf[index] * tf
-        if self.merge_encode:
-            return W[index] * np.c_[_ / norm(_)]
-        tfidf = {k: v for k, v in zip(index, _ / (norm(_) * tf_))}
-        return W[seq] * np.c_[[tfidf[i] for i in seq]]
-        
-    def transform(self, texts: Iterable):
-        """Transform"""
-        _ = [self.encode(text).sum(axis=0) 
-             for text in progress_bar(texts, desc='Transform',
-                                      use_tqdm=self.use_tqdm)]
-        X = np.vstack(_)
-        if self.with_intercept:
-            return X + self.intercept
-        return X
-
-    def fit(self, X, y):
-        """fit"""
-        return self
 
 # @dataclass
 # class EncExpT:

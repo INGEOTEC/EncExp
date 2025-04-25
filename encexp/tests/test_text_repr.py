@@ -11,15 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from os.path import isfile
+import os
 import numpy as np
 from numpy.testing import assert_almost_equal
-import os
+from sklearn.base import clone
 from microtc.utils import tweet_iterator
 # from encexp.tests.test_utils import samples
 from encexp.utils import load_dataset
 from encexp.text_repr import TextModel, SeqTM, EncExpT
-from sklearn.base import clone
 
 
 def test_TextModel():
@@ -165,12 +164,20 @@ def test_EncExpT_tailored_intercept():
     assert_almost_equal(X, X2, decimal=5)
 
 
-def test_EncExpT_tailored_intercept():
+def test_EncExpT_tailored_add():
     """Test EncExpT tailored"""
     dataset = load_dataset('mx')
     D = list(tweet_iterator(dataset))
     enc = EncExpT(lang='es', token_max_filter=2**13)
     enc.tailored(D)
+
+
+def test_EncExpT_tailored_no_neg():
+    """Test EncExpT tailored"""
+    dataset = load_dataset('mx')
+    D = [f'{text} de' for text in tweet_iterator(dataset)]
+    enc = EncExpT(lang='es', token_max_filter=2**13)
+    enc.tailored(D)    
 
 
 
