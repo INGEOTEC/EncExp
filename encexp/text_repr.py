@@ -514,7 +514,10 @@ class EncExpT(Identifier):
             train.store_model()
             set_weights(tweet_iterator(f'{train.identifier}.json.gz'))
         if tsv_filename is None:
-            os.unlink(path)
+            try:
+                os.unlink(path)
+            except PermissionError:
+                pass
         return self
 
     @property
