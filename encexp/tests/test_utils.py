@@ -13,12 +13,11 @@
 # limitations under the License.
 from os.path import isfile
 import os
-import json
 import numpy as np
 from numpy.testing import assert_almost_equal
-from microtc.utils import Counter, tweet_iterator
-from encexp.utils import Download, DialectID_URL, compute_b4msa_vocabulary
-from encexp.utils import compute_seqtm_vocabulary, unit_length
+from microtc.utils import tweet_iterator
+from encexp.utils import Download, DialectID_URL
+from encexp.utils import unit_length
 from encexp.utils import set_to_zero, transform_from_tokens
 
 
@@ -47,32 +46,18 @@ def test_download_use_tqdm():
     os.unlink("t.html")
 
 
-def samples(filename='es-mx-sample.json.zip'):
-    """Download MX sample"""
+# def samples(filename='es-mx-sample.json.zip'):
+#     """Download MX sample"""
 
-    from zipfile import ZipFile
+#     from zipfile import ZipFile
 
-    if isfile(filename):
-        return
-    Download(f'{DialectID_URL}/{filename}',
-             filename)
-    with ZipFile(filename, "r") as fpt:
-        fpt.extractall(path=".",
-                       pwd="ingeotec".encode("utf-8"))
-
-
-def test_compute_b4msa_vocabulary():
-    """Compute vocabulary"""
-
-    samples()
-    data = compute_b4msa_vocabulary('es-mx-sample.json')
-    _ = data['counter']
-    counter = Counter(_["dict"], _["update_calls"])
-    assert counter.most_common()[0] == ('q:e~', 1849)
-    data = compute_b4msa_vocabulary('es-mx-sample.json', 10)
-    _ = data['counter']
-    counter = Counter(_["dict"], _["update_calls"])
-    assert counter.update_calls == 10
+#     if isfile(filename):
+#         return
+#     Download(f'{DialectID_URL}/{filename}',
+#              filename)
+#     with ZipFile(filename, "r") as fpt:
+#         fpt.extractall(path=".",
+#                        pwd="ingeotec".encode("utf-8"))
 
 
 def test_uniform_sample():
@@ -85,35 +70,18 @@ def test_uniform_sample():
     assert data.sum() == 10
 
 
-def test_compute_seqtm_vocabulary_prefix_suffix():
-    """Test encode method"""
-    from encexp.text_repr import SeqTM
-
-    samples()
-    data = compute_b4msa_vocabulary('es-mx-sample.json')
-    voc = compute_seqtm_vocabulary(SeqTM, data,
-                                   'es-mx-sample.json',
-                                   voc_size_exponent=10,
-                                   prefix_suffix=True)
-    for k in voc['counter']['dict']:
-        if k[:2] != 'q:':
-            continue
-        if len(k) < 6:
-            assert k[3] == '~' or k[-1] == '~'
-
-
-def test_unit_length():
-    """Test unit length"""
-    from encexp import EncExp
-    enc = EncExp(lang='es',
-                 precision=np.float16)
-    w = enc.weights
-    w_u = unit_length(w)
-    a = np.sqrt((w_u * w_u).sum(axis=0))
-    assert_almost_equal(a, 1, decimal=4)
-    w[:, 3] = 0
-    w_u = unit_length(w)
-    assert w_u[:, 3].sum() == 0
+# def test_unit_length():
+#     """Test unit length"""
+#     from encexp import EncExp
+#     enc = EncExp(lang='es',
+#                  precision=np.float16)
+#     w = enc.weights
+#     w_u = unit_length(w)
+#     a = np.sqrt((w_u * w_u).sum(axis=0))
+#     assert_almost_equal(a, 1, decimal=4)
+#     w[:, 3] = 0
+#     w_u = unit_length(w)
+#     assert w_u[:, 3].sum() == 0
 
 
 def test_set_to_zero():
@@ -131,19 +99,15 @@ def test_set_to_zero():
     assert_almost_equal(a, b)
 
 
-def test_transform_from_tokens():
-    """Test transform"""
+# def test_transform_from_tokens():
+#     """Test transform"""
 
-    from encexp.text_repr import EncExp
-    samples()
-    enc = EncExp(lang='es')
-    D = list(tweet_iterator('es-mx-sample.json'))
-    data = [enc.bow.tokenize(x)
-            for x in D]
-    W = transform_from_tokens(enc)(data)
-    W2 = enc.transform(D)
-    assert_almost_equal(W, W2)
-
-
-    
-    
+#     from encexp.text_repr import EncExp
+#     samples()
+#     enc = EncExp(lang='es')
+#     D = list(tweet_iterator('es-mx-sample.json'))
+#     data = [enc.bow.tokenize(x)
+#             for x in D]
+#     W = transform_from_tokens(enc)(data)
+#     W2 = enc.transform(D)
+#     assert_almost_equal(W, W2)

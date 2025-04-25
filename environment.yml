@@ -1,0 +1,17 @@
+name: EncExp
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - pip
+  - scikit-learn
+  - pytest
+  - tqdm
+  - yaml
+  - jupyter
+  - CompStats
+  - microtc
+  - tabulate
+  - pip:
+    - pandas
+    - seaborn

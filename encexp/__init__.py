@@ -15,6 +15,6 @@
 import sys
 
 if not '-m' in sys.argv:
-    from encexp.text_repr import EncExp, EncExpT, SeqTM, TM
+    from encexp.text_repr import EncExpT, SeqTM, TextModel
 
-__version__ = "0.0.20"
+__version__ = "0.1.01"

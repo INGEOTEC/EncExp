@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from os.path import isfile
 import os
 import numpy as np
-from encexp.download import download_seqtm, download_encexp, main
+from encexp.download import download_seqtm, download_encexp, main, download_TextModel
 
 
 def test_download_seqtm():
@@ -57,3 +57,10 @@ def test_download_main():
         
     args = A()
     main(args)
+
+
+def test_download_TextModel():
+    """Test download TextModel"""
+    from encexp import TextModel
+    tm = TextModel(lang='ca')
+    download_TextModel(tm.identifier)
