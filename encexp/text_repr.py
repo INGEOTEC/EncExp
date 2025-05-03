@@ -16,6 +16,7 @@ from abc import ABC
 import inspect
 from typing import Union, Iterable
 from collections import OrderedDict
+from unicodedata import normalize
 import re
 from os.path import isfile
 import os
@@ -174,7 +175,10 @@ class TextModel(Identifier, microTCTM):
         """
 
         text = super(TextModel, self).text_transformations(text)
-        return re.sub('~+', '~', text)        
+        text = re.sub('~+', '~', text)
+        if self.del_diac:
+            return text
+        return normalize('NFD', text)
 
     def get_word_list(self, text):
         """Words from normalize text"""
