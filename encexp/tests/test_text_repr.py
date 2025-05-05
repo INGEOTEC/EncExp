@@ -17,7 +17,7 @@ from numpy.testing import assert_almost_equal
 from sklearn.base import clone
 from microtc.utils import tweet_iterator
 # from encexp.tests.test_utils import samples
-from encexp.utils import load_dataset
+from encexp.utils import load_dataset, MODEL_LANG
 from encexp.text_repr import TextModel, SeqTM, EncExpT
 
 
@@ -104,6 +104,22 @@ def test_SeqTM_TM():
     seq = SeqTM(lang='es', token_max_filter=2**13)
     _ = seq.tokenize('buenos dias .?,')
     assert _ == ['buenos~dias', 'e:.~e:?', 'e:,']
+
+
+def test_SeqTM_empty_punc():
+    """Test empty punc"""
+
+    X, y = load_dataset(['mx', 'ar'], return_X_y=True)
+    seq = SeqTM(lang='es')
+    tokens = seq.tokenize(X[0])
+    assert 'q:~e' not in tokens
+    assert 'e:' in tokens
+    for lang in MODEL_LANG:
+        if lang in ('ja', 'zh'):
+            continue
+        seq = SeqTM(lang=lang)
+        assert '~e:' in seq.tokens
+        assert seq.token_id['~e:'] == 'e:'
 
 
 def test_EncExpT_identifier():

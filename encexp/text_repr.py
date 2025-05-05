@@ -330,6 +330,10 @@ class SeqTM(TextModel):
             tokens[key] = False
         self.tokens = tokens
         self.token_id = code
+        if self.norm_punc or self.norm_emojis:
+            if '~e:' not in self.tokens and '~e:~' in self.tokens:
+                self.tokens['~e:'] = False
+                self.token_id['~e:'] = self.token_id['~e:~']
 
     def compute_tokens(self, text):
         """
