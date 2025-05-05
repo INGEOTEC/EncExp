@@ -193,7 +193,21 @@ def test_EncExpT_tailored_no_neg():
     dataset = load_dataset('mx')
     D = [f'{text} de' for text in tweet_iterator(dataset)]
     enc = EncExpT(lang='es', token_max_filter=2**13)
-    enc.tailored(D)    
+    enc.tailored(D)
+
+
+def test_TextModel_diac():
+    """Test TextModel diac"""
+    from unicodedata import normalize
+    dataset = load_dataset('mx')
+    D = list(tweet_iterator(dataset))
+    tm = TextModel(del_diac=False, pretrained=False).fit(D)
+    cdn = normalize('NFD', 'ñ')
+    lst = [x for x in tm.names if cdn in x]
+    assert len(lst) > 3
+    cdn = normalize('NFD', 'á')
+    lst = [x for x in tm.names if cdn in x]
+    assert len(lst) > 3
 
 
 
