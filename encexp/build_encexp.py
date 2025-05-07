@@ -37,6 +37,7 @@ class Dataset:
     dirname: str='.'
     text_model: SeqTM=None
     use_tqdm: bool=True
+    self_supervised: bool=True
 
     @property
     def identifier(self):
@@ -81,7 +82,7 @@ class Dataset:
                     text = " ".join([tm.text_transformations(x) for x in text])
                 else:
                     text = tm.text_transformations(text)
-                if label is None:
+                if label is None or self.self_supervised:
                     label = " ".join(tm.compute_tokens(text)[0])
                 if len(label) == 0:
                     continue
@@ -122,6 +123,8 @@ class Train:
     use_tqdm: bool=True
     with_intercept: bool=False
     n_jobs: int=-1
+    self_supervised: bool=True
+    keep_unfreq: bool=False
 
     @property
     def identifier(self):
@@ -164,20 +167,32 @@ class Train:
                 cnt.update(labels)
         labels = sorted([k for k, v in cnt.items() if v >= self.min_pos])
         self.labels = labels
+        self.labels_freq = cnt
         return labels
 
     @labels.setter
     def labels(self, value):
         self._labels = value
 
+    @property
+    def labels_freq(self):
+        """Labels frequency"""
+        return self._labels_freq
+
+    @labels_freq.setter
+    def labels_freq(self, value):
+        self._labels_freq = value
+
     def transform(self, data: list):
         """Transform"""
         model = self.text_model.model
         _ = [model[x] for x in data]
         return self.text_model.tonp(_)
-    
+
     def filter_tokens(self, tokens, label):
         """Filter tokens on self-supervised learning"""
+        if not self.self_supervised:
+            return tokens
         return [x for x in tokens if x != label]
 
     def training_set(self, label):
@@ -187,26 +202,35 @@ class Train:
         max_pos = self.max_pos
         POS = []
         NEG = []
+        labels_freq = [(k, v) for k, v in self.labels_freq.items() if k != label]
         with open(self.filename, encoding='utf-8') as fpt:
             for line in fpt:
+                if len(POS) >= max_pos and len(NEG) >= max_pos:
+                    break
                 line = line.strip()
                 labels, text = line.split('\t')
                 labels = labels.split()
                 tokens = tokenize(text)
-                if label in labels:
+                if label in labels and len(POS) < max_pos:
                     _ = self.filter_tokens(tokens, label)
                     POS.append(_)
-                elif len(NEG) - len(POS) < 1024:
-                    NEG.append(tokens)
-                else:
-                    k = randint(0, len(NEG) - 1)
-                    del NEG[k]
-                if len(POS) > max_pos:
-                    break
+                    continue
+                klass, _ = min(labels_freq, key=lambda x: x[1])
+                neg = dict(tokens=tokens, label=klass)
+                if len(NEG) < max_pos:
+                    NEG.append(neg)
+                    continue
+                k = randint(0, len(NEG) - 1)
+                if not self.keep_unfreq:
+                    NEG[k] = neg
+                    continue
+                if self.labels_freq[NEG[k]['label']] > self.labels_freq[neg['label']]:
+                    NEG[k] = neg
         if len(NEG) == 0 or len(POS) == 0:
             return None
         shuffle(NEG)
         NEG = NEG[:len(POS)]
+        NEG = [x['tokens'] for x in NEG]
         X = self.transform(POS + NEG)
         y = [1] * len(POS) + [-1] * len(NEG)
         return X, np.array(y)

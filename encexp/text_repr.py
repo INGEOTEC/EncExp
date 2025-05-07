@@ -585,6 +585,8 @@ class EncExpT(Identifier):
                  min_pos: int=32,
                  max_pos: int=int(2**15),
                  n_jobs: int=-1,
+                 self_supervised: bool=True,
+                 keep_unfreq: bool=True,
                  ds: object=None,
                  train: object=None):
         """Load/Create tailored encexp representation"""
@@ -611,6 +613,7 @@ class EncExpT(Identifier):
             return self
         if ds is None:
             ds = EncExpDataset(text_model=clone(self.seqTM),
+                               self_supervised=self_supervised,
                                use_tqdm=self.use_tqdm)
         if tsv_filename is None:
             _, path = mkstemp()
@@ -626,7 +629,9 @@ class EncExpT(Identifier):
                           min_pos=min_pos,
                           max_pos=max_pos,
                           n_jobs=n_jobs,
-                          with_intercept=self.with_intercept)
+                          with_intercept=self.with_intercept,
+                          self_supervised=self_supervised,
+                          keep_unfreq=keep_unfreq)
         if filename is None:
             train.identifier = self.identifier
         else:
