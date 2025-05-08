@@ -199,7 +199,8 @@ class Train:
         """Training set"""
         self.text_model.disable_text_transformations = True
         tokenize = self.text_model.tokenize
-        max_pos = self.max_pos
+        max_pos = min(self.max_pos,
+                      self.labels_freq[label])
         POS = []
         NEG = []
         labels_freq = [(k, v) for k, v in self.labels_freq.items() if k != label]
