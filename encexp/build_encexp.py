@@ -83,7 +83,7 @@ class Dataset:
                 else:
                     text = tm.text_transformations(text)
                 if label is None or self.self_supervised:
-                    label = " ".join(tm.compute_tokens(text)[0])
+                    label = " ".join(sorted(set(tm.compute_tokens(text)[0])))
                 if len(label) == 0:
                     continue
                 print(f'{label}\t{text}', file=fpt)
