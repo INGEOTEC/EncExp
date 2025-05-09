@@ -112,8 +112,8 @@ def test_Train_training_set():
     dataset = load_dataset('mx')
     seq = SeqTM(lang='es', token_max_filter=2**13)
     ds = EncExpDataset(text_model=clone(seq))
-    if not isfile(ds.output_filename):
-        ds.process(tweet_iterator(dataset))
+    # if not isfile(ds.output_filename):
+    ds.process(tweet_iterator(dataset))
     train = Train(text_model=seq, min_pos=32,
                   filename=ds.output_filename)
     labels = train.labels
@@ -122,6 +122,13 @@ def test_Train_training_set():
     # cnt = np.where((X > 0).sum(axis=0).A1)[0].shape
     train.keep_unfreq = True
     X, y = train.training_set(labels[0])
+    labels, freq =  np.unique(y, return_counts=True)
+    assert freq[0] > freq[1]
+    # train.min_neg = 1
+    # X, y = train.training_set(labels[0])
+    # labels, freq =  np.unique(y, return_counts=True)
+    # assert freq[0] == freq[1]
+
     # cnt2 = np.where((X > 0).sum(axis=0).A1)[0].shape
     # assert cnt < cnt2
 

@@ -119,6 +119,7 @@ class Train:
     text_model: SeqTM=None
     min_pos: int=512
     max_pos: int=int(2**15)
+    min_neg: int=int(2**14)
     filename: str=None
     use_tqdm: bool=True
     with_intercept: bool=False
@@ -201,12 +202,13 @@ class Train:
         tokenize = self.text_model.tokenize
         max_pos = min(self.max_pos,
                       self.labels_freq[label])
+        num_neg = max(max_pos, self.min_neg)
         POS = []
         NEG = []
         labels_freq = [(k, v) for k, v in self.labels_freq.items() if k != label]
         with open(self.filename, encoding='utf-8') as fpt:
             for line in fpt:
-                if len(POS) >= max_pos and len(NEG) >= max_pos:
+                if len(POS) >= max_pos and len(NEG) >= num_neg:
                     break
                 line = line.strip()
                 labels, text = line.split('\t')
@@ -218,7 +220,7 @@ class Train:
                     continue
                 klass, _ = min(labels_freq, key=lambda x: x[1])
                 neg = dict(tokens=tokens, label=klass)
-                if len(NEG) < max_pos:
+                if len(NEG) < num_neg:
                     NEG.append(neg)
                     continue
                 k = randint(0, len(NEG) - 1)
@@ -229,8 +231,6 @@ class Train:
                     NEG[k] = neg
         if len(NEG) == 0 or len(POS) == 0:
             return None
-        shuffle(NEG)
-        NEG = NEG[:len(POS)]
         NEG = [x['tokens'] for x in NEG]
         X = self.transform(POS + NEG)
         y = [1] * len(POS) + [-1] * len(NEG)
