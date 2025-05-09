@@ -327,8 +327,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     main(args)
 
-    
-# from EvoMSA.utils import MODEL_LANG
+
+# from encexp.utils import MODEL_LANG
 # from encexp import SeqTM
 # import json
 
@@ -341,7 +341,7 @@ if __name__ == '__main__':
 #     qgrams = [str(x) for x in seq.names
 #               if x[:2] == 'q:' and x[2] != '~' and x[-1] != '~']
 #     qgrams.sort(key=lambda x: len(x), reverse=True)
-#     cnt = 4986 - len(words)
+#     cnt = 4978 - len(words)
 #     if cnt > 0:
 #         words.extend(qgrams[:cnt])
 #     words = sorted(words)
