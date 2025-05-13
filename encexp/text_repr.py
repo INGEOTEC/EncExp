@@ -436,6 +436,7 @@ class EncExpT(Identifier):
     use_tqdm: bool=True
     with_intercept: bool=False
     merge_encode: bool=True
+    distance: bool=False
 
     @property
     def seqTM(self):
@@ -455,6 +456,8 @@ class EncExpT(Identifier):
         if key == 'pretrained':
             return True
         if key == 'merge_encode':
+            return True
+        if key == 'distance':
             return True
         return False
 
@@ -553,12 +556,28 @@ class EncExpT(Identifier):
                                       use_tqdm=self.use_tqdm)]
         X = np.vstack(_)
         if self.with_intercept:
-            return X + self.intercept
+            X = X + self.intercept
+        if self.distance:
+            X = X / self.norm
         return X
 
     def fit(self, X, y):
         """fit"""
         return self
+
+    @property
+    def norm(self):
+        """Weights norm"""
+        try:
+            return self._norm
+        except AttributeError:
+            _ = np.linalg.norm(self.weights, axis=0)
+            self.norm = _
+        return self._norm
+
+    @norm.setter
+    def norm(self, value):
+        self._norm = value
 
     def add(self, data: Iterable):
         """Add weights"""

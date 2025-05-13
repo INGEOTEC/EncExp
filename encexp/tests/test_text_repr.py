@@ -196,6 +196,18 @@ def test_EncExpT_tailored_no_neg():
     enc.tailored(D)
 
 
+def test_EncExpT_norm():
+    """Test EncExpT norm"""
+    enc = EncExpT(lang='es',
+                  distance=True,
+                  token_max_filter=2**13)
+    assert enc.norm.shape[0] == len(enc.names)
+    X1 = enc.transform(['buenos dias'])
+    enc.distance = False
+    X2 = enc.transform(['buenos dias'])
+    assert np.fabs(X1 - X2).sum() != 0
+
+
 def test_TextModel_diac():
     """Test TextModel diac"""
     from unicodedata import normalize
