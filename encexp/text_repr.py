@@ -437,6 +437,7 @@ class EncExpT(Identifier):
     with_intercept: bool=False
     merge_encode: bool=True
     distance: bool=False
+    keep_unfreq: bool=True
 
     @property
     def seqTM(self):
@@ -605,7 +606,6 @@ class EncExpT(Identifier):
                  max_pos: int=int(2**15),
                  n_jobs: int=-1,
                  self_supervised: bool=True,
-                 keep_unfreq: bool=True,
                  ds: object=None,
                  train: object=None):
         """Load/Create tailored encexp representation"""
@@ -650,7 +650,7 @@ class EncExpT(Identifier):
                           n_jobs=n_jobs,
                           with_intercept=self.with_intercept,
                           self_supervised=self_supervised,
-                          keep_unfreq=keep_unfreq)
+                          keep_unfreq=self.keep_unfreq)
         if filename is None:
             train.identifier = self.identifier
         else:

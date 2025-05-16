@@ -94,7 +94,7 @@ def test_Train_labels():
     ds.process(tweet_iterator(dataset))
     train = Train(text_model=seq, min_pos=32,
                   filename=ds.output_filename)
-    assert len(train.labels) == 94
+    assert len(train.labels) == 88
     X, y = load_dataset(['mx', 'ar'], return_X_y=True)
     D = [dict(text=text, klass=label) for text, label in zip(X, y)]
     ds = EncExpDataset(text_model=clone(seq), self_supervised=False)

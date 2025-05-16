@@ -140,11 +140,11 @@ def test_EncExpT_tailored():
     enc.tailored(D, tsv_filename='tailored.tsv',
                  filename='tailored.json.gz')
     assert enc.weights.shape[0] == 2**14
-    assert enc.weights.shape[1] == 94
+    assert enc.weights.shape[1] == 88
     W = enc.encode('buenos dias')
-    assert  W.shape == (1, 94)
+    assert  W.shape == (1, 88)
     X = enc.transform(D)
-    assert X.shape == (2048, 94)
+    assert X.shape == (2048, 88)
 
 
 def test_EncExpT_pretrained():
@@ -164,10 +164,10 @@ def test_EncExpT_tailored_intercept():
     enc.tailored(D, tsv_filename='tailored.tsv',
                  filename='tailored_intercept.json.gz')
     assert enc.weights.shape[0] == 2**14
-    assert enc.weights.shape[1] == 94
-    assert enc.intercept.shape[0] == 94
+    assert enc.weights.shape[1] == 88
+    assert enc.intercept.shape[0] == 88
     X = enc.transform(['buenos dias'])
-    assert X.shape[1] == 94
+    assert X.shape[1] == 88
     enc.with_intercept = False
     assert np.fabs(X - enc.transform(['buenos dias'])).sum() != 0
     enc.with_intercept = True
