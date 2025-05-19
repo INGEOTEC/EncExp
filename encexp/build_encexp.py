@@ -214,9 +214,10 @@ class Train:
                 labels, text = line.split('\t')
                 labels = labels.split()
                 tokens = tokenize(text)
-                if label in labels and len(POS) < max_pos:
-                    _ = self.filter_tokens(tokens, label)
-                    POS.append(_)
+                if label in labels:
+                    if len(POS) < max_pos:
+                        _ = self.filter_tokens(tokens, label)
+                        POS.append(_)
                     continue
                 klass, _ = min(labels_freq, key=lambda x: x[1])
                 neg = dict(tokens=tokens, label=klass)
