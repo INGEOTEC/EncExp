@@ -27,7 +27,7 @@ from microtc.utils import tweet_iterator, Counter
 import encexp
 from encexp.text_repr import SeqTM, EncExpT
 from encexp.utils import progress_bar
-from encexp.download import download_TextModel
+from encexp.download import download
 
 
 @dataclass
@@ -98,7 +98,7 @@ class EncExpDataset(Dataset):
         try:
             return self._keywords
         except AttributeError:
-            words = download_TextModel('keywords')[self.text_model.lang]
+            words = download('keywords')[self.text_model.lang]
             cnt = Counter()
             cnt.update(words)
             self.keywords = cnt

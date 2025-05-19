@@ -28,7 +28,7 @@ from microtc.utils import Counter
 from microtc import emoticons, TextModel as microTCTM
 from microtc.textmodel import SKIP_SYMBOLS
 from microtc.weighting import TFIDF
-from encexp.download import download_TextModel
+from encexp.download import download
 from encexp.utils import progress_bar
 
 
@@ -76,6 +76,10 @@ class Identifier(ABC):
     def precision(self, value):
         self._precision = value
 
+    def download(self, first: bool=True):
+        """download"""
+        return download(self.identifier, first=first)
+
 
 class TextModel(Identifier, microTCTM):
     """TextModel"""
@@ -118,7 +122,7 @@ class TextModel(Identifier, microTCTM):
         self._norm_tokens()
         self.pretrained = pretrained
         if pretrained:
-            counter = download_TextModel(self.identifier)['vocabulary']
+            counter = self.download()['vocabulary']
             self.set_vocabulary(counter)
 
     def identifier_filter(self, key, value):
@@ -473,8 +477,7 @@ class EncExpT(Identifier):
             return self._weights
         except AttributeError:
             assert self.pretrained
-            self.set_weights(download_TextModel(self.identifier,
-                                                first=False))
+            self.set_weights(self.download(first=False))
         return self._weights
 
     @weights.setter
