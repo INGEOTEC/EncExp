@@ -17,7 +17,7 @@ from numpy.testing import assert_almost_equal
 from sklearn.base import clone
 from microtc.utils import tweet_iterator
 # from encexp.tests.test_utils import samples
-from encexp.utils import load_dataset
+from encexp.utils import load_dataset, MODEL_LANG
 from encexp.text_repr import TextModel, SeqTM, EncExpT
 
 
@@ -106,6 +106,22 @@ def test_SeqTM_TM():
     assert _ == ['buenos~dias', 'e:.~e:?', 'e:,']
 
 
+def test_SeqTM_empty_punc():
+    """Test empty punc"""
+
+    X, y = load_dataset(['mx', 'ar'], return_X_y=True)
+    seq = SeqTM(lang='es')
+    tokens = seq.tokenize(X[0])
+    assert 'q:~e' not in tokens
+    assert 'e:' in tokens
+    for lang in MODEL_LANG:
+        if lang in ('ja', 'zh'):
+            continue
+        seq = SeqTM(lang=lang)
+        assert '~e:' in seq.tokens
+        assert seq.token_id['~e:'] == 'e:'
+
+
 def test_EncExpT_identifier():
     """Test EncExpT identifier"""
     enc = EncExpT(lang='es')
@@ -124,11 +140,11 @@ def test_EncExpT_tailored():
     enc.tailored(D, tsv_filename='tailored.tsv',
                  filename='tailored.json.gz')
     assert enc.weights.shape[0] == 2**14
-    assert enc.weights.shape[1] == 93
+    assert enc.weights.shape[1] == 88
     W = enc.encode('buenos dias')
-    assert  W.shape == (1, 93)
+    assert  W.shape == (1, 88)
     X = enc.transform(D)
-    assert X.shape == (2048, 93)
+    assert X.shape == (2048, 88)
 
 
 def test_EncExpT_pretrained():
@@ -148,10 +164,10 @@ def test_EncExpT_tailored_intercept():
     enc.tailored(D, tsv_filename='tailored.tsv',
                  filename='tailored_intercept.json.gz')
     assert enc.weights.shape[0] == 2**14
-    assert enc.weights.shape[1] == 93
-    assert enc.intercept.shape[0] == 93
+    assert enc.weights.shape[1] == 88
+    assert enc.intercept.shape[0] == 88
     X = enc.transform(['buenos dias'])
-    assert X.shape[1] == 93
+    assert X.shape[1] == 88
     enc.with_intercept = False
     assert np.fabs(X - enc.transform(['buenos dias'])).sum() != 0
     enc.with_intercept = True
@@ -177,7 +193,33 @@ def test_EncExpT_tailored_no_neg():
     dataset = load_dataset('mx')
     D = [f'{text} de' for text in tweet_iterator(dataset)]
     enc = EncExpT(lang='es', token_max_filter=2**13)
-    enc.tailored(D)    
+    enc.tailored(D)
+
+
+def test_EncExpT_norm():
+    """Test EncExpT norm"""
+    enc = EncExpT(lang='es',
+                  distance=True,
+                  token_max_filter=2**13)
+    assert enc.norm.shape[0] == len(enc.names)
+    X1 = enc.transform(['buenos dias'])
+    enc.distance = False
+    X2 = enc.transform(['buenos dias'])
+    assert np.fabs(X1 - X2).sum() != 0
+
+
+def test_TextModel_diac():
+    """Test TextModel diac"""
+    from unicodedata import normalize
+    dataset = load_dataset('mx')
+    D = list(tweet_iterator(dataset))
+    tm = TextModel(del_diac=False, pretrained=False).fit(D)
+    cdn = normalize('NFD', 'ñ')
+    lst = [x for x in tm.names if cdn in x]
+    assert len(lst) > 3
+    cdn = normalize('NFD', 'á')
+    lst = [x for x in tm.names if cdn in x]
+    assert len(lst) > 3
 
 
 

@@ -27,7 +27,7 @@ from microtc.utils import tweet_iterator, Counter
 import encexp
 from encexp.text_repr import SeqTM, EncExpT
 from encexp.utils import progress_bar
-from encexp.download import download_TextModel
+from encexp.download import download
 
 
 @dataclass
@@ -37,6 +37,7 @@ class Dataset:
     dirname: str='.'
     text_model: SeqTM=None
     use_tqdm: bool=True
+    self_supervised: bool=True
 
     @property
     def identifier(self):
@@ -81,8 +82,8 @@ class Dataset:
                     text = " ".join([tm.text_transformations(x) for x in text])
                 else:
                     text = tm.text_transformations(text)
-                if label is None:
-                    label = " ".join(tm.compute_tokens(text)[0])
+                if label is None or self.self_supervised:
+                    label = " ".join(sorted(set(tm.compute_tokens(text)[0])))
                 if len(label) == 0:
                     continue
                 print(f'{label}\t{text}', file=fpt)
@@ -97,7 +98,7 @@ class EncExpDataset(Dataset):
         try:
             return self._keywords
         except AttributeError:
-            words = download_TextModel('keywords')[self.text_model.lang]
+            words = download('keywords')[self.text_model.lang]
             cnt = Counter()
             cnt.update(words)
             self.keywords = cnt
@@ -118,10 +119,13 @@ class Train:
     text_model: SeqTM=None
     min_pos: int=512
     max_pos: int=int(2**15)
+    min_neg: int=int(2**14)
     filename: str=None
     use_tqdm: bool=True
     with_intercept: bool=False
     n_jobs: int=-1
+    self_supervised: bool=True
+    keep_unfreq: bool=False
 
     @property
     def identifier(self):
@@ -164,49 +168,71 @@ class Train:
                 cnt.update(labels)
         labels = sorted([k for k, v in cnt.items() if v >= self.min_pos])
         self.labels = labels
+        self.labels_freq = cnt
         return labels
 
     @labels.setter
     def labels(self, value):
         self._labels = value
 
+    @property
+    def labels_freq(self):
+        """Labels frequency"""
+        return self._labels_freq
+
+    @labels_freq.setter
+    def labels_freq(self, value):
+        self._labels_freq = value
+
     def transform(self, data: list):
         """Transform"""
         model = self.text_model.model
         _ = [model[x] for x in data]
         return self.text_model.tonp(_)
-    
+
     def filter_tokens(self, tokens, label):
         """Filter tokens on self-supervised learning"""
+        if not self.self_supervised:
+            return tokens
         return [x for x in tokens if x != label]
 
     def training_set(self, label):
         """Training set"""
         self.text_model.disable_text_transformations = True
         tokenize = self.text_model.tokenize
-        max_pos = self.max_pos
+        max_pos = min(self.max_pos,
+                      self.labels_freq[label])
+        num_neg = max(max_pos, self.min_neg)
         POS = []
         NEG = []
+        labels_freq = [(k, v) for k, v in self.labels_freq.items() if k != label]
         with open(self.filename, encoding='utf-8') as fpt:
             for line in fpt:
+                if len(POS) >= max_pos and len(NEG) >= num_neg:
+                    break
                 line = line.strip()
                 labels, text = line.split('\t')
                 labels = labels.split()
                 tokens = tokenize(text)
                 if label in labels:
-                    _ = self.filter_tokens(tokens, label)
-                    POS.append(_)
-                elif len(NEG) - len(POS) < 1024:
-                    NEG.append(tokens)
-                else:
-                    k = randint(0, len(NEG) - 1)
-                    del NEG[k]
-                if len(POS) > max_pos:
-                    break
+                    if len(POS) < max_pos:
+                        _ = self.filter_tokens(tokens, label)
+                        POS.append(_)
+                    continue
+                klass, _ = min(labels_freq, key=lambda x: x[1])
+                neg = dict(tokens=tokens, label=klass)
+                if len(NEG) < num_neg:
+                    NEG.append(neg)
+                    continue
+                k = randint(0, len(NEG) - 1)
+                if not self.keep_unfreq:
+                    NEG[k] = neg
+                    continue
+                if self.labels_freq[NEG[k]['label']] > self.labels_freq[neg['label']]:
+                    NEG[k] = neg
         if len(NEG) == 0 or len(POS) == 0:
             return None
-        shuffle(NEG)
-        NEG = NEG[:len(POS)]
+        NEG = [x['tokens'] for x in NEG]
         X = self.transform(POS + NEG)
         y = [1] * len(POS) + [-1] * len(NEG)
         return X, np.array(y)
@@ -302,8 +328,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     main(args)
 
-    
-# from EvoMSA.utils import MODEL_LANG
+
+# from encexp.utils import MODEL_LANG
 # from encexp import SeqTM
 # import json
 
@@ -316,7 +342,7 @@ if __name__ == '__main__':
 #     qgrams = [str(x) for x in seq.names
 #               if x[:2] == 'q:' and x[2] != '~' and x[-1] != '~']
 #     qgrams.sort(key=lambda x: len(x), reverse=True)
-#     cnt = 4986 - len(words)
+#     cnt = 4978 - len(words)
 #     if cnt > 0:
 #         words.extend(qgrams[:cnt])
 #     words = sorted(words)

@@ -16,6 +16,7 @@ from abc import ABC
 import inspect
 from typing import Union, Iterable
 from collections import OrderedDict
+from unicodedata import normalize
 import re
 from os.path import isfile
 import os
@@ -27,7 +28,7 @@ from microtc.utils import Counter
 from microtc import emoticons, TextModel as microTCTM
 from microtc.textmodel import SKIP_SYMBOLS
 from microtc.weighting import TFIDF
-from encexp.download import download_TextModel
+from encexp.download import download
 from encexp.utils import progress_bar
 
 
@@ -75,6 +76,10 @@ class Identifier(ABC):
     def precision(self, value):
         self._precision = value
 
+    def download(self, first: bool=True):
+        """download"""
+        return download(self.identifier, first=first)
+
 
 class TextModel(Identifier, microTCTM):
     """TextModel"""
@@ -117,7 +122,7 @@ class TextModel(Identifier, microTCTM):
         self._norm_tokens()
         self.pretrained = pretrained
         if pretrained:
-            counter = download_TextModel(self.identifier)['vocabulary']
+            counter = self.download()['vocabulary']
             self.set_vocabulary(counter)
 
     def identifier_filter(self, key, value):
@@ -174,7 +179,10 @@ class TextModel(Identifier, microTCTM):
         """
 
         text = super(TextModel, self).text_transformations(text)
-        return re.sub('~+', '~', text)        
+        text = re.sub('~+', '~', text)
+        if self.del_diac:
+            return text
+        return normalize('NFD', text)
 
     def get_word_list(self, text):
         """Words from normalize text"""
@@ -330,6 +338,10 @@ class SeqTM(TextModel):
             tokens[key] = False
         self.tokens = tokens
         self.token_id = code
+        if self.norm_punc or self.norm_emojis:
+            if '~e:' not in self.tokens and '~e:~' in self.tokens:
+                self.tokens['~e:'] = False
+                self.token_id['~e:'] = self.token_id['~e:~']
 
     def compute_tokens(self, text):
         """
@@ -428,6 +440,8 @@ class EncExpT(Identifier):
     use_tqdm: bool=True
     with_intercept: bool=False
     merge_encode: bool=True
+    distance: bool=False
+    keep_unfreq: bool=True
 
     @property
     def seqTM(self):
@@ -448,6 +462,8 @@ class EncExpT(Identifier):
             return True
         if key == 'merge_encode':
             return True
+        if key == 'distance':
+            return True
         return False
 
     @seqTM.setter
@@ -461,8 +477,7 @@ class EncExpT(Identifier):
             return self._weights
         except AttributeError:
             assert self.pretrained
-            self.set_weights(download_TextModel(self.identifier,
-                                                first=False))
+            self.set_weights(self.download(first=False))
         return self._weights
 
     @weights.setter
@@ -545,12 +560,28 @@ class EncExpT(Identifier):
                                       use_tqdm=self.use_tqdm)]
         X = np.vstack(_)
         if self.with_intercept:
-            return X + self.intercept
+            X = X + self.intercept
+        if self.distance:
+            X = X / self.norm
         return X
 
     def fit(self, X, y):
         """fit"""
         return self
+
+    @property
+    def norm(self):
+        """Weights norm"""
+        try:
+            return self._norm
+        except AttributeError:
+            _ = np.linalg.norm(self.weights, axis=0)
+            self.norm = _
+        return self._norm
+
+    @norm.setter
+    def norm(self, value):
+        self._norm = value
 
     def add(self, data: Iterable):
         """Add weights"""
@@ -577,6 +608,7 @@ class EncExpT(Identifier):
                  min_pos: int=32,
                  max_pos: int=int(2**15),
                  n_jobs: int=-1,
+                 self_supervised: bool=True,
                  ds: object=None,
                  train: object=None):
         """Load/Create tailored encexp representation"""
@@ -603,6 +635,7 @@ class EncExpT(Identifier):
             return self
         if ds is None:
             ds = EncExpDataset(text_model=clone(self.seqTM),
+                               self_supervised=self_supervised,
                                use_tqdm=self.use_tqdm)
         if tsv_filename is None:
             _, path = mkstemp()
@@ -618,7 +651,9 @@ class EncExpT(Identifier):
                           min_pos=min_pos,
                           max_pos=max_pos,
                           n_jobs=n_jobs,
-                          with_intercept=self.with_intercept)
+                          with_intercept=self.with_intercept,
+                          self_supervised=self_supervised,
+                          keep_unfreq=self.keep_unfreq)
         if filename is None:
             train.identifier = self.identifier
         else:
