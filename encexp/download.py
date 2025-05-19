@@ -20,8 +20,8 @@ import os
 import encexp
 
 
-def download_TextModel(identifier: str, first: bool=True):
-    """Download TextModel"""
+def download(identifier: str, first: bool=True, base_url: str=EncExp_URL):
+    """download"""
     if not isdir(MODELS):
         os.mkdir(MODELS)
     output = join(MODELS, f'{identifier}.json.gz')
@@ -32,8 +32,12 @@ def download_TextModel(identifier: str, first: bool=True):
             return tweet_iterator(output)
         except Exception:
             os.unlink(output)
-    Download(EncExp_URL + f'/{identifier}.json.gz', output)
+    Download(base_url + f'/{identifier}.json.gz', output)
     if first:
         return next(tweet_iterator(output))
     return tweet_iterator(output)
 
+
+def download_TextModel(identifier: str, first: bool=True):
+    """Download TextModel"""
+    return download(identifier, first=first)
