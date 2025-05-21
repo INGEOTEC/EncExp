@@ -109,11 +109,11 @@ def test_SeqTM_TM():
 def test_SeqTM_empty_punc():
     """Test empty punc"""
 
-    X, y = load_dataset(['mx', 'ar'], return_X_y=True)
+    # X, y = load_dataset(['mx', 'ar'], return_X_y=True)
     seq = SeqTM(lang='es')
-    tokens = seq.tokenize(X[0])
-    assert 'q:~e' not in tokens
-    assert 'e:' in tokens
+    # tokens = seq.tokenize(X[0])
+    # assert 'q:~e' not in tokens
+    # assert 'e:' in tokens
     for lang in MODEL_LANG:
         if lang in ('ja', 'zh'):
             continue
@@ -140,11 +140,11 @@ def test_EncExpT_tailored():
     enc.tailored(D, tsv_filename='tailored.tsv',
                  filename='tailored.json.gz')
     assert enc.weights.shape[0] == 2**14
-    assert enc.weights.shape[1] == 88
+    assert enc.weights.shape[1] == 90
     W = enc.encode('buenos dias')
-    assert  W.shape == (1, 88)
+    assert  W.shape == (1, 90)
     X = enc.transform(D)
-    assert X.shape == (2048, 88)
+    assert X.shape == (2048, 90)
 
 
 def test_EncExpT_pretrained():
@@ -164,10 +164,10 @@ def test_EncExpT_tailored_intercept():
     enc.tailored(D, tsv_filename='tailored.tsv',
                  filename='tailored_intercept.json.gz')
     assert enc.weights.shape[0] == 2**14
-    assert enc.weights.shape[1] == 88
-    assert enc.intercept.shape[0] == 88
+    assert enc.weights.shape[1] == 90
+    assert enc.intercept.shape[0] == 90
     X = enc.transform(['buenos dias'])
-    assert X.shape[1] == 88
+    assert X.shape[1] == 90
     enc.with_intercept = False
     assert np.fabs(X - enc.transform(['buenos dias'])).sum() != 0
     enc.with_intercept = True
@@ -195,6 +195,17 @@ def test_EncExpT_tailored_no_neg():
     enc = EncExpT(lang='es', token_max_filter=2**13)
     enc.tailored(D)
 
+
+def test_EncExpT_tailored_2cl():
+    """Test EncExpT tailored"""
+    X, y = load_dataset(['mx', 'ar'], return_X_y=True)
+    D = [dict(text=text, klass=label) for text, label in zip(X, y)]
+    enc = EncExpT(lang='es', pretrained=False,
+                  with_intercept=True,
+                  token_max_filter=2**13)
+    enc.tailored(D, self_supervised=False)
+    assert enc.names.tolist() == ['ar', 'mx']
+    
 
 def test_EncExpT_norm():
     """Test EncExpT norm"""

@@ -135,7 +135,7 @@ class Train:
         except AttributeError:
             self.identifier = self.text_model.identifier
         return self._identifier
-    
+
     @identifier.setter
     def identifier(self, value):
         self._identifier = value    
@@ -255,19 +255,28 @@ class Train:
     
     def create_model(self):
         """Create model"""
-        def inner(fname, label):
+        def inner(fname, label, add_label=None):
             if isfile(fname):
                 return (fname, label)
             coef = self.parameters(label)
             if coef is None:
                 return None
             with open(fname, 'w', encoding='utf-8') as fpt:
+                if add_label is not None:
+                    coef['label'] = [coef['label'], add_label]
                 print(json.dumps(coef), file=fpt)
             return (fname, label)
         if not isdir(self.identifier):
             os.mkdir(self.identifier)
-        args = [(join(self.identifier, f'{iden}.json'), label)
-                for iden, label in enumerate(self.labels)]
+        if len(self.labels) == 2:
+            args = [join(self.identifier, '0.json'), self.labels[0]]
+            output = inner(*args, add_label=self.labels[1])
+            if output is not None:
+                return [output]
+            return []            
+        else:
+            args = [(join(self.identifier, f'{iden}.json'), label)
+                    for iden, label in enumerate(self.labels)]
         _ = progress_bar(args, use_tqdm=self.use_tqdm)
         args = Parallel(n_jobs=self.n_jobs)(delayed(inner)(fname, label)
                                             for fname, label in _)
@@ -276,11 +285,19 @@ class Train:
     def store_model(self):
         """Create and store model"""
         args = self.create_model()
+        # if len(args) == 1:
+        #     with gzip.open(f'{self.identifier}.json.gz', 'wb') as fpt:
+        #         fname, _ = args[0]
+        #         data = next(tweet_iterator(fname))
+        #         data['label'] = self.labels
+        #         fpt.write(bytes(json.dumps(data) + '\n',
+        #                 encoding='utf-8'))
+        # else:
         with gzip.open(f'{self.identifier}.json.gz', 'wb') as fpt:
             for fname, _ in args:
                 data = next(tweet_iterator(fname))
                 fpt.write(bytes(json.dumps(data) + '\n',
-                          encoding='utf-8'))
+                        encoding='utf-8'))
         self.delete_tmps(args)
 
     def delete_tmps(self, args):

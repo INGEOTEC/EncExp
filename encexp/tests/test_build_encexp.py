@@ -54,6 +54,7 @@ def test_Dataset_process():
     data = open(ds.output_filename, encoding='utf-8').readlines()
     assert len(data) <= len(iter)
     assert len(data[0].split('\t')) == 2
+    os.unlink(ds.output_filename)
 
 
 def test_Dataset_self_supervise():
@@ -95,14 +96,14 @@ def test_Train_labels():
     train = Train(text_model=seq, min_pos=32,
                   filename=ds.output_filename)
     assert len(train.labels) == 88
-    X, y = load_dataset(['mx', 'ar'], return_X_y=True)
+    X, y = load_dataset(['mx', 'ar', 'es'], return_X_y=True)
     D = [dict(text=text, klass=label) for text, label in zip(X, y)]
     ds = EncExpDataset(text_model=clone(seq), self_supervised=False)
     ds.process(D)
     train = Train(text_model=seq, min_pos=32,
                   filename=ds.output_filename)
-    assert len(train.labels) == 2
-    assert len(train.labels_freq) == 2
+    assert len(train.labels) == 3
+    assert len(train.labels_freq) == 3
     os.unlink(ds.output_filename)
 
 
@@ -128,6 +129,7 @@ def test_Train_training_set():
     X, y = train.training_set(labels[0])
     _, freq =  np.unique(y, return_counts=True)
     assert freq[0] == freq[1]
+    os.unlink(ds.output_filename)
 
     # cnt2 = np.where((X > 0).sum(axis=0).A1)[0].shape
     # assert cnt < cnt2
@@ -146,6 +148,7 @@ def test_Train_parameters():
     labels = train.labels
     params = train.parameters(labels[0])
     assert 'N' in params
+    os.unlink(ds.output_filename)
 
 
 def test_Train_store_model():
@@ -164,6 +167,33 @@ def test_Train_store_model():
     train.identifier = enc.identifier
     train.store_model()
     assert isfile(f'{enc.identifier}.json.gz')
+    os.unlink(f'{enc.identifier}.json.gz')
+    os.unlink(ds.output_filename)    
+
+
+def test_Train_2cl():
+    """Test Train 2 labels"""
+    
+    X, y = load_dataset(['mx', 'ar'], return_X_y=True)
+    D = [dict(text=text, klass=label) for text, label in zip(X, y)]
+    enc = EncExpT(lang='es', token_max_filter=2**13,
+                  pretrained=False)
+    enc.pretrained = True
+    ds = EncExpDataset(text_model=clone(enc.seqTM),
+                       self_supervised=False)
+    ds.identifier = enc.identifier
+    ds.process(D)
+    train = Train(text_model=enc.seqTM, min_pos=32,
+                  filename=ds.output_filename,
+                  self_supervised=False)
+    train.identifier = enc.identifier
+    train.store_model()
+    assert isfile(f'{enc.identifier}.json.gz')
+    dd = list(tweet_iterator(f'{enc.identifier}.json.gz'))
+    assert len(dd) == 1
+    assert dd[0]['label'] == ['ar', 'mx']
+    os.unlink(f'{enc.identifier}.json.gz')
+    os.unlink(ds.output_filename)
 
 
 def test_seqtm_build():
