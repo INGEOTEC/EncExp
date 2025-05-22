@@ -493,7 +493,11 @@ class EncExpT(Identifier):
             _ = np.frombuffer(bytearray.fromhex(coef['coef']),
                               dtype=np.float16)
             weights.append(_)
-            names.append(coef['label'])
+            label = coef['label']
+            if isinstance(label, list):
+                names.extend(label)
+            else:
+                names.append(coef['label'])
             if self.with_intercept:
                 _ = np.frombuffer(bytearray.fromhex(coef['intercept']),
                                   dtype=np.float16)
