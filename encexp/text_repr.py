@@ -649,7 +649,7 @@ class EncExpT(Identifier):
         if tsv_filename is None or not isfile(tsv_filename):
             ds.process(D)
         if train is None:
-            train = Train(text_model=self.seqTM,
+            train = Train(text_model=clone(self.seqTM),
                           filename=ds.output_filename,
                           use_tqdm=self.use_tqdm,
                           min_pos=min_pos,
