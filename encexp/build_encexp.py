@@ -252,7 +252,7 @@ class Train:
         if self.with_intercept:
             output['intercept'] = m.intercept_.astype(np.float16).tobytes().hex()
         return output
-    
+
     def create_model(self):
         """Create model"""
         def inner(fname, label, add_label=None):
@@ -263,14 +263,14 @@ class Train:
                 return None
             with open(fname, 'w', encoding='utf-8') as fpt:
                 if add_label is not None:
-                    coef['label'] = [coef['label'], add_label]
+                    coef['label'] = [add_label, coef['label']]
                 print(json.dumps(coef), file=fpt)
             return (fname, label)
         if not isdir(self.identifier):
             os.mkdir(self.identifier)
         if len(self.labels) == 2:
-            args = [join(self.identifier, '0.json'), self.labels[0]]
-            output = inner(*args, add_label=self.labels[1])
+            args = [join(self.identifier, '0.json'), self.labels[1]]
+            output = inner(*args, add_label=self.labels[0])
             if output is not None:
                 return [output]
             return []            
