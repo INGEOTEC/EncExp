@@ -181,6 +181,7 @@ def transform_from_tokens(enc):
 
 
 def load_dataset(country: Union[str, list],
+                 lang: str='es',
                  return_X_y:bool=False):
     """Country identification dataset"""
     if not isdir(MODELS):
@@ -188,8 +189,8 @@ def load_dataset(country: Union[str, list],
     if isinstance(country, str):
         country = [country]
     for cntr in country:
-        url = f'{DialectID_URL}/es-{cntr}-sample.json.zip'
-        filename=join(MODELS, f'es-{cntr}-sample.json.zip')
+        url = f'{DialectID_URL}/{lang}-{cntr}-sample.json.zip'
+        filename=join(MODELS, f'{lang}-{cntr}-sample.json.zip')
         if isfile(filename):
             continue
         Download(url, filename)
@@ -197,12 +198,12 @@ def load_dataset(country: Union[str, list],
             fpt.extractall(path=MODELS,
                             pwd="ingeotec".encode("utf-8"))
     if len(country) == 1 and return_X_y is False:
-        return join(MODELS, f'es-{country[0]}-sample.json')
+        return join(MODELS, f'{lang}-{country[0]}-sample.json')
     assert return_X_y
     X = []
     y = []
     for cntr in country:
-        _ = join(MODELS, f'es-{cntr}-sample.json')
+        _ = join(MODELS, f'{lang}-{cntr}-sample.json')
         _ = list(tweet_iterator(_))
         X.extend(_)
         y.extend([cntr] * len(_))
