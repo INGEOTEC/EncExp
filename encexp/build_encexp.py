@@ -195,9 +195,9 @@ class Train:
         if not self.self_supervised:
             return tokens
         return [x for x in tokens if x != label]
-
-    def training_set(self, label):
-        """Training set"""
+    
+    def training_set_texts(self, label):
+        """Training set texts"""
         self.text_model.disable_text_transformations = True
         tokenize = self.text_model.tokenize
         max_pos = min(self.max_pos,
@@ -230,6 +230,11 @@ class Train:
                     continue
                 if self.labels_freq[NEG[k]['label']] > self.labels_freq[neg['label']]:
                     NEG[k] = neg
+        return NEG, POS
+
+    def training_set(self, label):
+        """Training set"""
+        NEG, POS = self.training_set_texts(label)        
         if len(NEG) == 0 or len(POS) == 0:
             return None
         NEG = [x['tokens'] for x in NEG]
