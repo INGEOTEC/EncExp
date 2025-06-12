@@ -219,7 +219,13 @@ class Train:
                         _ = self.filter_tokens(tokens, label)
                         POS.append(_)
                     continue
-                neg = dict(tokens=tokens, label=None)
+                if self.keep_unfreq:
+                    labels_freq = [(k, self.labels_freq[k])
+                                   for k in labels]
+                    klass, _ = min(labels_freq, key=lambda x: x[1])
+                else:
+                    klass = None
+                neg = dict(tokens=tokens, label=klass)
                 if len(NEG) < num_neg:
                     NEG.append(neg)
                     continue
@@ -227,9 +233,6 @@ class Train:
                 if not self.keep_unfreq:
                     NEG[k] = neg
                     continue
-                labels_freq = [(k, self.labels_freq[k]) for k in labels]
-                klass, _ = min(labels_freq, key=lambda x: x[1])
-                neg['label'] = klass
                 if self.labels_freq[NEG[k]['label']] > self.labels_freq[neg['label']]:
                     NEG[k] = neg
         return NEG, POS
