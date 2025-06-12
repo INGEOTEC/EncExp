@@ -205,7 +205,7 @@ class Train:
         num_neg = max(max_pos, self.min_neg)
         POS = []
         NEG = []
-        labels_freq = [(k, v) for k, v in self.labels_freq.items() if k != label]
+        # labels_freq = [(k, v) for k, v in self.labels_freq.items() if k != label]
         with open(self.filename, encoding='utf-8') as fpt:
             for line in fpt:
                 if len(POS) >= max_pos and len(NEG) >= num_neg:
@@ -219,8 +219,7 @@ class Train:
                         _ = self.filter_tokens(tokens, label)
                         POS.append(_)
                     continue
-                klass, _ = min(labels_freq, key=lambda x: x[1])
-                neg = dict(tokens=tokens, label=klass)
+                neg = dict(tokens=tokens, label=None)
                 if len(NEG) < num_neg:
                     NEG.append(neg)
                     continue
@@ -228,6 +227,9 @@ class Train:
                 if not self.keep_unfreq:
                     NEG[k] = neg
                     continue
+                labels_freq = [(k, self.labels_freq[k]) for k in labels]
+                klass, _ = min(labels_freq, key=lambda x: x[1])
+                neg['label'] = klass
                 if self.labels_freq[NEG[k]['label']] > self.labels_freq[neg['label']]:
                     NEG[k] = neg
         return NEG, POS
