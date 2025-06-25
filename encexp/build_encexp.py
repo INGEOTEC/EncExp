@@ -26,7 +26,7 @@ import numpy as np
 from microtc.utils import tweet_iterator, Counter
 import encexp
 from encexp.text_repr import SeqTM, EncExpT
-from encexp.utils import progress_bar
+from encexp.utils import progress_bar, uniform_sample
 from encexp.download import download
 
 
@@ -159,17 +159,38 @@ class Train:
         """Labels"""
         if hasattr(self, '_labels'):
             return self._labels
-        cnt = Counter()
+        labels_freq = Counter()
         with open(self.filename, encoding='utf-8') as fpt:
             for line in fpt:
                 line = line.strip()
                 labels, text = line.split('\t')
                 labels = labels.split()
-                cnt.update(labels)
-        labels = sorted([k for k, v in cnt.items() if v >= self.min_pos])
+                labels_freq.update(labels)
+        labels = sorted([k for k, v in labels_freq.items() if v >= self.min_pos])
         self.labels = labels
-        self.labels_freq = cnt
+        self.labels_freq = labels_freq
+        if self.keep_unfreq and self.self_supervised:
+            cnt = Counter()
+            with open(self.filename, encoding='utf-8') as fpt:
+                for line in fpt:
+                    line = line.strip()
+                    labels, text = line.split('\t')
+                    labels = labels.split()
+                    _labels_freq = [(k, labels_freq[k])
+                                    for k in labels]
+                    klass, _ = min(_labels_freq, key=lambda x: x[1])                    
+                    cnt.update([klass])
+            self.neg_freq = cnt
         return labels
+    
+    @property
+    def neg_freq(self):
+        """Frequency in the negative label"""
+        return self._neg_freq
+    
+    @neg_freq.setter
+    def neg_freq(self, value):
+        self._neg_freq = value
 
     @labels.setter
     def labels(self, value):
@@ -204,11 +225,16 @@ class Train:
                       self.labels_freq[label])
         num_neg = max(max_pos, self.min_neg)
         POS = []
-        NEG = []
-        # labels_freq = [(k, v) for k, v in self.labels_freq.items() if k != label]
+        labels_freq = self.labels_freq
+        if self.keep_unfreq and self.self_supervised:
+            labels_freq = self.neg_freq
+        labels_freq = {k: v for k, v in labels_freq.items() if k != label}
+        if not self.keep_unfreq:
+            labels_freq = {None: num_neg}
+        NEG = NegDataset(num_neg, labels_freq)
         with open(self.filename, encoding='utf-8') as fpt:
             for line in fpt:
-                if len(POS) >= max_pos and len(NEG) >= num_neg:
+                if len(POS) >= max_pos and NEG.full:
                     break
                 line = line.strip()
                 labels, text = line.split('\t')
@@ -225,24 +251,14 @@ class Train:
                     klass, _ = min(labels_freq, key=lambda x: x[1])
                 else:
                     klass = None
-                neg = dict(tokens=tokens, label=klass)
-                if len(NEG) < num_neg:
-                    NEG.append(neg)
-                    continue
-                k = randint(0, len(NEG) - 1)
-                if not self.keep_unfreq:
-                    NEG[k] = neg
-                    continue
-                if self.labels_freq[NEG[k]['label']] > self.labels_freq[neg['label']]:
-                    NEG[k] = neg
-        return NEG, POS
+                NEG.add(tokens, klass)
+        return NEG.dataset(), POS
 
     def training_set(self, label):
         """Training set"""
         NEG, POS = self.training_set_texts(label)        
         if len(NEG) == 0 or len(POS) == 0:
             return None
-        NEG = [x['tokens'] for x in NEG]
         X = self.transform(POS + NEG)
         y = [1] * len(POS) + [-1] * len(NEG)
         return X, np.array(y)
@@ -315,6 +331,42 @@ class Train:
         for fname, _ in args:
             os.unlink(fname)
         os.rmdir(self.identifier)
+
+
+class NegDataset:
+    """Uniform sample of the negatives"""
+    def __init__(self, N: int, freq: dict):
+        keys = list(freq)
+        cnt = uniform_sample(N,
+                             np.array([freq[x] for x in keys]))
+        self.cnt = {k: v for k, v in zip(keys, cnt)}
+        self.elements = {k: list() for k in keys}
+        self.tot = N
+        self.size = 0
+
+    def add(self, data: str, label: str):
+        """Add element"""
+        cnt = self.cnt[label]
+        dataset = self.elements[label]
+        if len(dataset) < cnt:
+            self.size += 1
+            dataset.append(data)
+        else:
+            k = randint(0, len(dataset) - 1)
+            dataset[k] = data
+
+    def dataset(self):
+        """Dataset"""
+        values = []
+        for v in self.elements.values():
+            values.extend(v)
+        shuffle(values)
+        return values
+
+    @property
+    def full(self):
+        """Indicate whether the dataset has all the elements required"""
+        return self.tot - self.size <= 0
 
 
 def main(args):
