@@ -351,9 +351,6 @@ class NegDataset:
         if len(dataset) < cnt:
             self.size += 1
             dataset.append(data)
-        else:
-            k = randint(0, len(dataset) - 1)
-            dataset[k] = data
 
     def dataset(self):
         """Dataset"""

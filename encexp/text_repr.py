@@ -441,7 +441,7 @@ class EncExpT(Identifier):
     with_intercept: bool=False
     merge_encode: bool=True
     distance: bool=False
-    keep_unfreq: bool=True
+    keep_unfreq: bool=False
 
     @property
     def seqTM(self):
