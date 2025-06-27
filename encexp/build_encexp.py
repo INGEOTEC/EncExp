@@ -118,7 +118,7 @@ class Train:
     """Train"""
     text_model: SeqTM=None
     min_pos: int=512
-    max_pos: int=int(2**15)
+    max_pos: int=int(2**14)
     min_neg: int=int(2**14)
     filename: str=None
     use_tqdm: bool=True

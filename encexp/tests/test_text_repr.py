@@ -138,6 +138,7 @@ def test_EncExpT_tailored():
     D = list(tweet_iterator(dataset))
     enc = EncExpT(lang='es', pretrained=False)
     enc.tailored(D, tsv_filename='tailored.tsv',
+                 min_pos=32,
                  filename='tailored.json.gz')
     assert enc.weights.shape[0] == 2**14
     assert enc.weights.shape[1] == 90
@@ -162,6 +163,7 @@ def test_EncExpT_tailored_intercept():
     enc = EncExpT(lang='es', with_intercept=True,
                   pretrained=False)
     enc.tailored(D, tsv_filename='tailored.tsv',
+                 min_pos=32,
                  filename='tailored_intercept.json.gz')
     assert enc.weights.shape[0] == 2**14
     assert enc.weights.shape[1] == 90
@@ -185,7 +187,7 @@ def test_EncExpT_tailored_add():
     dataset = load_dataset('mx')
     D = list(tweet_iterator(dataset))
     enc = EncExpT(lang='es', token_max_filter=2**13)
-    enc.tailored(D)
+    enc.tailored(D, min_pos=32)
 
 
 def test_EncExpT_tailored_no_neg():
@@ -193,7 +195,7 @@ def test_EncExpT_tailored_no_neg():
     dataset = load_dataset('mx')
     D = [f'{text} de' for text in tweet_iterator(dataset)]
     enc = EncExpT(lang='es', token_max_filter=2**13)
-    enc.tailored(D)
+    enc.tailored(D, min_pos=32)
 
 
 def test_EncExpT_tailored_2cl():
@@ -203,7 +205,7 @@ def test_EncExpT_tailored_2cl():
     enc = EncExpT(lang='es', pretrained=False,
                   with_intercept=True,
                   token_max_filter=2**13)
-    enc.tailored(D, self_supervised=False)
+    enc.tailored(D, self_supervised=False, min_pos=32)
     assert enc.names.tolist() == ['ar', 'mx']
     
 
