@@ -441,7 +441,7 @@ class EncExpT(Identifier):
     with_intercept: bool=False
     merge_encode: bool=True
     distance: bool=False
-    keep_unfreq: bool=True
+    keep_unfreq: bool=False
 
     @property
     def seqTM(self):
@@ -609,8 +609,9 @@ class EncExpT(Identifier):
     def tailored(self, D: Iterable=None,
                  filename: str=None,
                  tsv_filename: str=None,
-                 min_pos: int=32,
-                 max_pos: int=int(2**15),
+                 min_pos: int=512,
+                 min_neg: int=int(2**14),
+                 max_pos: int=int(2**14),
                  n_jobs: int=-1,
                  self_supervised: bool=True,
                  ds: object=None,
@@ -653,6 +654,7 @@ class EncExpT(Identifier):
                           filename=ds.output_filename,
                           use_tqdm=self.use_tqdm,
                           min_pos=min_pos,
+                          min_neg=min_neg,
                           max_pos=max_pos,
                           n_jobs=n_jobs,
                           with_intercept=self.with_intercept,

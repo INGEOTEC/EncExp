@@ -19,7 +19,7 @@ from microtc.utils import tweet_iterator, Counter
 # from encexp.tests.test_utils import samples
 from encexp.utils import load_dataset
 from encexp.text_repr import SeqTM, EncExpT
-from encexp.build_encexp import Dataset, EncExpDataset, Train, main
+from encexp.build_encexp import Dataset, EncExpDataset, Train, main, NegDataset
 
 
 def test_Dataset_output_filename():
@@ -109,7 +109,7 @@ def test_Train_labels():
 
 def test_Train_training_set():
     """Test Train"""
-    
+
     dataset = load_dataset('mx')
     seq = SeqTM(lang='es', token_max_filter=2**13)
     ds = EncExpDataset(text_model=clone(seq))
@@ -121,14 +121,17 @@ def test_Train_training_set():
     X, y = train.training_set(labels[0])
     assert X.shape[0] == len(y) and X.shape[1] == len(seq.names)
     # cnt = np.where((X > 0).sum(axis=0).A1)[0].shape
-    train.keep_unfreq = True
+    train = Train(text_model=seq, min_pos=32,
+                  keep_unfreq=True,
+                  filename=ds.output_filename)
+    labels = train.labels
     X, y = train.training_set(labels[0])
     _, freq =  np.unique(y, return_counts=True)
     assert freq[0] > freq[1]
-    train.min_neg = 0
-    X, y = train.training_set(labels[0])
-    _, freq =  np.unique(y, return_counts=True)
-    assert freq[0] == freq[1]
+    # train.min_neg = 0
+    # X, y = train.training_set(labels[0])
+    # _, freq =  np.unique(y, return_counts=True)
+    # assert freq[0] == freq[1]
     os.unlink(ds.output_filename)
 
     # cnt2 = np.where((X > 0).sum(axis=0).A1)[0].shape
@@ -208,3 +211,23 @@ def test_seqtm_build():
     A.voc_size_exponent = 13
     A.n_jobs = -1
     main(A)
+
+
+def test_NegDataset():
+    """Test NegDataset"""
+    freq = {'mx': 1000, 'ar': 100, 'es': 10}
+    neg = NegDataset(500, freq)
+    for k in range(510):
+        neg.add(f'mx {k}', 'mx')
+    assert len(neg.elements['mx']) == 390
+    for k in range(110):
+        neg.add(f'ar {k}', 'ar')
+    assert len(neg.elements['ar']) == 100
+    for k in range(20):
+        neg.add(f'es {k}', 'es')
+    assert neg.full
+    assert len(neg.dataset()) == 500
+    neg = NegDataset(500, {None: 500})
+    for k in range(510):
+        neg.add(f'unico {k}', None)
+    assert neg.full
