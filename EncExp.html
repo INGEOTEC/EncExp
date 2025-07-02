@@ -99,7 +99,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         
       </div>
     </div>
-<div id="dashboard-collapse" class="navbar-collapse collapse"><ul class="navbar-nav navbar-nav-scroll me-auto" role="tablist"><li class="nav-item" role="presentation"><a id="tab-introduction" class="nav-link active" data-bs-toggle="tab" role="tab" data-bs-target="#introduction" data-scrolling="false" href="#introduction" aria-controls="introduction" aria-selected="true"><span class="nav-link-text">Introduction</span></a></li><li class="nav-item" role="presentation"><a id="tab-quick-start-guide" class="nav-link" data-bs-toggle="tab" role="tab" data-bs-target="#quick-start-guide" data-scrolling="false" href="#quick-start-guide" aria-controls="quick-start-guide" aria-selected="false"><span class="nav-link-text">Quick Start Guide</span></a></li><li class="nav-item" role="presentation"><a id="tab-corpus" class="nav-link" data-bs-toggle="tab" role="tab" data-bs-target="#corpus" data-scrolling="false" href="#corpus" aria-controls="corpus" aria-selected="false"><span class="nav-link-text">Corpus</span></a></li></ul><div class="quarto-dashboard-links"><a class="quarto-dashboard-link" href="https://github.com/INGEOTEC/EncExp/" title="GitHub"><i class="bi bi-github"></i></a></div></div></div>
+<div id="dashboard-collapse" class="navbar-collapse collapse"><ul class="navbar-nav navbar-nav-scroll me-auto" role="tablist"><li class="nav-item" role="presentation"><a id="tab-introduction" class="nav-link active" data-bs-toggle="tab" role="tab" data-bs-target="#introduction" data-scrolling="false" href="#introduction" aria-controls="introduction" aria-selected="true"><span class="nav-link-text">Introduction</span></a></li><li class="nav-item" role="presentation"><a id="tab-quick-start-guide" class="nav-link" data-bs-toggle="tab" role="tab" data-bs-target="#quick-start-guide" data-scrolling="false" href="#quick-start-guide" aria-controls="quick-start-guide" aria-selected="false"><span class="nav-link-text">Quick Start Guide</span></a></li><li class="nav-item" role="presentation"><a id="tab-corpora" class="nav-link" data-bs-toggle="tab" role="tab" data-bs-target="#corpora" data-scrolling="false" href="#corpora" aria-controls="corpora" aria-selected="false"><span class="nav-link-text">Corpora</span></a></li></ul><div class="quarto-dashboard-links"><a class="quarto-dashboard-link" href="https://github.com/INGEOTEC/EncExp/" title="GitHub"><i class="bi bi-github"></i></a></div></div></div>
 </nav>
 </header>
 <div class="page-layout-custom quarto-dashboard-content bslib-gap-spacing html-fill-container bslib-page-fill quarto-dashboard-pages">  
@@ -148,7 +148,7 @@ grid-auto-rows: minmax(0, 1fr);">
 <div class="card-header"><div class="card-title"><span style="display: inline">
 Datasets and libraries
 </span></div></div>
-<div id="aef9448c" class="cell card-body html-fill-item html-fill-container" data-execution_count="1">
+<div id="fead4b44" class="cell card-body html-fill-item html-fill-container" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code html-fill-item html-fill-container" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split</span>
@@ -173,7 +173,7 @@ Datasets and libraries
 <div class="card-header"><div class="card-title"><span style="display: inline">
 TextModel
 </span></div></div>
-<div id="658fb19a" class="cell card-body html-fill-item html-fill-container" data-execution_count="2">
+<div id="91087777" class="cell card-body html-fill-item html-fill-container" data-execution_count="2">
 <div class="sourceCode cell-code html-fill-item html-fill-container" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>tm <span class="op">=</span> make_pipeline(TextModel(lang<span class="op">=</span><span class="st">'es'</span>),</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>                   LinearSVC()).fit(Xtrain, ytrain)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -187,7 +187,7 @@ TextModel
 <div class="card-header"><div class="card-title"><span style="display: inline">
 TextModel (Corpus)
 </span></div></div>
-<div id="ef782d11" class="cell card-body html-fill-item html-fill-container" data-execution_count="3">
+<div id="58629717" class="cell card-body html-fill-item html-fill-container" data-execution_count="3">
 <div class="sourceCode cell-code html-fill-item html-fill-container" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>corpus <span class="op">=</span> make_pipeline(TextModel(lang<span class="op">=</span><span class="st">'es'</span>, pretrained<span class="op">=</span><span class="va">False</span>),</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>                       LinearSVC()).fit(Xtrain, ytrain)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -201,7 +201,7 @@ TextModel (Corpus)
 <div class="card-header"><div class="card-title"><span style="display: inline">
 SeqTM
 </span></div></div>
-<div id="10f93483" class="cell card-body html-fill-item html-fill-container" data-execution_count="4">
+<div id="8d9af4b1" class="cell card-body html-fill-item html-fill-container" data-execution_count="4">
 <div class="sourceCode cell-code html-fill-item html-fill-container" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>seq <span class="op">=</span> make_pipeline(SeqTM(lang<span class="op">=</span><span class="st">'es'</span>),</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                    LinearSVC()).fit(Xtrain, ytrain)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -216,7 +216,7 @@ SeqTM
 <div class="card-header"><div class="card-title"><span style="display: inline">
 EncExp
 </span></div></div>
-<div id="af473c74" class="cell card-body html-fill-item html-fill-container" data-execution_count="5">
+<div id="39699cb0" class="cell card-body html-fill-item html-fill-container" data-execution_count="5">
 <div class="sourceCode cell-code html-fill-item html-fill-container" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>enc <span class="op">=</span> make_pipeline(EncExpT(lang<span class="op">=</span><span class="st">'es'</span>),</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>                    Normalizer(),</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>                    LinearSVC()).fit(Xtrain, ytrain)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -231,7 +231,7 @@ EncExp
 <div class="card-header"><div class="card-title"><span style="display: inline">
 Performance
 </span></div></div>
-<div id="ffb4954b" class="cell card-body html-fill-item html-fill-container" data-execution_count="6">
+<div id="950fd784" class="cell card-body html-fill-item html-fill-container" data-execution_count="6">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code html-fill-item html-fill-container" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>score <span class="op">=</span> macro_recall(yval, tm.predict(Xval),</span>
@@ -253,7 +253,7 @@ Performance
 </bslib-tooltip><script data-bslib-card-init="">bslib.Card.initializeAllCards();</script></div>
 </div>
 </div>
-</div><div id="corpus" class="dashboard-page tab-pane grid-skip html-fill-item html-fill-container" data-orientation="columns" aria-labelledby="tab-corpus">
+</div><div id="corpora" class="dashboard-page tab-pane grid-skip html-fill-item html-fill-container" data-orientation="columns" aria-labelledby="tab-corpora">
 <div class="html-fill-item html-fill-container bslib-grid" style="display: grid; grid-template-columns: minmax(3em, 1fr) minmax(3em, 1fr);
 grid-auto-rows: minmax(0, 1fr);">
 <div class="card tabset html-fill-item html-fill-container bslib-card" data-bslib-card-init="" data-require-bs-caller="card()" data-full-screen="false">
@@ -1431,11 +1431,10 @@ grid-auto-rows: minmax(0, 1fr);">
 Description
 </span></div></div>
 <div class="card-body html-fill-item html-fill-container">
-<p>The dataset used to create the self-supervised problems is a collection of Tweets collected from the open stream for several years, i.e., the Spanish collection started on December 11, 2015; English on July 1, 2016; Arabic on January 25, 2017; Russian on October 16, 2018; and the rest of the languages on June 1, 2021. In all the cases, the last day collected was June 9, 2023. The collected Tweets were filtered with the following restrictions: the retweets were removed; URL and users were replaced by the tokens _url and _usr, respectively; and only tweets with at least 50 characters were accepted in the final collection.</p>
-<p>The Corpus is divided into two sets: the first set is used as a training set, i.e., to estimate the parameters, while the second set corresponds to the test set, which could be used to measure the model performance. The basis for this division is a specific date, with tweets published prior to October 1, 2022, forming the first set and those published on October 3, 2022, or later, being used to create the test set.</p>
-<p>The training set and test set were created with an equivalent procedure; the only difference is that the maximum size of the training set is <span class="math inline">\(2^{23}\)</span> (8M) tweets and <span class="math inline">\(2^{12}\)</span> (4096) tweets for the test set.</p>
-<p>The training and test set was meticulously crafted by uniformly selecting the maximum number of tweets (i.e., <span class="math inline">\(2^{23}\)</span> and <span class="math inline">\(2^{12}\)</span>, respectively) from each day collected. These selected tweets were then organized by day, and within each day, the tweets were randomly chosen, with near duplicates being removed. The subsequent step involved the elimination of tweets that were near duplicates of the previous three days.</p>
-<p>It is worth mentioning that the last step is to shuffle the training and test set to eliminate the ordering by date.</p>
+<p>The dataset used to create the self-supervised problems is a collection of Tweets collected from the open stream for several years, i.e., the Spanish collection started on December 11, 2015; English on July 1, 2016; Arabic on January 25, 2017; Russian on October 16, 2018; and the rest of the languages on June 1, 2021. In all the cases, the last day collected was June 9, 2023. The collected Tweets were filtered with the following restrictions: retweets were removed; URLs and usernames were replaced by the tokens _url and _usr, respectively; and only tweets with at least 50 characters were included in the final collection.</p>
+<p>The corpora are divided into two sets: the first set is used as a training set, i.e., to estimate the parameters, while the second set corresponds to the test set, which could be used to measure the model’s performance. The basis for this division is a specific date, with tweets published before October 1, 2022, forming the first set. Those published on or after October 3, 2022, are being used to create the test set.</p>
+<p>The training set and test set were created using an equivalent procedure; the only difference is that the maximum size of the training set is <span class="math inline">\(2^{23}\)</span> (8 million tweets), and the test set is <span class="math inline">\(2^{12}\)</span> (4,096 tweets).</p>
+<p>There are pairs of training and test sets for each country, using tweets with geographic information, and a pair that groups all tweets without geographic information, labeled as ALL. Each set was meticulously crafted to have, as closely as possible, a uniform distribution of the days. Within each day, near duplicates were removed. Then, a three-day sliding window was used to remove near duplicates within the window. The final step was to shuffle the data to remove the ordering by date.</p>
 </div>
 <bslib-tooltip placement="auto" bsoptions="[]" data-require-bs-version="5" data-require-bs-caller="tooltip()">
     <template>Expand</template>
