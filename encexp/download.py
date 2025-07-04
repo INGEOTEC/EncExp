@@ -11,20 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import argparse
-from encexp.utils import Download, MODELS, EncExp_URL
-from microtc.utils import tweet_iterator
-from os.path import isdir, isfile, join
-import numpy as np
 import os
-import encexp
+from os.path import isdir, isfile, join
+from microtc.utils import tweet_iterator
+from encexp.utils import Download, MODELS, EncExp_URL
 
 
-def download(identifier: str, first: bool=True, base_url: str=EncExp_URL):
+def download(identifier: str, first: bool=True,
+             base_url: str=EncExp_URL,
+             outputdir: str=MODELS):
     """download"""
-    if not isdir(MODELS):
-        os.mkdir(MODELS)
-    output = join(MODELS, f'{identifier}.json.gz')
+    if not isdir(outputdir):
+        os.mkdir(outputdir)
+    output = join(outputdir, f'{identifier}.json.gz')
     if isfile(output):
         try:
             if first:
