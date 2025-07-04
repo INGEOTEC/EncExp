@@ -31,8 +31,7 @@ MODEL_LANG = ['ar', 'ca', 'de', 'en', 'es', 'fr',
 
 DialectID_URL = 'https://github.com/INGEOTEC/dialectid/releases/download/data'
 EncExp_URL = 'https://github.com/INGEOTEC/EncExp/releases/download/data'
-MODELS = join(dirname(__file__),
-              'models')
+MODELS = join(dirname(__file__), 'models')
 
 class Download(object):
     """Download
@@ -70,7 +69,7 @@ class Download(object):
             self.tqdm = tqdm(total=self._nblocks,
                              leave=False, desc=self._output)
         return self._tqdm
-    
+
     @tqdm.setter
     def tqdm(self, value):
         self._tqdm = value
