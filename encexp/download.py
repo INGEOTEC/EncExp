@@ -26,6 +26,8 @@ def download(identifier: str, first: bool=True,
         os.mkdir(outputdir)
     output = join(outputdir, f'{identifier}.json.gz')
     if isfile(output):
+        if return_path:
+            return output
         try:
             if first:
                 return next(tweet_iterator(output))

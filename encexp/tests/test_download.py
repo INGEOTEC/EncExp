@@ -30,3 +30,5 @@ def test_download_path():
 
     path = download('es_info', return_path=True)
     assert isfile(path)
+    path = download('es_info', return_path=True)
+    assert isfile(path)
