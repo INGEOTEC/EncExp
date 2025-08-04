@@ -19,7 +19,8 @@ from encexp.utils import Download, MODELS, EncExp_URL
 
 def download(identifier: str, first: bool=True,
              base_url: str=EncExp_URL,
-             outputdir: str=MODELS):
+             outputdir: str=MODELS,
+             return_path: bool=False):
     """download"""
     if not isdir(outputdir):
         os.mkdir(outputdir)
@@ -32,6 +33,8 @@ def download(identifier: str, first: bool=True,
         except Exception:
             os.unlink(output)
     Download(base_url + f'/{identifier}.json.gz', output)
+    if return_path:
+        return output
     if first:
         return next(tweet_iterator(output))
     return tweet_iterator(output)

@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from os.path import isfile
 import os
 import numpy as np
-from encexp.download import download_TextModel
+from encexp.download import download_TextModel, download
 
 
 def test_download_TextModel():
@@ -23,3 +23,10 @@ def test_download_TextModel():
     from encexp import TextModel
     tm = TextModel(lang='es')
     download_TextModel(tm.identifier)
+
+
+def test_download_path():
+    """Test download path"""
+
+    path = download('es_info', return_path=True)
+    assert isfile(path)
