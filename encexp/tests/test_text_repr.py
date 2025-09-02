@@ -241,3 +241,18 @@ def test_EncExpT_transform_dtype():
                   token_max_filter=2**13)
     X = enc.transform(['buenos dias'])
     assert X.dtype == enc.precision
+
+
+def test_EncExpT_encode():
+    """Test EncExpT transform type"""
+    enc = EncExpT(lang='es', merge_encode=False,
+                  token_max_filter=2**13)
+    text = 'el infarto tiene que ver con el organo'
+    index = [k for k, v in enumerate(enc.seqTM.tokenize(text)) if v == 'el']
+    X = enc.encode(text)
+    for otro in index[1:]:
+        assert_almost_equal(X[index[0]], X[otro])
+    enc.merge_encode = True
+    X2 = enc.encode(text)
+    assert_almost_equal(X.sum(axis=0), X.sum(axis=0))
+    
