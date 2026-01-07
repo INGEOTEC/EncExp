@@ -11,20 +11,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from os.path import join
 from microtc.utils import tweet_iterator
 # from encexp.tests.test_utils import samples
 from encexp.utils import load_dataset
 from encexp.build_voc import compute_TextModel_vocabulary, compute_SeqTM_vocabulary
+from encexp.utils import MODELS
 
 
 def test_compute_TextModel_vocabulary():
     """Compute vocabulary"""
     def iterator():
         """iterator"""
-        return tweet_iterator(dataset)
+        for x in dataset:
+            yield x
 
-    dataset = load_dataset('mx')
-    data = compute_TextModel_vocabulary(dataset,
+
+    dataset = load_dataset(dataset='dev')[:2048]
+    filename = join(MODELS, 'dialectid_es_dev.json')
+    data = compute_TextModel_vocabulary(filename,
                                         pretrained=False,
                                         token_max_filter=20)
     assert len(data['vocabulary']['dict']) == 20
@@ -37,10 +42,15 @@ def test_compute_TextModel_vocabulary():
 
 def test_compute_SeqTM_vocabulary():
     """test SeqTM vocabulary"""
-    dataset = load_dataset('mx')
-    params = compute_TextModel_vocabulary(dataset,
+    def iterator():
+        """iterator"""
+        for x in dataset:
+            yield x
+    
+    dataset = load_dataset(dataset='dev')[:2048]
+    params = compute_TextModel_vocabulary(iterator,
                                           pretrained=False)
-    data = compute_SeqTM_vocabulary(dataset,
+    data = compute_SeqTM_vocabulary(iterator,
                                     params,
                                     pretrained=False,
                                     token_max_filter=2**13)
