@@ -179,31 +179,34 @@ def transform_from_tokens(enc):
     return inner
 
 
-def load_dataset(country: Union[str, list],
+def load_dataset(country: Union[str, list]=None,
                  lang: str='es',
+                 dataset='train',
                  return_X_y:bool=False):
     """Country identification dataset"""
+    def filter_func(ele):
+        if country is None:
+            return True
+        elif isinstance(country, str):
+            return ele['country'] == country
+        return ele['country'] in country
+    
+
     if not isdir(MODELS):
-        os.mkdir(MODELS)    
-    if isinstance(country, str):
-        country = [country]
-    for cntr in country:
-        url = f'{DialectID_URL}/{lang}-{cntr}-sample.json.zip'
-        filename=join(MODELS, f'{lang}-{cntr}-sample.json.zip')
-        if isfile(filename):
-            continue
+        os.mkdir(MODELS)
+    url = f'{DialectID_URL}/dialectid_{lang}_{dataset}.json.zip'
+    filename=join(MODELS, f'dialectid_{lang}_{dataset}.json.zip')
+    json_filename = filename[:-4]
+    if not isfile(json_filename):
         Download(url, filename)
         with ZipFile(filename, "r") as fpt:
             fpt.extractall(path=MODELS,
                             pwd="ingeotec".encode("utf-8"))
-    if len(country) == 1 and return_X_y is False:
-        return join(MODELS, f'{lang}-{country[0]}-sample.json')
-    assert return_X_y
-    X = []
-    y = []
-    for cntr in country:
-        _ = join(MODELS, f'{lang}-{cntr}-sample.json')
-        _ = list(tweet_iterator(_))
-        X.extend(_)
-        y.extend([cntr] * len(_))
-    return X, y
+        os.unlink(filename)
+    if country is not None:
+        assert dataset == 'train'
+    data = list(tweet_iterator(json_filename))
+    if not return_X_y:
+        return [x for x in data if filter_func(x)]
+    _ = [x for x in data if filter_func(x)]
+    return [i['text'] for i in _], [i['country'] for i in _]
