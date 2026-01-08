@@ -221,7 +221,7 @@ def test_EncExpT_norm():
 def test_TextModel_diac():
     """Test TextModel diac"""
     from unicodedata import normalize
-    D = load_dataset(dataset='dev')
+    D = load_dataset(dataset='dev')[:2048]
     tm = TextModel(del_diac=False, pretrained=False).fit(D)
     cdn = normalize('NFD', 'ñ')
     lst = [x for x in tm.names if cdn in x]

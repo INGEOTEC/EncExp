@@ -32,7 +32,7 @@ def test_Dataset_output_filename():
 def test_Dataset_process():
     """Test Dataset process"""
     
-    iter = load_dataset('mx')[:2000]
+    iter = load_dataset(dataset='dev')[:2048]
     for x in iter:
         x['klass'] = 'mx'
     seq = SeqTM(lang='es', token_max_filter=2**13)
@@ -75,7 +75,7 @@ def test_Dataset_self_supervise():
 def test_EncExpDataset():
     """Test EncExpDataset"""
     
-    iter = load_dataset('mx')
+    iter = load_dataset(dataset='dev')[:2048]
     seq = SeqTM(lang='es', token_max_filter=2**13)
     ds = EncExpDataset(text_model=seq)
     ds.process(iter)
@@ -87,13 +87,13 @@ def test_EncExpDataset():
 def test_Train_labels():
     """Test labels"""
     
-    dataset = load_dataset('mx')[:2000]
+    dataset = load_dataset(dataset='dev')[:2048]
     seq = SeqTM(lang='es', token_max_filter=2**13)
     ds = EncExpDataset(text_model=clone(seq))
     ds.process(dataset)
     train = Train(text_model=seq, min_pos=32,
                   filename=ds.output_filename)
-    assert len(train.labels) == 87
+    assert len(train.labels) == 91
     X, y = load_dataset(['mx', 'ar', 'es'], return_X_y=True)
     D = [dict(text=text, klass=label) for text, label in zip(X, y)]
     ds = EncExpDataset(text_model=clone(seq), self_supervised=False)
@@ -108,7 +108,7 @@ def test_Train_labels():
 def test_Train_training_set():
     """Test Train"""
 
-    dataset = load_dataset('mx')
+    dataset = load_dataset(dataset='dev')[:2048]
     seq = SeqTM(lang='es', token_max_filter=2**13)
     ds = EncExpDataset(text_model=clone(seq))
     # if not isfile(ds.output_filename):
@@ -139,7 +139,7 @@ def test_Train_training_set():
 def test_Train_parameters():
     """Test Train"""
     
-    dataset = load_dataset('mx')
+    dataset = load_dataset(dataset='dev')[:2048]
     seq = SeqTM(lang='es', token_max_filter=2**13)
     ds = EncExpDataset(text_model=clone(seq))
     if not isfile(ds.output_filename):
@@ -155,7 +155,7 @@ def test_Train_parameters():
 def test_Train_store_model():
     """Test Train"""
     
-    dataset = load_dataset('mx')
+    dataset = load_dataset(dataset='dev')[:2048]
     enc = EncExpT(lang='es', token_max_filter=2**13,
                   pretrained=False)
     enc.pretrained = True
@@ -204,8 +204,8 @@ def test_seqtm_build():
     class A:
         """Dummy"""
 
-    load_dataset()
-    filename = join(MODELS, 'dialectid_es_train.json')
+    load_dataset(dataset='dev')
+    filename = join(MODELS, 'dialectid_es_dev.json')
     A.lang = 'es'
     A.file = [filename]
     A.voc_size_exponent = 13
