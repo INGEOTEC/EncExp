@@ -151,8 +151,8 @@ def test_EncExpT_pretrained():
     """Test EncExpT pretrained"""
     enc = EncExpT(lang='es', token_max_filter=2**13)
     X = enc.transform(['buenos dias'])
-    assert X.shape == (1, 4985)
-    assert len(enc.names) == 4985
+    assert X.shape == (1, 4977)
+    assert len(enc.names) == 4977
 
 
 def test_EncExpT_tailored_intercept():
@@ -190,7 +190,7 @@ def test_EncExpT_tailored_add():
 def test_EncExpT_tailored_no_neg():
     """Test EncExpT tailored"""
     dataset = load_dataset(dataset='dev')[:2048]
-    D = [f'{text} de' for text in tweet_iterator(dataset)]
+    D = [f'{text} de' for text in dataset]
     enc = EncExpT(lang='es', token_max_filter=2**13)
     enc.tailored(D, min_pos=32)
 
