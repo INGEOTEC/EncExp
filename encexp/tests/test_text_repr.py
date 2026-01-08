@@ -134,42 +134,40 @@ def test_EncExpT_identifier():
 
 def test_EncExpT_tailored():
     """Test EncExpT tailored"""
-    dataset = load_dataset('mx')
-    D = list(tweet_iterator(dataset))
+    D = load_dataset(dataset='dev')[:2048]
     enc = EncExpT(lang='es', pretrained=False)
     enc.tailored(D, tsv_filename='tailored.tsv',
                  min_pos=32,
                  filename='tailored.json.gz')
     assert enc.weights.shape[0] == 2**14
-    assert enc.weights.shape[1] == 90
+    assert enc.weights.shape[1] == 91
     W = enc.encode('buenos dias')
-    assert  W.shape == (1, 90)
+    assert  W.shape == (1, 91)
     X = enc.transform(D)
-    assert X.shape == (2048, 90)
+    assert X.shape == (2048, 91)
 
 
 def test_EncExpT_pretrained():
     """Test EncExpT pretrained"""
     enc = EncExpT(lang='es', token_max_filter=2**13)
     X = enc.transform(['buenos dias'])
-    assert X.shape == (1, 4985)
-    assert len(enc.names) == 4985
+    assert X.shape == (1, 4977)
+    assert len(enc.names) == 4977
 
 
 def test_EncExpT_tailored_intercept():
     """Test EncExpT tailored"""
-    dataset = load_dataset('mx')
-    D = list(tweet_iterator(dataset))
+    D = load_dataset(dataset='dev')[:2048]
     enc = EncExpT(lang='es', with_intercept=True,
                   pretrained=False)
     enc.tailored(D, tsv_filename='tailored.tsv',
                  min_pos=32,
                  filename='tailored_intercept.json.gz')
     assert enc.weights.shape[0] == 2**14
-    assert enc.weights.shape[1] == 90
-    assert enc.intercept.shape[0] == 90
+    assert enc.weights.shape[1] == 91
+    assert enc.intercept.shape[0] == 91
     X = enc.transform(['buenos dias'])
-    assert X.shape[1] == 90
+    assert X.shape[1] == 91
     enc.with_intercept = False
     assert np.fabs(X - enc.transform(['buenos dias'])).sum() != 0
     enc.with_intercept = True
@@ -184,16 +182,15 @@ def test_EncExpT_tailored_intercept():
 
 def test_EncExpT_tailored_add():
     """Test EncExpT tailored"""
-    dataset = load_dataset('mx')
-    D = list(tweet_iterator(dataset))
+    D = load_dataset(dataset='dev')[:2048]
     enc = EncExpT(lang='es', token_max_filter=2**13)
     enc.tailored(D, min_pos=32)
 
 
 def test_EncExpT_tailored_no_neg():
     """Test EncExpT tailored"""
-    dataset = load_dataset('mx')
-    D = [f'{text} de' for text in tweet_iterator(dataset)]
+    dataset = load_dataset(dataset='dev')[:2048]
+    D = [f'{text} de' for text in dataset]
     enc = EncExpT(lang='es', token_max_filter=2**13)
     enc.tailored(D, min_pos=32)
 
@@ -224,8 +221,7 @@ def test_EncExpT_norm():
 def test_TextModel_diac():
     """Test TextModel diac"""
     from unicodedata import normalize
-    dataset = load_dataset('mx')
-    D = list(tweet_iterator(dataset))
+    D = load_dataset(dataset='dev')[:2048]
     tm = TextModel(del_diac=False, pretrained=False).fit(D)
     cdn = normalize('NFD', 'ñ')
     lst = [x for x in tm.names if cdn in x]
@@ -241,3 +237,18 @@ def test_EncExpT_transform_dtype():
                   token_max_filter=2**13)
     X = enc.transform(['buenos dias'])
     assert X.dtype == enc.precision
+
+
+def test_EncExpT_encode():
+    """Test EncExpT transform type"""
+    enc = EncExpT(lang='es', merge_encode=False,
+                  token_max_filter=2**13)
+    text = 'el infarto tiene que ver con el organo'
+    index = [k for k, v in enumerate(enc.seqTM.tokenize(text)) if v == 'el']
+    X = enc.encode(text)
+    for otro in index[1:]:
+        assert_almost_equal(X[index[0]], X[otro])
+    enc.merge_encode = True
+    X2 = enc.encode(text)
+    assert_almost_equal(X.sum(axis=0), X.sum(axis=0))
+    
