@@ -6,3 +6,5 @@ jupyter
 pyyaml
 microtc
 CompStats
+tokenizers
+pytest
