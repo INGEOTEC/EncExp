@@ -32,6 +32,7 @@ jobs:
         conda install --yes pip
         pip install coverage
         pip install coveralls
+        pip install tokenizers
         conda install --yes numpy scipy scikit-learn pytest microtc b4msa
     - name: Tests on Linux
       if: ${{ runner.os == 'Linux' }}

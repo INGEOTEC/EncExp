@@ -88,13 +88,10 @@ class SeqHF(Identifier):
         # _ = pre_tokenizers.Split('[URL]', behavior='isolated')
         # return pre_tokenizers.Sequence([_, pre_tokenizers.Whitespace()])
 
-    def fit(self, X):
+    def fit_tokenizer(self, X):
         """
-        fit
-        
-        :param X: Dataset
+        Fit tokenizer
         """
-
         if self._is_fitted:
             return self
         special_tokens = ['[UNK]', '[URL]', '[USR]']
@@ -107,10 +104,25 @@ class SeqHF(Identifier):
         self.tokenizer.train_from_iterator(map(self.get_text, X),
                                            trainer=trainer,
                                            length=len(X))
+        return self
+    
+    def fit_doc_freq(self, X):
+        """
+        Compute the document frequency
+        """
         cnt = Counter()
         for text in X:
             cnt.update(set(self.tokenizer.encode(self.get_text(text)).ids))
         self.doc_freq = cnt
+
+    def fit(self, X):
+        """
+        fit
+        
+        :param X: Dataset
+        """
+        self.fit_tokenizer(X)
+        self.fit_doc_freq(X)
         self._is_fitted = True
         return self
 

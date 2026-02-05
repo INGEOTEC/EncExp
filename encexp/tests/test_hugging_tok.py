@@ -17,5 +17,6 @@ from encexp.utils import load_dataset
 
 def test_SeqHF():
     dataset = load_dataset(dataset='dev')
-    seq = SeqHF(del_diac=False).fit(dataset)
-    assert seq.doc_freq.most_common()[0] == (1985, 51153)
+    seq = SeqHF(del_diac=False).fit_tokenizer(dataset[:2**15])
+    seq.fit_doc_freq(dataset)
+    assert seq.doc_freq.most_common()[0] == (1358, 51222)
