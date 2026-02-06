@@ -19,7 +19,7 @@ def test_SeqHF():
     dataset = load_dataset(dataset='dev')
     seq = SeqHF(del_diac=False).fit_tokenizer(dataset[:2**15])
     seq.fit_doc_freq(dataset)
-    assert seq.doc_freq.most_common()[0] == (1358, 51222)
+    assert seq.doc_freq.most_common()[0] == (2413, 50522)
 
 
 def test_SeqHF_to_dict():
@@ -32,3 +32,4 @@ def test_SeqHF_to_dict():
     assert 'update_calls' in model
     seq2 = SeqHF(del_diac=False).from_dict(model)
     assert len(seq2.doc_freq) == len(seq.doc_freq)
+    

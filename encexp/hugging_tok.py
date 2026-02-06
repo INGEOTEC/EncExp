@@ -13,8 +13,8 @@
 # limitations under the License.
 import re
 from tokenizers import Tokenizer, pre_tokenizers, normalizers
-from tokenizers.models import BPE
-from tokenizers.trainers import BpeTrainer
+from tokenizers.models import WordPiece
+from tokenizers.trainers import WordPieceTrainer
 from tokenizers.normalizers import NFD, StripAccents, Lowercase
 from microtc.utils import Counter
 from encexp.text_repr import Identifier
@@ -94,10 +94,10 @@ class SeqHF(Identifier):
         if self._is_fitted:
             return self
         special_tokens = ['[UNK]', '[URL]', '[USR]']
-        self.tokenizer = Tokenizer(BPE(unk_token=special_tokens[0]))
+        self.tokenizer = Tokenizer(WordPiece(unk_token=special_tokens[0]))
         self.tokenizer.add_special_tokens(special_tokens)
-        trainer = BpeTrainer(vocab_size=self.vocab_size,
-                             special_tokens=special_tokens)
+        trainer = WordPieceTrainer(vocab_size=self.vocab_size,
+                                   special_tokens=special_tokens)
         self.tokenizer.normalizer = self.normalizer_params()
         self.tokenizer.pre_tokenizer = self.pre_tokenizers_params()
         self.tokenizer.train_from_iterator(map(self.get_text, X),
